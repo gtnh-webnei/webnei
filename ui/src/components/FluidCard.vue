@@ -1,0 +1,151 @@
+<script setup lang="ts">
+import { ref } from 'vue'
+import type { FluidSummary } from '@/api/fluids.types'
+
+defineProps<{
+  fluid: FluidSummary
+}>()
+
+defineEmits<{
+  (e: 'select', fluid: FluidSummary): void
+  (e: 'lookup', kind: 'recipe' | 'usage', fluid: FluidSummary): void
+}>()
+
+const imgFailed = ref(false)
+</script>
+
+<template>
+  <div
+    class="fluid-card"
+    tabindex="0"
+    role="button"
+    :title="`左键 · 详情 · 右键 · 合成 · 中键 · 用途\n${fluid.fluidId}`"
+    @click="$emit('select', fluid)"
+    @contextmenu.prevent="$emit('lookup', 'recipe', fluid)"
+    @auxclick="(e) => e.button === 1 && (e.preventDefault(), $emit('lookup', 'usage', fluid))"
+    @keydown.enter="$emit('select', fluid)"
+  >
+    <div class="icon-wrap" :class="{ gaseous: fluid.gaseous }">
+      <img
+        v-if="fluid.assetUrl && !imgFailed"
+        :src="fluid.assetUrl"
+        :alt="fluid.displayName"
+        loading="lazy"
+        draggable="false"
+        @error="imgFailed = true"
+      />
+      <div v-else class="initial" :class="{ gaseous: fluid.gaseous }">
+        {{ fluid.gaseous ? '气' : '液' }}
+      </div>
+    </div>
+    <div class="meta">
+      <div class="name" :title="fluid.displayName">{{ fluid.displayName }}</div>
+      <div class="id" :title="fluid.fluidId">{{ fluid.registryName }}</div>
+      <div class="tags">
+        <el-tag size="small" type="info" effect="plain" round class="mod-tag">
+          {{ fluid.modId }}
+        </el-tag>
+        <el-tag
+          v-if="fluid.gaseous"
+          size="small"
+          type="warning"
+          effect="plain"
+          round
+        >
+          气态
+        </el-tag>
+      </div>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.fluid-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 6px;
+  background: var(--el-bg-color);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  min-width: 0;
+}
+.fluid-card:hover {
+  border-color: var(--el-color-primary-light-5);
+  background: var(--el-color-primary-light-9);
+}
+.fluid-card:focus-visible {
+  outline: 2px solid var(--el-color-primary);
+  outline-offset: 2px;
+}
+.icon-wrap {
+  width: 40px;
+  height: 40px;
+  background: rgba(33, 130, 230, 0.12);
+  border: 1px solid rgba(33, 130, 230, 0.35);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.icon-wrap.gaseous {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.45);
+}
+.icon-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+.placeholder {
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+}
+.initial {
+  font-size: 18px;
+  font-weight: 700;
+  color: rgba(33, 130, 230, 0.9);
+}
+.initial.gaseous {
+  color: rgba(245, 158, 11, 0.95);
+}
+.meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.name {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.id {
+  font-size: 11px;
+  color: var(--el-text-color-secondary);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tags {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.mod-tag {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+</style>

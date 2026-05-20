@@ -1,0 +1,31 @@
+package moe.takochan.webnei.recipe.dto;
+
+public record RecipeCategoryDto(
+        String categoryId,
+        String plugin,
+        String handlerId,
+        String displayName,
+        String uiKind,
+        String uiTemplateId,
+        boolean shapeless,
+        String iconItemVariantId,
+        String iconDisplayName,
+        String iconAssetUrl,
+        String iconInfo,
+        int itemInputWidth,
+        int itemInputHeight,
+        int fluidInputWidth,
+        int fluidInputHeight,
+        int itemOutputWidth,
+        int itemOutputHeight,
+        int fluidOutputWidth,
+        int fluidOutputHeight,
+        boolean supportsRecipeLookup,
+        boolean supportsUsageLookup,
+        int displayOrder,
+        Integer canvasWidth,
+        Integer canvasHeight,
+        String backgroundAssetUrl,
+        long recipeCount,
+        long machineCount) {
+}

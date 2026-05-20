@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: webnei
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: ${WEBNEI_DATASOURCE_URL:jdbc:postgresql://localhost:5432/nesql}
+    username: ${WEBNEI_DATASOURCE_USERNAME:postgres}
+    password: ${WEBNEI_DATASOURCE_PASSWORD:postgres}
+  jdbc:
+    template:
+      fetch-size: 200
+  mvc:
+    problemdetails:
+      enabled: true
+
+webnei:
+  assets:
+    root: ${WEBNEI_ASSETS_ROOT:./assets}
+    public-url: ${WEBNEI_ASSETS_PUBLIC_URL:/assets}
+  cors:
+    dev-origins:
+      - http://localhost:5173

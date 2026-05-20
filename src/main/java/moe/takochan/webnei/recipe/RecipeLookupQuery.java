@@ -1,0 +1,20 @@
+package moe.takochan.webnei.recipe;
+
+public record RecipeLookupQuery(String target, String kind, String handlerId, String categoryId) {
+
+    public RecipeLookupQuery(String target, String kind) {
+        this(target, kind, null, null);
+    }
+
+    public boolean isUsage() {
+        return "usage".equalsIgnoreCase(kind);
+    }
+
+    public boolean hasHandlerFilter() {
+        return handlerId != null && !handlerId.isBlank();
+    }
+
+    public boolean hasCategoryFilter() {
+        return categoryId != null && !categoryId.isBlank();
+    }
+}
