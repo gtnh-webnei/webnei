@@ -10,15 +10,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 import moe.takochan.webnei.asset.AssetUrlBuilder;
 import moe.takochan.webnei.common.PageRequest;
 import moe.takochan.webnei.common.PageResponse;
 import moe.takochan.webnei.dataset.DatasetSummary;
 import moe.takochan.webnei.recipe.dto.CategoryBreakdownDto;
+import moe.takochan.webnei.recipe.dto.GregTechFuelProfileDto;
 import moe.takochan.webnei.recipe.dto.GregTechRecipeDto;
 import moe.takochan.webnei.recipe.dto.GregTechSpecialItemDto;
 import moe.takochan.webnei.recipe.dto.HandlerBreakdownDto;
+import moe.takochan.webnei.recipe.dto.MetadataValueDto;
 import moe.takochan.webnei.recipe.dto.RecipeCategoryDto;
 import moe.takochan.webnei.recipe.dto.RecipeDto;
 import moe.takochan.webnei.recipe.dto.RecipeSlotCandidateDto;
@@ -33,10 +40,12 @@ public class RecipeDao {
 
     private final JdbcClient jdbc;
     private final AssetUrlBuilder assetUrlBuilder;
+    private final ObjectMapper objectMapper;
 
-    public RecipeDao(JdbcClient jdbc, AssetUrlBuilder assetUrlBuilder) {
+    public RecipeDao(JdbcClient jdbc, AssetUrlBuilder assetUrlBuilder, ObjectMapper objectMapper) {
         this.jdbc = jdbc;
         this.assetUrlBuilder = assetUrlBuilder;
+        this.objectMapper = objectMapper;
     }
 
     public List<RecipeCategoryDto> listCategories(DatasetSummary dataset) {
@@ -372,7 +381,7 @@ public class RecipeDao {
                 dataset, headers.values().stream().map(RecipeHeader::categoryId).distinct().toList());
         Map<String, CategoryLayoutMeta> categoryMeta = loadCategoryLayoutMeta(
                 dataset, headers.values().stream().map(RecipeHeader::categoryId).distinct().toList());
-        Map<String, GregTechRecipeDto> gtMap = loadGregTechInfo(dataset, recipeIds);
+        Map<String, GregTechRecipeDto> gtMap = loadGregTechInfo(dataset, headers);
 
         List<RecipeDto> out = new ArrayList<>(recipeIds.size());
         for (String id : recipeIds) {
@@ -400,21 +409,29 @@ public class RecipeDao {
     }
 
     private Map<String, GregTechRecipeDto> loadGregTechInfo(
-            DatasetSummary dataset, List<String> recipeIds) {
-        if (recipeIds.isEmpty()) return Map.of();
+            DatasetSummary dataset, Map<String, RecipeHeader> headers) {
+        if (headers.isEmpty()) return Map.of();
+        List<String> recipeIds = new ArrayList<>(headers.keySet());
 
         record GtRow(
                 String recipeId,
+                String recipeKind,
+                boolean visibleInNei,
                 String voltageTier,
-                long voltage,
-                int amperage,
+                Integer voltage,
+                Integer amperage,
                 int durationTicks,
                 boolean requiresCleanroom,
+                boolean requiresLowGravity,
+                Integer specialValue,
+                Integer fuelValue,
                 String additionalInfo) {}
 
         List<GtRow> rows = jdbc.sql("""
-                        SELECT recipe_id, voltage_tier, voltage, amperage, duration_ticks,
-                               requires_cleanroom, additional_info
+                        SELECT recipe_id, recipe_kind, visible_in_nei,
+                               voltage_tier, voltage, amperage, duration_ticks,
+                               requires_cleanroom, requires_low_gravity,
+                               special_value, fuel_value, additional_info
                         FROM gregtech_recipe
                         WHERE dataset_id = :datasetId
                           AND recipe_id IN (:ids)
@@ -423,29 +440,134 @@ public class RecipeDao {
                 .param("ids", recipeIds)
                 .query((rs, n) -> new GtRow(
                         rs.getString("recipe_id"),
+                        rs.getString("recipe_kind"),
+                        rs.getBoolean("visible_in_nei"),
                         rs.getString("voltage_tier"),
-                        rs.getLong("voltage"),
-                        rs.getInt("amperage"),
+                        rs.getObject("voltage", Integer.class),
+                        rs.getObject("amperage", Integer.class),
                         rs.getInt("duration_ticks"),
                         rs.getBoolean("requires_cleanroom"),
+                        rs.getBoolean("requires_low_gravity"),
+                        rs.getObject("special_value", Integer.class),
+                        rs.getObject("fuel_value", Integer.class),
                         rs.getString("additional_info")))
                 .list();
 
         Map<String, List<GregTechSpecialItemDto>> specialItems =
                 loadGregTechSpecialItems(dataset, recipeIds);
+        Map<String, Map<String, MetadataValueDto>> metadataByRecipe =
+                loadGregTechMetadata(dataset, recipeIds);
+
+        List<String> fuelCategoryIds = rows.stream()
+                .filter(r -> "FUEL".equals(r.recipeKind()))
+                .map(r -> {
+                    RecipeHeader h = headers.get(r.recipeId());
+                    return h == null ? null : h.categoryId();
+                })
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        Map<String, GregTechFuelProfileDto> fuelProfileByCategory =
+                loadFuelMachineProfiles(dataset, fuelCategoryIds);
 
         Map<String, GregTechRecipeDto> map = new HashMap<>(rows.size());
         for (GtRow r : rows) {
+            GregTechFuelProfileDto fuelProfile = null;
+            if ("FUEL".equals(r.recipeKind())) {
+                RecipeHeader h = headers.get(r.recipeId());
+                if (h != null) {
+                    fuelProfile = fuelProfileByCategory.get(h.categoryId());
+                }
+            }
             map.put(r.recipeId(), new GregTechRecipeDto(
+                    r.recipeKind(),
+                    r.visibleInNei(),
                     r.voltageTier(),
                     r.voltage(),
                     r.amperage(),
                     r.durationTicks(),
                     r.requiresCleanroom(),
+                    r.requiresLowGravity(),
+                    r.specialValue(),
+                    r.fuelValue(),
                     r.additionalInfo(),
-                    specialItems.getOrDefault(r.recipeId(), List.of())));
+                    specialItems.getOrDefault(r.recipeId(), List.of()),
+                    metadataByRecipe.getOrDefault(r.recipeId(), Map.of()),
+                    fuelProfile));
         }
         return map;
+    }
+
+    private Map<String, GregTechFuelProfileDto> loadFuelMachineProfiles(
+            DatasetSummary dataset, List<String> categoryIds) {
+        if (categoryIds.isEmpty()) return Map.of();
+        return jdbc.sql("""
+                        SELECT category_id, machine_kind, display_name,
+                               base_efficiency_percent, tier_efficiency_formula, consumption_unit
+                        FROM gregtech_fuel_machine_profile
+                        WHERE dataset_id = :datasetId
+                          AND category_id IN (:ids)
+                        """)
+                .param("datasetId", dataset.datasetId())
+                .param("ids", categoryIds)
+                .query((rs, n) -> new GregTechFuelProfileDto(
+                        rs.getString("category_id"),
+                        rs.getString("machine_kind"),
+                        rs.getString("display_name"),
+                        rs.getObject("base_efficiency_percent", Integer.class),
+                        rs.getString("tier_efficiency_formula"),
+                        rs.getString("consumption_unit")))
+                .list()
+                .stream()
+                .collect(Collectors.toMap(GregTechFuelProfileDto::categoryId, p -> p));
+    }
+
+    private Map<String, Map<String, MetadataValueDto>> loadGregTechMetadata(
+            DatasetSummary dataset, List<String> recipeIds) {
+        if (recipeIds.isEmpty()) return Map.of();
+
+        record MetaRow(
+                String recipeId,
+                String key,
+                String valueType,
+                String valueText,
+                String valueJson) {}
+
+        List<MetaRow> rows = jdbc.sql("""
+                        SELECT recipe_id, metadata_key, value_type, value_text, value_json
+                        FROM gregtech_recipe_metadata
+                        WHERE dataset_id = :datasetId
+                          AND recipe_id IN (:ids)
+                        ORDER BY recipe_id, metadata_key
+                        """)
+                .param("datasetId", dataset.datasetId())
+                .param("ids", recipeIds)
+                .query((rs, n) -> new MetaRow(
+                        rs.getString("recipe_id"),
+                        rs.getString("metadata_key"),
+                        rs.getString("value_type"),
+                        rs.getString("value_text"),
+                        rs.getString("value_json")))
+                .list();
+
+        Map<String, Map<String, MetadataValueDto>> map = new LinkedHashMap<>();
+        for (MetaRow r : rows) {
+            JsonNode parsed = parseMetadataJson(r.valueJson(), r.recipeId(), r.key());
+            map.computeIfAbsent(r.recipeId(), k -> new LinkedHashMap<>())
+                    .put(r.key(), new MetadataValueDto(r.valueType(), r.valueText(), parsed));
+        }
+        return map;
+    }
+
+    private JsonNode parseMetadataJson(String raw, String recipeId, String key) {
+        if (raw == null || raw.isBlank()) return null;
+        try {
+            return objectMapper.readTree(raw);
+        } catch (JacksonException ex) {
+            throw new IllegalStateException(
+                    "Failed to parse gregtech_recipe_metadata.value_json for recipe="
+                            + recipeId + ", key=" + key, ex);
+        }
     }
 
     private Map<String, List<GregTechSpecialItemDto>> loadGregTechSpecialItems(

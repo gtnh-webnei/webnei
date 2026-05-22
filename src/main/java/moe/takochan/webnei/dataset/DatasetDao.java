@@ -22,7 +22,7 @@ import org.springframework.stereotype.Repository;
 public class DatasetDao {
 
     private static final String DATASET_COLUMNS = """
-            dataset_id, pack_slug, pack_version, variant, display_name,
+            dataset_id, pack_slug, pack_version, variant, language, display_name,
             schema_version, exporter_version, minecraft_version, created_at, active_plugins
             """;
 
@@ -35,7 +35,8 @@ public class DatasetDao {
     }
 
     public List<DatasetSummary> listAll() {
-        return jdbc.sql("SELECT " + DATASET_COLUMNS + " FROM dataset ORDER BY pack_slug, pack_version, variant")
+        return jdbc.sql("SELECT " + DATASET_COLUMNS
+                        + " FROM dataset ORDER BY pack_slug, pack_version, variant, language")
                 .query(datasetMapper())
                 .list();
     }
@@ -128,6 +129,7 @@ public class DatasetDao {
                 rs.getString("pack_slug"),
                 rs.getString("pack_version"),
                 rs.getString("variant"),
+                rs.getString("language"),
                 rs.getString("display_name"),
                 rs.getString("schema_version"),
                 rs.getString("exporter_version"),

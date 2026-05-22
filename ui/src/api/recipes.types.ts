@@ -38,14 +38,76 @@ export interface GregTechSpecialItem {
   assetUrl: string | null
 }
 
+export type GregTechRecipeKind = 'PROCESSING' | 'FUEL'
+
+export type FuelMachineKind =
+  | 'diesel'
+  | 'gas_turbine'
+  | 'plasma'
+  | 'naquadah'
+  | 'semifluid'
+  | 'hot'
+  | 'magic'
+  | 'large_boiler'
+
+export type FuelConsumptionUnit = 'eu_per_mb' | 'burn_time'
+
+export interface FuelMachineProfile {
+  categoryId: string
+  machineKind: FuelMachineKind | string
+  displayName: string
+  baseEfficiencyPercent: number | null
+  tierEfficiencyFormula: string | null
+  consumptionUnit: FuelConsumptionUnit | string
+}
+
+export interface MaterialRef {
+  $ref: 'Materials'
+  name: string
+}
+
+export interface SolarFactoryWaferData {
+  tierRequired: number
+  minimumWaferTier: number
+  minimumWaferCount: number
+}
+
+export interface QuantumComputerData {
+  maxHeat: number
+  subZero: boolean
+  computation: number
+  coolConstant: number
+  heatConstant: number
+}
+
+export type MetadataJsonValue =
+  | MaterialRef
+  | SolarFactoryWaferData
+  | QuantumComputerData
+  | Record<string, unknown>
+  | unknown[]
+
+export interface MetadataValue {
+  valueType: 'int' | 'long' | 'float' | 'double' | 'bool' | 'str' | 'enum' | 'json' | string
+  valueText: string | null
+  valueJson: MetadataJsonValue | null
+}
+
 export interface GregTechRecipeInfo {
-  voltageTier: string
-  voltage: number
-  amperage: number
+  recipeKind: GregTechRecipeKind
+  visibleInNei: boolean
+  voltageTier: string | null
+  voltage: number | null
+  amperage: number | null
   durationTicks: number
   requiresCleanroom: boolean
+  requiresLowGravity: boolean
+  specialValue: number | null
+  fuelValue: number | null
   additionalInfo: string
   specialItems: GregTechSpecialItem[]
+  metadata: Record<string, MetadataValue>
+  fuelProfile: FuelMachineProfile | null
 }
 
 export interface Recipe {

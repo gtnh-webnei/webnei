@@ -1,13 +1,11 @@
 package moe.takochan.webnei.config;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.CacheControl;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -21,29 +19,14 @@ public class WebMvcConfig implements WebMvcConfigurer {
     private static final ClassPathResource SPA_INDEX = new ClassPathResource("/static/index.html");
     private static final List<String> SPA_EXCLUDED_PREFIXES = List.of("api/", "actuator/", "assets/", "static/");
 
-    private final AssetsProperties assetsProperties;
     private final CorsProperties corsProperties;
 
-    public WebMvcConfig(AssetsProperties assetsProperties, CorsProperties corsProperties) {
-        this.assetsProperties = assetsProperties;
+    public WebMvcConfig(CorsProperties corsProperties) {
         this.corsProperties = corsProperties;
     }
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        if (assetsProperties.servesLocal()) {
-            Path root = Path.of(assetsProperties.root()).toAbsolutePath().normalize();
-            String textureLocation = root.toUri().toString();
-            PathResourceResolver textureResolver = new PathResourceResolver();
-            textureResolver.setAllowedLocations(new FileSystemResource(root + "/"));
-            String pattern = assetsProperties.publicUrl() + "/**";
-            registry.addResourceHandler(pattern)
-                    .addResourceLocations(textureLocation)
-                    .setCacheControl(CacheControl.maxAge(365, TimeUnit.DAYS).cachePublic())
-                    .resourceChain(true)
-                    .addResolver(textureResolver);
-        }
-
         registry.addResourceHandler("/**")
                 .addResourceLocations("classpath:/static/")
                 .setCacheControl(CacheControl.maxAge(1, TimeUnit.HOURS))
@@ -59,12 +42,6 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .allowedMethods("GET", "HEAD", "OPTIONS")
                 .allowedHeaders("*")
                 .maxAge(3600);
-        if (assetsProperties.servesLocal()) {
-            registry.addMapping(assetsProperties.publicUrl() + "/**")
-                    .allowedOrigins(origins)
-                    .allowedMethods("GET", "HEAD", "OPTIONS")
-                    .maxAge(3600);
-        }
     }
 
     private static final class SpaResourceResolver extends PathResourceResolver {

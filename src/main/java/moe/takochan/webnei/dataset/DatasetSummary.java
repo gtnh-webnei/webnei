@@ -8,6 +8,7 @@ public record DatasetSummary(
         String packSlug,
         String packVersion,
         String variant,
+        String language,
         String displayName,
         String schemaVersion,
         String exporterVersion,

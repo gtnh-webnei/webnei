@@ -15,7 +15,6 @@ spring:
 
 webnei:
   assets:
-    root: ${WEBNEI_ASSETS_ROOT:./assets}
     public-url: ${WEBNEI_ASSETS_PUBLIC_URL:/assets}
   cors:
     dev-origins:

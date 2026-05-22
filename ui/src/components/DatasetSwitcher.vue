@@ -29,7 +29,7 @@ function onChange(value: string) {
     <el-option
       v-for="d in datasets"
       :key="d.datasetId"
-      :label="`${d.displayName} (${d.variant})`"
+      :label="`${d.displayName} (${d.variant}/${d.language})`"
       :value="d.datasetId"
     />
   </el-select>

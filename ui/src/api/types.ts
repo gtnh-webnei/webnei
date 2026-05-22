@@ -3,6 +3,7 @@ export interface DatasetSummary {
   packSlug: string
   packVersion: string
   variant: string
+  language: string
   displayName: string
   schemaVersion: string
   exporterVersion: string

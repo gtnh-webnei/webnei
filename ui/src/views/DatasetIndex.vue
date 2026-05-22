@@ -33,7 +33,7 @@ const { datasets, loading, error } = storeToRefs(store)
               <div class="title-block">
                 <span class="title">{{ d.displayName }}</span>
                 <span class="subtitle">
-                  {{ d.packSlug }} · {{ d.packVersion }} · {{ d.variant }}
+                  {{ d.packSlug }} · {{ d.packVersion }} · {{ d.variant }} · {{ d.language }}
                 </span>
               </div>
               <el-tag type="info" effect="plain" size="small">

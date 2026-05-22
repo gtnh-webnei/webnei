@@ -25,13 +25,13 @@ Defaults are intentionally portable and can be overridden by environment variabl
 Extract each export asset bundle into:
 
 ```text
-assets/{pack_slug}/{pack_version}/{variant}/...
+assets/{pack_slug}/{pack_version}/{variant}/{language}/...
 ```
 
 The backend maps `asset.path` to that relative directory and returns cache-busted URLs:
 
 ```text
-/assets/{packSlug}/{packVersion}/{variant}/{asset.path}?v={sha256}
+/assets/{packSlug}/{packVersion}/{variant}/{language}/{asset.path}?v={sha256}
 ```
 
 ## API
