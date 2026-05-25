@@ -49,6 +49,7 @@ declare module 'vue' {
     GregTechNotes: typeof import('./src/components/recipe/gregtech/GregTechNotes.vue')['default']
     GregTechRecipePanel: typeof import('./src/components/recipe/renderers/GregTechRecipePanel.vue')['default']
     GregTechSpecialItems: typeof import('./src/components/recipe/gregtech/GregTechSpecialItems.vue')['default']
+    GregTechTierBadge: typeof import('./src/components/recipe/gregtech/GregTechTierBadge.vue')['default']
     InscriberRecipePanel: typeof import('./src/components/recipe/renderers/InscriberRecipePanel.vue')['default']
     ItemCard: typeof import('./src/components/ItemCard.vue')['default']
     ItemDetailPanel: typeof import('./src/components/ItemDetailPanel.vue')['default']

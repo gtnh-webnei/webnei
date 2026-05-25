@@ -52,12 +52,13 @@ const descriptionLines = computed(() =>
             <code class="recipe-id">{{ recipe.recipeId }}</code>
           </el-tooltip>
         </div>
+        <div class="header-tag">
+          <slot name="header-tag" />
+        </div>
       </div>
     </template>
 
     <div class="body">
-      <slot name="badge" />
-
       <div v-if="descriptionLines.length" class="description-block">
         <div v-for="(line, idx) in descriptionLines" :key="idx" class="description-line">
           {{ line }}
@@ -65,6 +66,8 @@ const descriptionLines = computed(() =>
       </div>
 
       <slot />
+
+      <slot name="footer" />
     </div>
   </el-card>
 </template>
@@ -76,7 +79,13 @@ const descriptionLines = computed(() =>
 .header {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
   gap: 12px;
+}
+.header-tag {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
 }
 .title-block {
   min-width: 0;

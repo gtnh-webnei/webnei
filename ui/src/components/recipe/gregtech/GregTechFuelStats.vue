@@ -29,32 +29,40 @@ const fuelTypeText = computed(() => {
   return FUEL_TYPE_LABEL[n] ?? `类型 ${n}`
 })
 
-const headerTitle = computed(() => {
-  const name = profile.value?.displayName ?? '发电配方'
-  const type = fuelTypeText.value
-  return type ? `${name} · ${type}` : name
-})
+const machineName = computed(() => profile.value?.displayName ?? null)
 
-const energyDensityText = computed(() => {
-  if (isLargeBoiler.value) return null
-  const v = props.info.fuelValue
-  return v !== null ? `${formatNumber(v)} EU/L` : null
-})
+interface Row {
+  key: string
+  label: string
+  value: string
+  note?: string
+  tooltip?: string
+}
 
-const perBucketText = computed(() => {
-  if (isLargeBoiler.value) return null
-  const v = props.info.fuelValue
-  return v !== null ? `${formatNumber(v * 1000)} EU` : null
-})
-
-const efficiencyText = computed(() => {
+const rows = computed<Row[]>(() => {
+  const out: Row[] = []
+  if (machineName.value) {
+    out.push({ key: 'machine', label: '机器', value: machineName.value })
+  }
+  if (fuelTypeText.value) {
+    out.push({ key: 'fuel_type', label: '燃料类型', value: fuelTypeText.value })
+  }
+  if (!isLargeBoiler.value && props.info.fuelValue !== null) {
+    const v = props.info.fuelValue
+    out.push({ key: 'energy_density', label: '能量密度', value: `${formatNumber(v)} EU/L` })
+    out.push({ key: 'per_bucket', label: '每桶产能', value: `${formatNumber(v * 1000)} EU` })
+  }
   const p = profile.value
-  if (!p) return null
-  if (p.baseEfficiencyPercent !== null) return `${p.baseEfficiencyPercent}%`
-  return null
+  if (p?.baseEfficiencyPercent !== null && p?.baseEfficiencyPercent !== undefined) {
+    out.push({
+      key: 'efficiency',
+      label: '默认效率',
+      value: `${p.baseEfficiencyPercent}%`,
+      tooltip: p.tierEfficiencyFormula ?? undefined,
+    })
+  }
+  return out
 })
-
-const efficiencyTooltip = computed(() => profile.value?.tierEfficiencyFormula ?? null)
 
 const additionalLines = computed(() =>
   props.info.additionalInfo
@@ -64,124 +72,84 @@ const additionalLines = computed(() =>
 </script>
 
 <template>
-  <div class="fuel-card">
-    <div class="fuel-header">
-      <span class="bolt">⚡</span>
-      <span class="machine-name">{{ headerTitle }}</span>
-    </div>
-
-    <div v-if="!isLargeBoiler" class="fuel-grid">
-      <div class="row" v-if="energyDensityText">
-        <span class="row-label">能量密度</span>
-        <span class="row-value mono">{{ energyDensityText }}</span>
-      </div>
-      <div class="row" v-if="perBucketText">
-        <span class="row-label">每桶产能</span>
-        <span class="row-value mono">{{ perBucketText }}</span>
-      </div>
-      <div class="row" v-if="efficiencyText">
-        <span class="row-label">默认效率</span>
-        <span class="row-value">
-          {{ efficiencyText }}
-          <el-tooltip
-            v-if="efficiencyTooltip"
-            :content="efficiencyTooltip"
-            placement="top"
-            :show-after="150"
-          >
+  <div class="fuel-stats">
+    <dl class="stat-list">
+      <template v-for="r in rows" :key="r.key">
+        <dt class="stat-label">{{ r.label }}</dt>
+        <dd class="stat-value">
+          <span class="main">{{ r.value }}</span>
+          <el-tooltip v-if="r.tooltip" :content="r.tooltip" placement="top" :show-after="150">
             <span class="info-icon">ⓘ</span>
           </el-tooltip>
-        </span>
-      </div>
-    </div>
+        </dd>
+      </template>
+    </dl>
 
-    <div v-if="!isLargeBoiler" class="fuel-note">
+    <div v-if="!isLargeBoiler" class="hint">
       <span class="info-icon">ⓘ</span>
       <span>实际发电量 = 能量密度 × 机器效率 × 流体消耗速率</span>
     </div>
 
-    <div v-if="isLargeBoiler && additionalLines.length" class="fuel-boiler-block">
+    <div v-if="isLargeBoiler && additionalLines.length" class="boiler-block">
       <div v-for="(line, idx) in additionalLines" :key="idx" class="boiler-line">{{ line }}</div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.fuel-card {
+.fuel-stats {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 10px 12px;
-  background: rgba(234, 88, 12, 0.06);
-  border: 1px solid rgba(234, 88, 12, 0.35);
-  border-radius: 6px;
 }
-.fuel-header {
+.stat-list {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  margin: 0;
+}
+.stat-label,
+.stat-value {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-weight: 600;
-  font-size: 13px;
-  color: #ea580c;
-  border-bottom: 1px solid rgba(234, 88, 12, 0.25);
-  padding-bottom: 6px;
-  white-space: nowrap;
-  overflow: hidden;
+  padding: 0;
+  min-width: 0;
+  line-height: 1.6;
 }
-.bolt {
-  font-size: 14px;
-}
-.machine-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.fuel-grid {
-  display: grid;
-  grid-template-columns: 96px 1fr;
-  row-gap: 4px;
-  column-gap: 12px;
-  font-size: 13px;
-  align-items: baseline;
-}
-.row {
-  display: contents;
-}
-.row-label {
+.stat-label {
   color: var(--el-text-color-secondary);
   font-size: 12px;
-}
-.row-value {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 4px;
-  color: var(--el-text-color-primary);
-  font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
+  padding-right: 12px;
 }
-.row-value.mono {
+.stat-value {
+  margin: 0;
+  gap: 6px;
+}
+.main {
+  font-size: 13px;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-}
-.fuel-note {
-  display: flex;
-  gap: 6px;
-  align-items: baseline;
-  font-size: 12px;
-  color: var(--el-text-color-secondary);
-  border-top: 1px solid rgba(234, 88, 12, 0.18);
-  padding-top: 6px;
+  color: var(--el-text-color-primary);
+  white-space: nowrap;
 }
 .info-icon {
-  color: #ea580c;
+  color: var(--el-text-color-secondary);
   cursor: help;
   font-size: 12px;
 }
-.fuel-boiler-block {
+.hint {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+.boiler-block {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  margin-top: 8px;
   font-size: 13px;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   color: var(--el-text-color-primary);

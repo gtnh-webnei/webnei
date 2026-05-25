@@ -155,30 +155,35 @@ const rows = computed<Row[]>(() => {
 <style scoped>
 .meta-list {
   display: grid;
-  grid-template-columns: 112px 1fr;
-  row-gap: 4px;
-  column-gap: 12px;
+  grid-template-columns: 80px 1fr;
+  row-gap: 0;
+  column-gap: 0;
   margin: 0;
-  font-size: 12px;
-  align-items: baseline;
+}
+.meta-label,
+.meta-value {
+  display: flex;
+  align-items: center;
+  padding: 0;
+  min-width: 0;
+  line-height: 1.6;
 }
 .meta-label {
   color: var(--el-text-color-secondary);
-  font-size: 11px;
+  font-size: 12px;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  padding-right: 12px;
 }
 .meta-value {
   margin: 0;
   font-weight: 600;
+  font-size: 13px;
   color: var(--el-text-color-primary);
   font-variant-numeric: tabular-nums;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
 }
 .meta-value.tone-highlight {
   color: #b45309;
