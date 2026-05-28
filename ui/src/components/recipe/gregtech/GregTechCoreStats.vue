@@ -55,10 +55,10 @@ const rows = computed<Row[]>(() => {
     note: formatDuration(info.durationTicks),
   })
 
-  if (info.requiresCleanroom) {
+  if (metaBool('cleanroom')) {
     out.push({ key: 'cleanroom', label: '洁净室', value: '需要', accent: true })
   }
-  if (info.requiresLowGravity) {
+  if (metaBool('low_gravity')) {
     out.push({ key: 'low_gravity', label: '低重力', value: '需要', accent: true })
   }
   if (metaBool('no_gas')) {

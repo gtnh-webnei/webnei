@@ -1,6 +1,13 @@
 import { http } from './client'
 import type { PageResponse } from './types'
-import type { HandlerBreakdown, LookupKind, Recipe, RecipeCategory } from './recipes.types'
+import type {
+  CategoryMachine,
+  CategoryVoltageTier,
+  HandlerBreakdown,
+  LookupKind,
+  Recipe,
+  RecipeCategory,
+} from './recipes.types'
 
 export async function listRecipeCategories(datasetId: string): Promise<RecipeCategory[]> {
   const { data } = await http.get<RecipeCategory[]>(
@@ -46,11 +53,12 @@ export async function lookupRecipes(
   kind: LookupKind,
   page: number,
   size: number,
-  filters: { handlerId?: string; categoryId?: string } = {},
+  filters: { handlerId?: string; categoryId?: string; voltageTier?: string } = {},
 ): Promise<PageResponse<Recipe>> {
   const params: Record<string, string | number> = { target, kind, page, size }
   if (filters.handlerId) params.handlerId = filters.handlerId
   if (filters.categoryId) params.categoryId = filters.categoryId
+  if (filters.voltageTier) params.voltageTier = filters.voltageTier
   const { data } = await http.get<PageResponse<Recipe>>(
     `/datasets/${encodeURIComponent(datasetId)}/recipes/lookup`,
     { params },
@@ -83,12 +91,39 @@ export async function listRecipesByCategory(
   q: string,
   page: number,
   size: number,
+  filters: { voltageTier?: string } = {},
 ): Promise<PageResponse<Recipe>> {
   const params: Record<string, string | number> = { page, size }
   const trimmed = q.trim()
   if (trimmed) params.q = trimmed
+  if (filters.voltageTier) params.voltageTier = filters.voltageTier
   const { data } = await http.get<PageResponse<Recipe>>(
     `/datasets/${encodeURIComponent(datasetId)}/categories/${encodeURIComponent(categoryId)}/recipes`,
+    { params },
+  )
+  return data
+}
+
+export async function listCategoryMachines(
+  datasetId: string,
+  categoryId: string,
+): Promise<CategoryMachine[]> {
+  const { data } = await http.get<CategoryMachine[]>(
+    `/datasets/${encodeURIComponent(datasetId)}/categories/${encodeURIComponent(categoryId)}/machines`,
+  )
+  return data
+}
+
+export async function listCategoryVoltageTiers(
+  datasetId: string,
+  categoryId: string,
+  scope: { target?: string; kind?: LookupKind } = {},
+): Promise<CategoryVoltageTier[]> {
+  const params: Record<string, string> = {}
+  if (scope.target) params.target = scope.target
+  if (scope.kind) params.kind = scope.kind
+  const { data } = await http.get<CategoryVoltageTier[]>(
+    `/datasets/${encodeURIComponent(datasetId)}/categories/${encodeURIComponent(categoryId)}/voltage-tiers`,
     { params },
   )
   return data

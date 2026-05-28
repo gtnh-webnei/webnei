@@ -5,10 +5,8 @@ import RecipePanelShell from '../RecipePanelShell.vue'
 import SidesLayout from '../SidesLayout.vue'
 import GregTechTierBadge from '../gregtech/GregTechTierBadge.vue'
 import GregTechCoreStats from '../gregtech/GregTechCoreStats.vue'
-import GregTechFuelStats from '../gregtech/GregTechFuelStats.vue'
 import GregTechSpecialItems from '../gregtech/GregTechSpecialItems.vue'
 import GregTechMetadataList from '../gregtech/GregTechMetadataList.vue'
-import GregTechNotes from '../gregtech/GregTechNotes.vue'
 
 const props = defineProps<{
   recipe: Recipe
@@ -26,13 +24,6 @@ const declaredRows = computed(() => props.category?.itemInputHeight ?? null)
 const gt = computed(() => props.recipe.gregtech)
 
 const isFuel = computed(() => gt.value?.recipeKind === 'FUEL')
-const isLargeBoilerFuel = computed(
-  () => isFuel.value && gt.value?.fuelProfile?.machineKind === 'large_boiler',
-)
-const showNotes = computed(() => {
-  if (!gt.value?.additionalInfo) return false
-  return !isLargeBoilerFuel.value
-})
 </script>
 
 <template>
@@ -61,11 +52,9 @@ const showNotes = computed(() => {
           <span class="title">{{ isFuel ? '燃料信息' : '配方信息' }}</span>
         </header>
         <div class="gt-stack">
-          <GregTechFuelStats v-if="isFuel" :info="gt" />
-          <GregTechCoreStats v-else :info="gt" />
+          <GregTechCoreStats :info="gt" />
           <GregTechSpecialItems v-if="gt.specialItems?.length" :items="gt.specialItems" />
           <GregTechMetadataList :metadata="gt.metadata" />
-          <GregTechNotes v-if="showNotes" :text="gt.additionalInfo" />
         </div>
       </section>
     </template>
@@ -108,8 +97,7 @@ const showNotes = computed(() => {
   background: var(--el-bg-color);
 }
 .gt-stack :deep(.stat-list),
-.gt-stack :deep(.meta-list),
-.gt-stack :deep(.fuel-stats) {
+.gt-stack :deep(.meta-list) {
   border: none;
 }
 </style>

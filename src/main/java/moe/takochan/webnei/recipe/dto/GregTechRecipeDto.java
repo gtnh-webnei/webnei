@@ -10,12 +10,7 @@ public record GregTechRecipeDto(
         Integer voltage,
         Integer amperage,
         int durationTicks,
-        boolean requiresCleanroom,
-        boolean requiresLowGravity,
         Integer specialValue,
-        Integer fuelValue,
-        String additionalInfo,
         List<GregTechSpecialItemDto> specialItems,
-        Map<String, MetadataValueDto> metadata,
-        GregTechFuelProfileDto fuelProfile) {
+        Map<String, MetadataValueDto> metadata) {
 }

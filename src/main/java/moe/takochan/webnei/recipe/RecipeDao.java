@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
@@ -21,7 +20,8 @@ import moe.takochan.webnei.common.PageRequest;
 import moe.takochan.webnei.common.PageResponse;
 import moe.takochan.webnei.dataset.DatasetSummary;
 import moe.takochan.webnei.recipe.dto.CategoryBreakdownDto;
-import moe.takochan.webnei.recipe.dto.GregTechFuelProfileDto;
+import moe.takochan.webnei.recipe.dto.CategoryMachineDto;
+import moe.takochan.webnei.recipe.dto.CategoryVoltageTierDto;
 import moe.takochan.webnei.recipe.dto.GregTechRecipeDto;
 import moe.takochan.webnei.recipe.dto.GregTechSpecialItemDto;
 import moe.takochan.webnei.recipe.dto.HandlerBreakdownDto;
@@ -94,24 +94,37 @@ public class RecipeDao {
     private List<RecipeCategoryDto> queryCategories(
             DatasetSummary dataset, String filter, String plugin, boolean hideEmpty, PageRequest page) {
         StringBuilder sql = new StringBuilder("""
-                SELECT category_id, plugin, handler_id, display_name, ui_kind, ui_template_id,
-                       shapeless, icon_item_variant_id, icon_display_name, icon_asset_path,
-                       icon_info, item_input_width, item_input_height, fluid_input_width, fluid_input_height,
-                       item_output_width, item_output_height, fluid_output_width, fluid_output_height,
-                       supports_recipe_lookup, supports_usage_lookup, display_order,
-                       canvas_width, canvas_height, background_asset_path,
-                       recipe_count, machine_count
-                FROM v_recipe_category_browser
-                WHERE dataset_id = :datasetId
-                  AND (CAST(:plugin AS TEXT) IS NULL OR plugin = CAST(:plugin AS TEXT))
+                SELECT v.category_id, v.plugin, v.handler_id, v.display_name,
+                       v.shapeless, v.icon_item_variant_id, v.icon_display_name,
+                       COALESCE(v.icon_asset_path, nei.exported_path) AS icon_asset_path,
+                       v.icon_info, v.item_input_width, v.item_input_height,
+                       v.fluid_input_width, v.fluid_input_height,
+                       v.item_output_width, v.item_output_height,
+                       v.fluid_output_width, v.fluid_output_height,
+                       v.supports_recipe_lookup, v.supports_usage_lookup, v.display_order,
+                       v.canvas_width, v.canvas_height, v.background_asset_path,
+                       v.recipe_count, v.machine_count,
+                       v.mod_id, v.mod_name, v.handler_class,
+                       v.handler_canvas_width, v.handler_canvas_height, v.handler_y_shift,
+                       v.handler_multiple_widgets_allowed,
+                       v.icon_image_resource, v.icon_image_x, v.icon_image_y,
+                       v.icon_image_width, v.icon_image_height,
+                       v.icon_image_texture_width, v.icon_image_texture_height
+                FROM v_recipe_category_browser v
+                LEFT JOIN nei_texture_export nei
+                  ON nei.dataset_id = v.dataset_id
+                 AND nei.resource = v.icon_image_resource
+                 AND v.icon_asset_path IS NULL
+                WHERE v.dataset_id = :datasetId
+                  AND (CAST(:plugin AS TEXT) IS NULL OR v.plugin = CAST(:plugin AS TEXT))
                   AND (CAST(:hideEmpty AS BOOLEAN) IS NULL
                        OR CAST(:hideEmpty AS BOOLEAN) = false
-                       OR recipe_count > 0)
+                       OR v.recipe_count > 0)
                   AND (CAST(:filter AS TEXT) IS NULL
-                       OR lower(display_name) LIKE CAST(:filter AS TEXT)
-                       OR lower(category_id) LIKE CAST(:filter AS TEXT)
-                       OR lower(handler_id) LIKE CAST(:filter AS TEXT))
-                ORDER BY display_order, category_id
+                       OR lower(v.display_name) LIKE CAST(:filter AS TEXT)
+                       OR lower(v.category_id) LIKE CAST(:filter AS TEXT)
+                       OR lower(v.handler_id) LIKE CAST(:filter AS TEXT))
+                ORDER BY v.display_order, v.category_id
                 """);
         if (page != null) {
             sql.append("OFFSET :offset LIMIT :limit\n");
@@ -130,8 +143,6 @@ public class RecipeDao {
                         rs.getString("plugin"),
                         rs.getString("handler_id"),
                         rs.getString("display_name"),
-                        rs.getString("ui_kind"),
-                        rs.getString("ui_template_id"),
                         rs.getBoolean("shapeless"),
                         rs.getString("icon_item_variant_id"),
                         rs.getString("icon_display_name"),
@@ -152,41 +163,66 @@ public class RecipeDao {
                         nullableInt(rs, "canvas_height"),
                         assetUrlBuilder.build(dataset, rs.getString("background_asset_path"), null),
                         rs.getLong("recipe_count"),
-                        rs.getLong("machine_count")))
+                        rs.getLong("machine_count"),
+                        rs.getString("mod_id"),
+                        rs.getString("mod_name"),
+                        rs.getString("handler_class"),
+                        rs.getInt("handler_canvas_width"),
+                        rs.getInt("handler_canvas_height"),
+                        rs.getInt("handler_y_shift"),
+                        rs.getBoolean("handler_multiple_widgets_allowed"),
+                        rs.getString("icon_image_resource"),
+                        rs.getInt("icon_image_x"),
+                        rs.getInt("icon_image_y"),
+                        rs.getInt("icon_image_width"),
+                        rs.getInt("icon_image_height"),
+                        rs.getInt("icon_image_texture_width"),
+                        rs.getInt("icon_image_texture_height")))
                 .list();
     }
 
     public LookupPage listRecipeIdsByCategory(
-            DatasetSummary dataset, String categoryId, String query, PageRequest page) {
+            DatasetSummary dataset, String categoryId, String query, String voltageTier, PageRequest page) {
         String q = (query == null) ? "" : query.trim();
-        if (q.isEmpty()) {
-            long total = jdbc.sql("""
-                            SELECT COUNT(*) FROM recipe
-                            WHERE dataset_id = :datasetId AND category_id = :categoryId
-                            """)
-                    .param("datasetId", dataset.datasetId())
-                    .param("categoryId", categoryId)
-                    .query(Long.class)
-                    .single();
+        boolean hasVoltage = voltageTier != null && !voltageTier.isBlank();
+        String voltageJoin = hasVoltage
+                ? "JOIN gregtech_recipe g ON g.recipe_id = recipe.recipe_id AND g.dataset_id = recipe.dataset_id\n"
+                : "";
+        String voltageWhere = hasVoltage ? "  AND g.voltage_tier = :voltageTier\n" : "";
 
-            List<String> ids = jdbc.sql("""
-                            SELECT recipe_id FROM recipe
-                            WHERE dataset_id = :datasetId AND category_id = :categoryId
-                            ORDER BY recipe_id
-                            OFFSET :offset LIMIT :limit
-                            """)
+        if (q.isEmpty()) {
+            var totalSpec = jdbc.sql(
+                            "SELECT COUNT(*) FROM recipe\n"
+                            + voltageJoin
+                            + "WHERE recipe.dataset_id = :datasetId AND recipe.category_id = :categoryId\n"
+                            + voltageWhere)
+                    .param("datasetId", dataset.datasetId())
+                    .param("categoryId", categoryId);
+            if (hasVoltage) totalSpec = totalSpec.param("voltageTier", voltageTier);
+            long total = totalSpec.query(Long.class).single();
+
+            var idsSpec = jdbc.sql(
+                            "SELECT recipe.recipe_id FROM recipe\n"
+                            + voltageJoin
+                            + "WHERE recipe.dataset_id = :datasetId AND recipe.category_id = :categoryId\n"
+                            + voltageWhere
+                            + "ORDER BY recipe.recipe_id\n"
+                            + "OFFSET :offset LIMIT :limit\n")
                     .param("datasetId", dataset.datasetId())
                     .param("categoryId", categoryId)
                     .param("offset", page.offset())
-                    .param("limit", page.size())
-                    .query(String.class)
-                    .list();
+                    .param("limit", page.size());
+            if (hasVoltage) idsSpec = idsSpec.param("voltageTier", voltageTier);
+            List<String> ids = idsSpec.query(String.class).list();
             return new LookupPage(ids, total);
         }
 
         String pattern = "%" + q.toLowerCase() + "%";
-        String matchSql = """
-                SELECT DISTINCT recipe_id FROM (
+        // Match recipes by item/fluid display name or id, optionally narrowed by voltage tier.
+        // The matched-id subquery is unioned across item and fluid slot views; the voltage filter
+        // is applied as an outer join because gregtech_recipe is GT-only.
+        String matchInner = """
+                SELECT DISTINCT m.recipe_id FROM (
                   SELECT recipe_id FROM v_recipe_item_slot
                   WHERE dataset_id = :datasetId
                     AND category_id = :categoryId
@@ -200,21 +236,31 @@ public class RecipeDao {
                          OR LOWER(fluid_variant_id) LIKE :pattern)
                 ) m
                 """;
+        String matchSql;
+        if (hasVoltage) {
+            matchSql = matchInner
+                    + "JOIN gregtech_recipe g\n"
+                    + "  ON g.recipe_id = m.recipe_id AND g.dataset_id = :datasetId\n"
+                    + "WHERE g.voltage_tier = :voltageTier\n";
+        } else {
+            matchSql = matchInner;
+        }
 
-        long total = jdbc.sql("SELECT COUNT(*) FROM (" + matchSql + ") c")
+        var totalSpec = jdbc.sql("SELECT COUNT(*) FROM (" + matchSql + ") c")
                 .param("datasetId", dataset.datasetId())
                 .param("categoryId", categoryId)
-                .param("pattern", pattern)
-                .query(Long.class)
-                .single();
-        List<String> ids = jdbc.sql(matchSql + " ORDER BY recipe_id OFFSET :offset LIMIT :limit")
+                .param("pattern", pattern);
+        if (hasVoltage) totalSpec = totalSpec.param("voltageTier", voltageTier);
+        long total = totalSpec.query(Long.class).single();
+
+        var idsSpec = jdbc.sql(matchSql + " ORDER BY recipe_id OFFSET :offset LIMIT :limit")
                 .param("datasetId", dataset.datasetId())
                 .param("categoryId", categoryId)
                 .param("pattern", pattern)
                 .param("offset", page.offset())
-                .param("limit", page.size())
-                .query(String.class)
-                .list();
+                .param("limit", page.size());
+        if (hasVoltage) idsSpec = idsSpec.param("voltageTier", voltageTier);
+        List<String> ids = idsSpec.query(String.class).list();
         return new LookupPage(ids, total);
     }
 
@@ -223,13 +269,21 @@ public class RecipeDao {
         String kind = query.isUsage() ? "usage" : "recipe";
         String handlerId = query.hasHandlerFilter() ? query.handlerId() : null;
         String categoryId = query.hasCategoryFilter() ? query.categoryId() : null;
+        String voltageTier = query.hasVoltageTierFilter() ? query.voltageTier() : null;
         boolean needsCategoryJoin = handlerId != null;
+        boolean needsVoltageJoin = voltageTier != null;
 
         StringBuilder baseFrom = new StringBuilder("FROM recipe_lookup_index rli\n");
         if (needsCategoryJoin) {
             baseFrom.append("""
                     JOIN recipe_category rc
                       ON rc.dataset_id = rli.dataset_id AND rc.category_id = rli.category_id
+                    """);
+        }
+        if (needsVoltageJoin) {
+            baseFrom.append("""
+                    JOIN gregtech_recipe g
+                      ON g.recipe_id = rli.recipe_id AND g.dataset_id = rli.dataset_id
                     """);
         }
 
@@ -244,6 +298,9 @@ public class RecipeDao {
         if (categoryId != null) {
             filters.append("  AND rli.category_id = :categoryId\n");
         }
+        if (voltageTier != null) {
+            filters.append("  AND g.voltage_tier = :voltageTier\n");
+        }
 
         var totalSpec = jdbc.sql("SELECT COUNT(DISTINCT rli.recipe_id) " + baseFrom + filters)
                 .param("datasetId", dataset.datasetId())
@@ -251,6 +308,7 @@ public class RecipeDao {
                 .param("kind", kind);
         if (handlerId != null) totalSpec = totalSpec.param("handlerId", handlerId);
         if (categoryId != null) totalSpec = totalSpec.param("categoryId", categoryId);
+        if (voltageTier != null) totalSpec = totalSpec.param("voltageTier", voltageTier);
         long total = totalSpec.query(Long.class).single();
 
         var idsSpec = jdbc.sql("""
@@ -269,6 +327,7 @@ public class RecipeDao {
                 .param("limit", page.size());
         if (handlerId != null) idsSpec = idsSpec.param("handlerId", handlerId);
         if (categoryId != null) idsSpec = idsSpec.param("categoryId", categoryId);
+        if (voltageTier != null) idsSpec = idsSpec.param("voltageTier", voltageTier);
         List<String> ids = idsSpec.query(String.class).list();
         return new LookupPage(ids, total);
     }
@@ -289,16 +348,22 @@ public class RecipeDao {
                         SELECT vc.handler_id,
                                rli.category_id,
                                vc.display_name,
-                               vc.icon_asset_path,
+                               COALESCE(vc.icon_asset_path, nei.exported_path) AS icon_asset_path,
                                vc.display_order,
                                COUNT(DISTINCT rli.recipe_id) AS cnt
                         FROM recipe_lookup_index rli
                         JOIN v_recipe_category_browser vc
                           ON vc.dataset_id = rli.dataset_id AND vc.category_id = rli.category_id
+                        LEFT JOIN nei_texture_export nei
+                          ON nei.dataset_id = vc.dataset_id
+                         AND nei.resource = vc.icon_image_resource
+                         AND vc.icon_asset_path IS NULL
                         WHERE rli.dataset_id = :datasetId
                           AND rli.target_id = :target
                           AND rli.lookup_kind = :kind
-                        GROUP BY vc.handler_id, rli.category_id, vc.display_name, vc.icon_asset_path, vc.display_order
+                        GROUP BY vc.handler_id, rli.category_id, vc.display_name,
+                                 COALESCE(vc.icon_asset_path, nei.exported_path),
+                                 vc.display_order
                         """)
                 .param("datasetId", dataset.datasetId())
                 .param("target", query.target())
@@ -393,8 +458,6 @@ public class RecipeDao {
                     id,
                     h.categoryId(),
                     h.categoryDisplayName(),
-                    h.uiKind(),
-                    h.uiTemplateId(),
                     h.sourcePlugin(),
                     h.sourceRef(),
                     h.description(),
@@ -421,17 +484,12 @@ public class RecipeDao {
                 Integer voltage,
                 Integer amperage,
                 int durationTicks,
-                boolean requiresCleanroom,
-                boolean requiresLowGravity,
-                Integer specialValue,
-                Integer fuelValue,
-                String additionalInfo) {}
+                Integer specialValue) {}
 
         List<GtRow> rows = jdbc.sql("""
                         SELECT recipe_id, recipe_kind, visible_in_nei,
                                voltage_tier, voltage, amperage, duration_ticks,
-                               requires_cleanroom, requires_low_gravity,
-                               special_value, fuel_value, additional_info
+                               special_value
                         FROM gregtech_recipe
                         WHERE dataset_id = :datasetId
                           AND recipe_id IN (:ids)
@@ -446,11 +504,7 @@ public class RecipeDao {
                         rs.getObject("voltage", Integer.class),
                         rs.getObject("amperage", Integer.class),
                         rs.getInt("duration_ticks"),
-                        rs.getBoolean("requires_cleanroom"),
-                        rs.getBoolean("requires_low_gravity"),
-                        rs.getObject("special_value", Integer.class),
-                        rs.getObject("fuel_value", Integer.class),
-                        rs.getString("additional_info")))
+                        rs.getObject("special_value", Integer.class)))
                 .list();
 
         Map<String, List<GregTechSpecialItemDto>> specialItems =
@@ -458,27 +512,8 @@ public class RecipeDao {
         Map<String, Map<String, MetadataValueDto>> metadataByRecipe =
                 loadGregTechMetadata(dataset, recipeIds);
 
-        List<String> fuelCategoryIds = rows.stream()
-                .filter(r -> "FUEL".equals(r.recipeKind()))
-                .map(r -> {
-                    RecipeHeader h = headers.get(r.recipeId());
-                    return h == null ? null : h.categoryId();
-                })
-                .filter(Objects::nonNull)
-                .distinct()
-                .toList();
-        Map<String, GregTechFuelProfileDto> fuelProfileByCategory =
-                loadFuelMachineProfiles(dataset, fuelCategoryIds);
-
         Map<String, GregTechRecipeDto> map = new HashMap<>(rows.size());
         for (GtRow r : rows) {
-            GregTechFuelProfileDto fuelProfile = null;
-            if ("FUEL".equals(r.recipeKind())) {
-                RecipeHeader h = headers.get(r.recipeId());
-                if (h != null) {
-                    fuelProfile = fuelProfileByCategory.get(h.categoryId());
-                }
-            }
             map.put(r.recipeId(), new GregTechRecipeDto(
                     r.recipeKind(),
                     r.visibleInNei(),
@@ -486,40 +521,11 @@ public class RecipeDao {
                     r.voltage(),
                     r.amperage(),
                     r.durationTicks(),
-                    r.requiresCleanroom(),
-                    r.requiresLowGravity(),
                     r.specialValue(),
-                    r.fuelValue(),
-                    r.additionalInfo(),
                     specialItems.getOrDefault(r.recipeId(), List.of()),
-                    metadataByRecipe.getOrDefault(r.recipeId(), Map.of()),
-                    fuelProfile));
+                    metadataByRecipe.getOrDefault(r.recipeId(), Map.of())));
         }
         return map;
-    }
-
-    private Map<String, GregTechFuelProfileDto> loadFuelMachineProfiles(
-            DatasetSummary dataset, List<String> categoryIds) {
-        if (categoryIds.isEmpty()) return Map.of();
-        return jdbc.sql("""
-                        SELECT category_id, machine_kind, display_name,
-                               base_efficiency_percent, tier_efficiency_formula, consumption_unit
-                        FROM gregtech_fuel_machine_profile
-                        WHERE dataset_id = :datasetId
-                          AND category_id IN (:ids)
-                        """)
-                .param("datasetId", dataset.datasetId())
-                .param("ids", categoryIds)
-                .query((rs, n) -> new GregTechFuelProfileDto(
-                        rs.getString("category_id"),
-                        rs.getString("machine_kind"),
-                        rs.getString("display_name"),
-                        rs.getObject("base_efficiency_percent", Integer.class),
-                        rs.getString("tier_efficiency_formula"),
-                        rs.getString("consumption_unit")))
-                .list()
-                .stream()
-                .collect(Collectors.toMap(GregTechFuelProfileDto::categoryId, p -> p));
     }
 
     private Map<String, Map<String, MetadataValueDto>> loadGregTechMetadata(
@@ -621,7 +627,7 @@ public class RecipeDao {
     private Map<String, RecipeHeader> loadHeaders(DatasetSummary dataset, List<String> recipeIds) {
         List<RecipeHeader> rows = jdbc.sql("""
                         SELECT r.recipe_id, r.category_id, r.source_plugin, r.source_ref, r.description,
-                               rc.display_name AS category_display_name, rc.ui_kind, rc.ui_template_id
+                               rc.display_name AS category_display_name
                         FROM recipe r
                         JOIN recipe_category rc
                           ON rc.dataset_id = r.dataset_id AND rc.category_id = r.category_id
@@ -634,8 +640,6 @@ public class RecipeDao {
                         rs.getString("recipe_id"),
                         rs.getString("category_id"),
                         rs.getString("category_display_name"),
-                        rs.getString("ui_kind"),
-                        rs.getString("ui_template_id"),
                         rs.getString("source_plugin"),
                         rs.getString("source_ref"),
                         rs.getString("description")))
@@ -851,14 +855,73 @@ public class RecipeDao {
         return s == null || s.isEmpty() ? null : s;
     }
 
+    public List<CategoryMachineDto> listCategoryMachines(DatasetSummary dataset, String categoryId) {
+        return jdbc.sql("""
+                        SELECT m.item_variant_id,
+                               iv.display_name,
+                               iv.asset_path,
+                               m.role,
+                               m.display_order
+                        FROM recipe_category_machine m
+                        LEFT JOIN v_item_variant_browser iv
+                          ON iv.item_variant_id = m.item_variant_id
+                         AND iv.dataset_id = m.dataset_id
+                        WHERE m.dataset_id = :datasetId
+                          AND m.category_id = :categoryId
+                        ORDER BY m.display_order, m.item_variant_id
+                        """)
+                .param("datasetId", dataset.datasetId())
+                .param("categoryId", categoryId)
+                .query((rs, n) -> new CategoryMachineDto(
+                        rs.getString("item_variant_id"),
+                        rs.getString("display_name"),
+                        assetUrlBuilder.build(dataset, rs.getString("asset_path"), null),
+                        rs.getString("role"),
+                        rs.getInt("display_order")))
+                .list();
+    }
+
+    public List<CategoryVoltageTierDto> listCategoryVoltageTiers(
+            DatasetSummary dataset, String categoryId, String target, String kind) {
+        boolean hasLookup = target != null && !target.isBlank() && kind != null && !kind.isBlank();
+        String lookupJoin = hasLookup
+                ? "JOIN recipe_lookup_index rli\n"
+                + "  ON rli.recipe_id = r.recipe_id AND rli.dataset_id = r.dataset_id\n"
+                + " AND rli.target_id = :target AND rli.lookup_kind = :kind\n"
+                : "";
+        String countExpr = hasLookup ? "COUNT(DISTINCT r.recipe_id)" : "COUNT(*)";
+
+        var spec = jdbc.sql("""
+                        SELECT g.voltage_tier AS tier,
+                               %s AS cnt
+                        FROM recipe r
+                        JOIN gregtech_recipe g
+                          ON g.recipe_id = r.recipe_id AND g.dataset_id = r.dataset_id
+                        %s
+                        WHERE r.dataset_id = :datasetId
+                          AND r.category_id = :categoryId
+                          AND g.voltage_tier IS NOT NULL
+                        GROUP BY g.voltage_tier
+                        ORDER BY MIN(g.voltage) NULLS LAST
+                        """.formatted(countExpr, lookupJoin))
+                .param("datasetId", dataset.datasetId())
+                .param("categoryId", categoryId);
+        if (hasLookup) {
+            spec = spec.param("target", target).param("kind", kind);
+        }
+        return spec
+                .query((rs, n) -> new CategoryVoltageTierDto(
+                        rs.getString("tier"),
+                        rs.getLong("cnt")))
+                .list();
+    }
+
     public record LookupPage(List<String> recipeIds, long total) {}
 
     private record RecipeHeader(
             String recipeId,
             String categoryId,
             String categoryDisplayName,
-            String uiKind,
-            String uiTemplateId,
             String sourcePlugin,
             String sourceRef,
             String description) {}

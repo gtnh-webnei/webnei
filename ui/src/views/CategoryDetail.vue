@@ -7,6 +7,7 @@ import { useDatasetStore } from '@/stores/dataset'
 import { listRecipeCategories, listRecipesByCategory } from '@/api/recipes'
 import type { Recipe, RecipeCategory } from '@/api/recipes.types'
 import RecipePanel from '@/components/RecipePanel.vue'
+import CategoryHeaderRows from '@/components/recipe/CategoryHeaderRows.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -26,6 +27,7 @@ const pageSize = ref(24)
 const loading = ref(false)
 const error = ref<string | null>(null)
 const q = ref('')
+const activeTier = ref<string | null>(null)
 
 async function fetchCategoryMeta() {
   if (!datasetId.value || !categoryId.value) return
@@ -48,6 +50,7 @@ async function fetchRecipes() {
       q.value,
       page.value - 1,
       pageSize.value,
+      { voltageTier: activeTier.value ?? undefined },
     )
     recipes.value = data.items
     total.value = data.total
@@ -65,10 +68,15 @@ const debouncedReset = useDebounceFn(() => {
 
 watch([datasetId, categoryId], () => {
   page.value = 1
+  activeTier.value = null
   fetchCategoryMeta()
   fetchRecipes()
 })
 watch(q, () => debouncedReset())
+watch(activeTier, () => {
+  page.value = 1
+  fetchRecipes()
+})
 watch(page, () => fetchRecipes())
 watch(pageSize, () => {
   page.value = 1
@@ -128,6 +136,13 @@ onMounted(() => {
         </div>
       </div>
     </section>
+
+    <CategoryHeaderRows
+      :dataset-id="datasetId"
+      :category-id="categoryId"
+      :active-tier="activeTier"
+      @update:active-tier="activeTier = $event"
+    />
 
     <div class="toolbar">
       <el-input

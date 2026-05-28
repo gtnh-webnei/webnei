@@ -16,7 +16,7 @@ const emit = defineEmits<{
   (e: 'lookup', kind: 'recipe' | 'usage', payload: SlotPayload): void
 }>()
 
-const Renderer = computed(() => resolveRenderer(props.recipe))
+const Renderer = computed(() => resolveRenderer(props.recipe, props.category))
 </script>
 
 <template>

@@ -5,8 +5,6 @@ public record RecipeCategoryDto(
         String plugin,
         String handlerId,
         String displayName,
-        String uiKind,
-        String uiTemplateId,
         boolean shapeless,
         String iconItemVariantId,
         String iconDisplayName,
@@ -27,5 +25,20 @@ public record RecipeCategoryDto(
         Integer canvasHeight,
         String backgroundAssetUrl,
         long recipeCount,
-        long machineCount) {
+        long machineCount,
+        // NEI HandlerInfo
+        String modId,
+        String modName,
+        String handlerClass,
+        int handlerCanvasWidth,
+        int handlerCanvasHeight,
+        int handlerYShift,
+        boolean handlerMultipleWidgetsAllowed,
+        String iconImageResource,
+        int iconImageX,
+        int iconImageY,
+        int iconImageWidth,
+        int iconImageHeight,
+        int iconImageTextureWidth,
+        int iconImageTextureHeight) {
 }

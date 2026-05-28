@@ -9,6 +9,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     BrowserToolbar: typeof import('./src/components/BrowserToolbar.vue')['default']
     CategoryCard: typeof import('./src/components/CategoryCard.vue')['default']
+    CategoryHeaderRows: typeof import('./src/components/recipe/CategoryHeaderRows.vue')['default']
     DatasetSwitcher: typeof import('./src/components/DatasetSwitcher.vue')['default']
     DefaultRecipePanel: typeof import('./src/components/recipe/renderers/DefaultRecipePanel.vue')['default']
     ElAlert: typeof import('element-plus/es')['ElAlert']
@@ -44,9 +45,7 @@ declare module 'vue' {
     FluidCard: typeof import('./src/components/FluidCard.vue')['default']
     FluidDetailPanel: typeof import('./src/components/FluidDetailPanel.vue')['default']
     GregTechCoreStats: typeof import('./src/components/recipe/gregtech/GregTechCoreStats.vue')['default']
-    GregTechFuelStats: typeof import('./src/components/recipe/gregtech/GregTechFuelStats.vue')['default']
     GregTechMetadataList: typeof import('./src/components/recipe/gregtech/GregTechMetadataList.vue')['default']
-    GregTechNotes: typeof import('./src/components/recipe/gregtech/GregTechNotes.vue')['default']
     GregTechRecipePanel: typeof import('./src/components/recipe/renderers/GregTechRecipePanel.vue')['default']
     GregTechSpecialItems: typeof import('./src/components/recipe/gregtech/GregTechSpecialItems.vue')['default']
     GregTechTierBadge: typeof import('./src/components/recipe/gregtech/GregTechTierBadge.vue')['default']

@@ -8,11 +8,11 @@ import ModBrowser from '@/views/ModBrowser.vue'
 import RecipeLookup from '@/views/RecipeLookup.vue'
 import CategoryGallery from '@/views/CategoryGallery.vue'
 import CategoryDetail from '@/views/CategoryDetail.vue'
+import RecipeDetail from '@/views/RecipeDetail.vue'
 import QuestLineList from '@/views/QuestLineList.vue'
 import QuestLineCanvas from '@/views/QuestLineCanvas.vue'
 import MobBrowser from '@/views/MobBrowser.vue'
 import MobDetail from '@/views/MobDetail.vue'
-import Placeholder from '@/views/Placeholder.vue'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -53,8 +53,7 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'datasets/:datasetId/recipes/:recipeId',
         name: 'recipe',
-        component: Placeholder,
-        props: { title: '配方详情', hint: 'M1.2 实现' },
+        component: RecipeDetail,
       },
       {
         path: 'datasets/:datasetId/lookup',

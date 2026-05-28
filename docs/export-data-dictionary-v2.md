@@ -285,18 +285,18 @@ Forge FluidRegistry 中的流体定义。
 
 ### `recipe_category`
 
-NEI 配方分类/处理器。前端先按此表决定怎么画 UI。
+NEI 配方分类/处理器。一个 category = 一个“已注册的配方结构”：slot 网格尺寸固定，info 字段类型/名称固定。具体内容（数值、物品、metadata 值）写在 `recipe` / `gregtech_recipe` / `gregtech_recipe_metadata`。
+
+GregTech 的 category 已按机器合并，**不再按电压拆分**：同一台机器的 15 个电压共用 1 个 `category_id`，电压退化为 `gregtech_recipe.voltage_tier` / `voltage` / `amperage` 上的 recipe 属性。fuel 同理合并。
 
 | 字段 | 说明 |
 |---|---|
-| `category_id` | 分类 ID，例如 `minecraft:crafting:shaped`、`gregtech:assembler:LV`。 |
-| `plugin` | 来源插件/Mod，例如 `minecraft`、`gregtech`。 |
-| `handler_id` | 处理器 ID，通常为分类前两段。 |
+| `category_id` | 分类 ID，例如 `minecraft:crafting:shaped`、`gregtech:assembler`、`gregtech:fuel_diesel`。 |
+| `plugin` | 来源插件/Mod,例如 `minecraft`、`gregtech`。 |
+| `handler_id` | 处理器 ID,通常为分类前两段。 |
 | `display_name` | 分类显示名。 |
-| `ui_kind` | UI 类型：`crafting_grid`、`furnace`、`gregtech_machine`、`extreme_crafting`、`custom`。 |
-| `ui_template_id` | UI 模板 ID。 |
 | `shapeless` | 是否无序配方。 |
-| `icon_item_variant_id` | 分类图标物品。 |
+| `icon_item_variant_id` | 分类图标物品。优先来自 NEI `HandlerInfo.itemStack`；当 HandlerInfo 用贴图当图标时为空。 |
 | `icon_info` | 图标角标/附加文本。 |
 | `item_input_width` / `item_input_height` | 物品输入网格尺寸。 |
 | `fluid_input_width` / `fluid_input_height` | 流体输入网格尺寸。 |
@@ -305,18 +305,30 @@ NEI 配方分类/处理器。前端先按此表决定怎么画 UI。
 | `supports_recipe_lookup` | 是否支持“查询合成”。 |
 | `supports_usage_lookup` | 是否支持“查询用途”。 |
 | `display_order` | 分类排序。 |
+| `mod_id` | NEI handler 所属 mod ID。来自 `HandlerInfo.modId`。 |
+| `mod_name` | NEI handler 所属 mod 显示名。来自 `HandlerInfo.modName`。 |
+| `handler_class` | NEI handler Java 全类名（调试 / 路由识别用）。 |
+| `handler_canvas_width` / `handler_canvas_height` | NEI 配方面板画布尺寸。 |
+| `handler_y_shift` | NEI 内部 Y 偏移。 |
+| `handler_multiple_widgets_allowed` | 同一页面是否允许多个 recipe widget。 |
+| `icon_image_resource` | 贴图图标的 ResourceLocation，格式 `domain:path`。当 HandlerInfo 用贴图当图标时填，否则为空。对应 PNG 由导出器抠到 `exports/<dataset>/nei-texture/<domain>/<path>`，在 `nei_texture_export` 表登记。 |
+| `icon_image_x` / `icon_image_y` | 贴图图标在原始大图中的裁剪起点。 |
+| `icon_image_width` / `icon_image_height` | 贴图图标的裁剪宽高。 |
+| `icon_image_texture_width` / `icon_image_texture_height` | 原始贴图整体尺寸（用于 UV 计算）。 |
+
+> UI 类型 / 模板 / 动态 annotation 当前**不写在导出数据里**。前端按 `category_id` 路由到对应 renderer（[`registry.ts`](../ui/src/components/recipe/registry.ts)），后端按 category 派生 `infoSchema` 描述如何把 `gregtech_recipe` 列和 `gregtech_recipe_metadata` 行解释为带 label / valueType 的字段。
 
 ### `recipe_category_machine`
 
 配方分类对应的机器/工作台图标。
+
+GregTech 的 category 已按机器合并，因此**不再写电压 tier 行**：一个 GT category 通常只有一行 machine（通用图标），具体电压由 `gregtech_recipe.voltage_tier` 在 recipe 维度承载。
 
 | 字段 | 说明 |
 |---|---|
 | `category_id` | 配方分类。 |
 | `item_variant_id` | 机器或工作台物品。 |
 | `role` | `machine` 或 `workstation`。 |
-| `machine_family` | 机器族，例如 `assembler`。 |
-| `tier` | 电压等级，例如 `LV`；无则为空。 |
 | `opens_category` | 点击该机器是否进入该配方分类。 |
 | `display_order` | 排序。 |
 | `source_ref` | 原始 RecipeType ID。 |
@@ -334,31 +346,11 @@ NEI 配方分类/处理器。前端先按此表决定怎么画 UI。
 
 ### `recipe_ui_template`
 
-可复用 UI 模板。
-
-| 字段 | 说明 |
-|---|---|
-| `ui_template_id` | 模板 ID。 |
-| `ui_kind` | UI 类型。 |
-| `display_name` | 模板名称。 |
-| `canvas_width` / `canvas_height` | 画布尺寸。 |
-| `coordinate_system` | 坐标系，当前为 `nei_gui_pixels`。 |
-| `template_version` | 模板版本。 |
+> 重构中移除：UI 模板由前端 [`registry.ts`](../ui/src/components/recipe/registry.ts) 按 `category_id` 直接路由，不再以表形式导出。
 
 ### `recipe_ui_template_asset`
 
-模板内 UI 资源，例如背景、slot、箭头、能量条。本表描述导出器归一化后的模板素材；NEI 原始 handler 纹理另见 `nei_recipe_handler.gui_texture_asset_id` 和 `asset_source.source_type = resource_location`。
-
-| 字段 | 说明 |
-|---|---|
-| `ui_template_id` | 模板 ID。 |
-| `asset_id` | UI 资源。 |
-| `role` | 资源角色：`background`、`slot`、`progress_arrow` 等。 |
-| `state` | 状态：`default`、`active` 等。 |
-| `x` / `y` | 模板内位置。 |
-| `width` / `height` | 资源尺寸。 |
-| `repeat_mode` | 平铺/拉伸方式。 |
-| `display_order` | 排序。 |
+> 重构中移除：归一化模板素材（背景 / slot / 箭头 / 能量条）不再随导出落库。前端按 `category_id` 选 renderer，自行绘制；NEI 原始 handler GUI 纹理仍通过 `nei_recipe_handler.gui_texture_asset_id` 暴露。
 
 ### `nei_recipe_handler`
 
@@ -443,16 +435,7 @@ NEI recipe UI 内可点击热区。点击这些区域会跳转到其他 recipe/u
 
 ### `recipe_ui_annotation`
 
-配方 UI 上的动态文字/条件标记，例如 GT 电压、耗时、洁净室。
-
-| 字段 | 说明 |
-|---|---|
-| `category_id` | 配方分类。 |
-| `annotation_key` | 标记键，例如 `duration`、`eu_per_tick`。 |
-| `value_source` | 值来源字段。 |
-| `x` / `y` | 显示坐标。 |
-| `style` | 显示样式。 |
-| `format` | 前端格式化模板。 |
+> 重构中移除：动态文字/条件标记（GT 电压、耗时、洁净室等）不再通过专表导出。这些值来自 `gregtech_recipe` 列或 `gregtech_recipe_metadata` 行，后端按 category 派生 `infoSchema`（含 label / valueType / fieldGroup），前端 renderer 按 schema 渲染。
 
 ### `recipe`
 
@@ -563,16 +546,60 @@ NEI recipe UI 内可点击热区。点击这些区域会跳转到其他 recipe/u
 
 ### `gregtech_recipe`
 
+GregTech 配方的固定列。voltage 三元字段对 fuel 配方为空（`RecipeKind.FUEL`）。其余 GT 特性（洁净室、低重力、coil_heat、燃烧值、material 等）一律下沉到 [`gregtech_recipe_metadata`](#gregtech_recipe_metadata)，**不再在本表占列**。
+
 | 字段 | 说明 |
 |---|---|
 | `recipe_id` | 对应通用配方。 |
-| `voltage_tier` | 电压等级。 |
-| `voltage` | EU/t。 |
-| `amperage` | 安培。 |
+| `recipe_kind` | `PROCESSING` 或 `FUEL`。 |
+| `visible_in_nei` | 是否在 NEI 中可见。 |
+| `voltage_tier` | 电压等级，例如 `LV`、`HV`；fuel 为空。 |
+| `voltage` | EU/t；fuel 为空。 |
+| `amperage` | 安培；fuel 为空。 |
 | `duration_ticks` | 耗时 tick。 |
-| `requires_cleanroom` | 是否需要洁净室。 |
-| `requires_low_gravity` | 是否需要低重力。 |
-| `additional_info` | GT 附加信息。 |
+| `special_value` | 上游 `GTRecipe.mSpecialValue` 原值；语义因 RecipeMap 而异，由后端按 category 解释。 |
+
+### <a id="gregtech_recipe_metadata"></a>`gregtech_recipe_metadata`
+
+GregTech 配方的可变 metadata，按 (recipe, key) 一行。导出器**不解释语义**：原样落库，由后端按 category 的 `infoSchema` 决定 label / valueType / 展示分组，前端按 valueType 选 renderer。
+
+| 字段 | 说明 |
+|---|---|
+| `recipe_id` | 对应 GT 配方。 |
+| `metadata_key` | metadata 键，例如 `coil_heat`、`fuel_value`、`material`。 |
+| `value_type` | 原始值类型：`bool` / `int` / `long` / `float` / `double` / `enum` / `json`。前端按此选 renderer。 |
+| `value_text` | 标量字面值（`int` / `long` / `float` / `double` / `bool` / `enum`）；`json` 为空。 |
+| `value_json` | `value_type = json` 时的结构化值（jsonb），例如 `material`、`pcb_nanite_material`、`solar_factory_wafer_data`、`quantum_computer_data`。其余类型为空。 |
+
+当前观察到的 metadata key（`gtnh:2.8.4:official` 数据集，22 个）：
+
+| key | value_type | 大致含义 |
+|---|---|---|
+| `recycle` | bool | 是否为回收配方。 |
+| `cleanroom` | bool | 是否要求洁净室。 |
+| `low_gravity` | bool | 是否要求低重力。 |
+| `no_gas` | bool | 是否禁用气态 circuit。 |
+| `additives` | int | 添加剂数量/标志。 |
+| `coil_heat` | int | 线圈热容（K）。 |
+| `compression_tier` | int | 压缩机 tier。 |
+| `eu_multiplier` | int | EU 倍率。 |
+| `fuel_type` | int | 燃料类型枚举。 |
+| `fuel_value` | int | 燃烧值（EU）。 |
+| `nano_forge_tier` | int | 纳米锻造 tier。 |
+| `no_gas_circuit_config` | int | 无气体配方下的 circuit 编号。 |
+| `pcb_factory_tier` | int | PCB 工厂 tier。 |
+| `fusion_threshold` | long | 聚变阈值（EU）。 |
+| `purification_plant_base_chance` | float | 净化厂基础几率。 |
+| `half-life` | double | 衰变半衰期。 |
+| `decay-type` | enum | 衰变类型。 |
+| `pcb_factory_bio_upgrade` | enum | PCB 生物升级类型。 |
+| `material` | json | 物料引用（mod_id + name）。 |
+| `pcb_nanite_material` | json | PCB 纳米机器人物料。 |
+| `quantum_computer_data` | json | 量子计算机配方数据。 |
+| `solar_factory_wafer_data` | json | 太阳能厂晶圆数据。 |
+
+> 列表会随 mod 版本变化。后端按 category 注册的 `infoSchema` 是这张表的“词典”：未在 schema 中登记的 key 仍可读出，前端按 valueType 走通用 renderer 兜底显示。
+
 
 ### `gregtech_recipe_special_item` / `gregtech_recipe_mod_owner`
 
@@ -615,9 +642,181 @@ Thaumcraft aspect 数据。
 | `aspect_component` | 复合 aspect 的组成关系。 |
 | `aspect_item` | 物品包含的 aspect 和数量。 |
 
+## GregTech NEI Ore Plugin
+
+来自 `gtneioreplugin` 模块（gtneioreplugin.util.GT5OreLayerHelper / GT5OreSmallHelper / GT5UndergroundFluidHelper），用于回答“这种矿/流体在哪个维度怎么生成”。
+
+### `gt_ore_vein`
+
+GT 大矿脉档案，每个矿脉一行。
+
+| 字段 | 说明 |
+|---|---|
+| `vein_name` | 矿脉内部名（如 `ore.mix.copper`）。 |
+| `display_name` | 矿脉本地化名（已是导出时 locale 的最终中文）。 |
+| `weight` | 生成权重（生成概率）。 |
+| `size` | 矿脉大小。 |
+| `density` | 矿脉密度。 |
+| `height_min` / `height_max` | 生成高度范围（解析自 `worldGenHeightRange` "min-max"）。 |
+
+### `gt_ore_vein_layer`
+
+矿脉每一层（主层 / 副层 / 夹层 / 零星层）对应的矿物材料。
+
+| 字段 | 说明 |
+|---|---|
+| `vein_name` | 所属矿脉。 |
+| `layer` | `primary` / `secondary` / `between` / `sporadic`。 |
+| `material_name` | GT 材料枚举名（如 `Copper`、`Iron`）。 |
+| `ore_meta` | 矿石方块 metadata（`GregTechAPI.sBlockOres1` 的 sub-id）。 |
+| `block_item_variant_id` | 派生的矿石方块物品 variant ID（前端可显示图标）。 |
+
+### `gt_ore_vein_dimension`
+
+矿脉允许生成的维度列表。
+
+| 字段 | 说明 |
+|---|---|
+| `vein_name` | 所属矿脉。 |
+| `dimension` | 维度缩写（`Ow` / `Ne` / `Ma` 等，来自 GT 的 `DimensionHelper` 缩写表）。 |
+| `enabled` | 该维度该矿脉是否启用。 |
+
+### `gt_ore_small`
+
+GT 贫瘠矿（散落小矿块）档案。
+
+| 字段 | 说明 |
+|---|---|
+| `ore_gen_name` | 小矿内部名。 |
+| `ore_meta` | 矿石方块 metadata。 |
+| `material_name` | GT 材料枚举名。 |
+| `amount_per_chunk` | 每个区块生成数量。 |
+| `height_min` / `height_max` | 生成高度范围。 |
+
+### `gt_ore_small_dimension`
+
+小矿允许生成的维度列表（结构同 `gt_ore_vein_dimension`）。
+
+### `gt_underground_fluid`
+
+地下流体在各维度的产出。
+
+| 字段 | 说明 |
+|---|---|
+| `fluid_id` | 流体注册名。 |
+| `fluid_variant_id` | 关联到 `fluid_variant` 的 ID（如能反查）。 |
+| `dimension` | 维度名。 |
+| `chance` | 该流体在该维度的生成几率，按千分比表达（10000 = 100%）。 |
+| `min_amount` / `max_amount` | 每抽产量范围。 |
+
+## NEI Custom Diagram
+
+来自 `nei-custom-diagram` mod，用于电路图谱 / 矿物处理流程图 / 透镜对照表 / 材料零件总览 / OreDict 同义词等结构化图谱。**不是配方**，需独立模型。
+
+### `diagram_group`
+
+每个图谱组（一个 `DiagramGenerator` 对应一组）。当前可能出现的 group：`gregtech.5.circuits` / `gregtech.5.lenses` / `gregtech.5.materialparts` / `gregtech.5.materialtools` / `gregtech.5.oreprocessing` / `gregtech.5.oredictionary` / `gregtech.5.oreprefixes`。
+
+| 字段 | 说明 |
+|---|---|
+| `group_id` | 组 ID。 |
+| `display_name` | 组显示名（已本地化）。 |
+| `description` | 组描述。 |
+| `icon_item_variant_id` | 组图标对应的物品 variant ID。 |
+| `diagrams_per_page` | 每页显示几张图。 |
+| `ignore_nbt` | 匹配时是否忽略 NBT。 |
+| `default_visibility` | 默认可见性枚举。 |
+
+### `diagram`
+
+一个图谱组内的单张图。
+
+| 字段 | 说明 |
+|---|---|
+| `group_id` | 所属组。 |
+| `diagram_id` | 组内唯一 ID，格式 `<group_id>:d<index>`。 |
+| `display_order` | 在组内的显示顺序。 |
+| `width` / `height` | 画布尺寸（来自 `layout.maxDimension`）。 |
+
+### `diagram_slot`
+
+图内静态槽位的拓扑（来自 `Layout.slots` + `Layout.slotGroups`）。
+
+| 字段 | 说明 |
+|---|---|
+| `slot_key` | 槽位 key；slotGroup 内的槽位 key 形如 `<groupKey>[<index>]`。 |
+| `slot_group_key` | 所属 slotGroup key；独立槽位为空。 |
+| `slot_index` | 在 slotGroup 内的序号；独立槽位为 0。 |
+| `x` / `y` / `width` / `height` | 槽位位置和尺寸。 |
+| `tooltip_text` | 槽位 tooltip（暂未抓取，留空）。 |
+
+### `diagram_slot_entry`
+
+槽位里塞的物品/流体（来自 `InteractiveComponentGroup.components`，反射读 protected 字段）。注意：图谱里的"槽位"key 实际可能是 `interactable[<i>]:<x>,<y>`（动态产生的可交互组）。
+
+| 字段 | 说明 |
+|---|---|
+| `slot_key` | 关联到 `diagram_slot`，或动态槽位 key。 |
+| `entry_index` | 槽位内候选序号。 |
+| `component_type` | `item` / `fluid` / `other`。 |
+| `item_variant_id` | 物品 variant；非物品为空。 |
+| `fluid_variant_id` | 流体 variant；非流体为空。 |
+| `stack_size` | 数量（来自 `DisplayComponent.stackSize`）。 |
+| `additional_info` | DisplayComponent 上的附加信息文本。 |
+| `tooltip_text` | DisplayComponent 的 tooltip（暂未抓取，留空）。 |
+
+### `diagram_label`
+
+图上的标签/装饰文字（`CustomInteractable` 实例）。
+
+| 字段 | 说明 |
+|---|---|
+| `label_index` | 序号。 |
+| `x` / `y` | 位置。 |
+| `text` | 文字（当前未提取，留空）。 |
+| `icon_item_variant_id` | 关联物品图标（当前未提取，留空）。 |
+
+### `diagram_line`
+
+图上的连线（当前未导出，预留表）。
+
+### `diagram_match`
+
+哪些物品/流体（点击后）触发显示这张图。来自 `ComponentDiagramMatcher.matchData` 反射读出。仅 `ComponentDiagramMatcher` 类型的 matcher 可静态导出；其它 matcher（如 `CustomDiagramMatcher`）需要运行时匹配，本表为空。
+
+| 字段 | 说明 |
+|---|---|
+| `recipe_type` | `CRAFTING` / `USAGE`。 |
+| `component_type` | `item` / `fluid` / `other`。 |
+| `item_variant_id` / `fluid_variant_id` | 触发该 diagram 的组件。 |
+
+## NEI 贴图导出
+
+### `nei_texture_export`
+
+记录所有从游戏 ResourceManager 抠出来的 PNG 文件。来源：`recipe_category.icon_image_resource` 字段引用到的 ResourceLocation；导出器在所有插件 postProcess 后统一去重并落盘到 `exports/<dataset>/nei-texture/<domain>/<path>`。
+
+| 字段 | 说明 |
+|---|---|
+| `resource` | 完整 ResourceLocation，格式 `domain:path`。 |
+| `domain` / `path` | 拆解的两段。 |
+| `exported_path` | 相对 `exports/<dataset>/` 的路径，前端 fetch 用。 |
+| `sha256` | PNG 内容 hash（用于缓存校验）。 |
+| `width` / `height` | PNG 整张图尺寸。 |
+
+## 外置文件（不进 PG）
+
+- `exports/<dataset>/nei-display-snapshot/<category>.jsonl`：GT 每条 recipe 在 NEI 上实际渲染的中文文本行。每行一条 recipe：`{"recipe_id":"...","lines":["电压: 32 EU/t","耗时: 10s",...]}`。**只覆盖 GT 系**（其它 mod handler 不走 `RecipeDisplayInfo`）。供前后端开发对照 NEI 真实展示文案，不在运行时查询。
+- `exports/<dataset>/nei-texture/<domain>/<path>`：贴图 PNG 物理文件，路径与 ResourceLocation 一一对应。
+
 ## 当前实现边界
 
-- `recipe_ui_template_asset` 当前会导出生成版 NEI 基础素材；真实 NEI/Mod GUI 原始纹理会按 ResourceLocation 拷贝到 `assets.zip`，并通过 `nei_recipe_handler` / `asset_source` 暴露。复杂动态绘制的进度条和文字仍需要结合 handler metadata 与 recipe 数据在前端重绘。
+- UI 模板 / 模板素材表已被移除。前端按 `category_id` 选 renderer，`recipe_category` / `recipe_category_layout` 给出 slot 网格尺寸和画布尺寸，复杂 UI 由前端组件直接实现。NEI / Mod 原始 GUI 纹理仍按 ResourceLocation 拷入 `assets.zip`，通过 `asset_source` 暴露；NEI handler 自带的小图标贴图走 `nei_texture_export` 表。
+- GT 的 category 已按机器合并：同一机器的 15 个电压共用 1 个 `category_id`，电压退化为 `gregtech_recipe.voltage_tier` / `voltage` / `amperage`。fuel category 同样按机器合并。
+- GT 配方的可变属性（洁净室、低重力、coil_heat、fuel_value、material 等）全部走 `gregtech_recipe_metadata` 键值表；导出器不解释语义，后端按 category 的 `infoSchema` 决定如何展示。
+- NEI handler 元数据（图标、画布尺寸、所属 mod 等）从 `GuiCraftingRecipe.craftinghandlers` / `GuiUsageRecipe.usagehandlers` 等 NEI 静态注册表 + `GuiRecipeTab.getHandlerInfo` 抓取，落到 `recipe_category` 新增 14 列。匹配 RecipeType ↔ HandlerInfo 走多策略 key（handlerId / overlayIdent / handlerClass），未匹配上的 category 这些列为默认空值。
+- GT NEI 渲染文本快照通过子类化 `gregtech.nei.RecipeDisplayInfo`（包内侵入）+ 调用 `RecipeMapFrontend.drawDescription` 抓取，**仅 GT 系**有效。其它 mod handler 未覆盖。
 - `nei_item_panel_entry.collapsible_collection_id` 已预留，但 NEI collapsible preset 还未解析，当前为空。
 - `asset_source.renderer_class` 当前多数为空，后续可以通过 renderer 反射补充。
 - 配方 ID 使用 `category_id + 原始 recipe key hash`，因为大量 NEI/GregTech 配方没有稳定自然主键。
+- 多方块结构投影（BlockRenderer6343）暂未导出，留待下一阶段。

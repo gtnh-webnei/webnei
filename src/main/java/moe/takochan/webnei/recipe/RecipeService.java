@@ -7,6 +7,8 @@ import moe.takochan.webnei.common.PageRequest;
 import moe.takochan.webnei.common.PageResponse;
 import moe.takochan.webnei.dataset.DatasetService;
 import moe.takochan.webnei.dataset.DatasetSummary;
+import moe.takochan.webnei.recipe.dto.CategoryMachineDto;
+import moe.takochan.webnei.recipe.dto.CategoryVoltageTierDto;
 import moe.takochan.webnei.recipe.dto.HandlerBreakdownDto;
 import moe.takochan.webnei.recipe.dto.RecipeCategoryDto;
 import moe.takochan.webnei.recipe.dto.RecipeDto;
@@ -66,11 +68,22 @@ public class RecipeService {
     }
 
     public PageResponse<RecipeDto> listRecipesByCategory(
-            String datasetId, String categoryId, String query, PageRequest page) {
+            String datasetId, String categoryId, String query, String voltageTier, PageRequest page) {
         DatasetSummary dataset = datasetService.requireById(datasetId);
         RecipeDao.LookupPage idPage =
-                recipeDao.listRecipeIdsByCategory(dataset, categoryId, query, page);
+                recipeDao.listRecipeIdsByCategory(dataset, categoryId, query, voltageTier, page);
         List<RecipeDto> recipes = recipeDao.loadRecipes(dataset, idPage.recipeIds());
         return PageResponse.of(recipes, page, idPage.total());
+    }
+
+    public List<CategoryMachineDto> listCategoryMachines(String datasetId, String categoryId) {
+        DatasetSummary dataset = datasetService.requireById(datasetId);
+        return recipeDao.listCategoryMachines(dataset, categoryId);
+    }
+
+    public List<CategoryVoltageTierDto> listCategoryVoltageTiers(
+            String datasetId, String categoryId, String target, String kind) {
+        DatasetSummary dataset = datasetService.requireById(datasetId);
+        return recipeDao.listCategoryVoltageTiers(dataset, categoryId, target, kind);
     }
 }

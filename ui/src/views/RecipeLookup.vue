@@ -10,6 +10,7 @@ import type { HandlerBreakdown, LookupKind, Recipe, RecipeCategory } from '@/api
 import RecipePanel from '@/components/RecipePanel.vue'
 import ItemDetailPanel from '@/components/ItemDetailPanel.vue'
 import FluidDetailPanel from '@/components/FluidDetailPanel.vue'
+import CategoryHeaderRows from '@/components/recipe/CategoryHeaderRows.vue'
 
 type Tab = 'detail' | 'recipe' | 'usage'
 
@@ -44,14 +45,29 @@ let categoriesPromise: Promise<void> | null = null
 
 const breakdown = ref<HandlerBreakdown[]>([])
 const breakdownLoading = ref(false)
-const selectedHandlerId = ref<string | null>(null)
 const selectedCategoryId = ref<string | null>(null)
+const selectedTier = ref<string | null>(null)
 
-const selectedHandler = computed(() =>
-  breakdown.value.find((h) => h.handlerId === selectedHandlerId.value) ?? null,
-)
-const hasSubCategories = computed(
-  () => (selectedHandler.value?.categories.length ?? 0) > 1,
+type CategoryTab = {
+  handlerId: string
+  handlerDisplayName: string
+  categoryId: string
+  displayName: string
+  iconAssetUrl: string | null
+  count: number
+}
+
+const categoryTabs = computed<CategoryTab[]>(() =>
+  breakdown.value.flatMap((h) =>
+    h.categories.map((c) => ({
+      handlerId: h.handlerId,
+      handlerDisplayName: h.displayName,
+      categoryId: c.categoryId,
+      displayName: c.displayName,
+      iconAssetUrl: c.iconAssetUrl,
+      count: c.count,
+    })),
+  ),
 )
 
 function ensureCategories() {
@@ -107,12 +123,13 @@ async function fetchBreakdown() {
       tab.value as LookupKind,
     )
     breakdown.value = data
-    if (
-      selectedHandlerId.value &&
-      !data.some((h) => h.handlerId === selectedHandlerId.value)
-    ) {
-      selectedHandlerId.value = null
+    const flat = data.flatMap((h) => h.categories.map((c) => c.categoryId))
+    if (flat.length === 0) {
       selectedCategoryId.value = null
+      selectedTier.value = null
+    } else if (!selectedCategoryId.value || !flat.includes(selectedCategoryId.value)) {
+      selectedCategoryId.value = flat[0]
+      selectedTier.value = null
     }
   } catch (e) {
     breakdown.value = []
@@ -128,6 +145,11 @@ async function fetchRecipes() {
     total.value = 0
     return
   }
+  if (!selectedCategoryId.value) {
+    recipes.value = []
+    total.value = 0
+    return
+  }
   loading.value = true
   error.value = null
   try {
@@ -139,8 +161,8 @@ async function fetchRecipes() {
         page.value - 1,
         pageSize.value,
         {
-          handlerId: selectedHandlerId.value ?? undefined,
-          categoryId: selectedCategoryId.value ?? undefined,
+          categoryId: selectedCategoryId.value,
+          voltageTier: selectedTier.value ?? undefined,
         },
       ),
       ensureCategories(),
@@ -156,15 +178,15 @@ async function fetchRecipes() {
 
 watch(tab, () => {
   page.value = 1
-  selectedHandlerId.value = null
   selectedCategoryId.value = null
+  selectedTier.value = null
   fetchBreakdown()
   fetchRecipes()
 })
 watch(target, () => {
   page.value = 1
-  selectedHandlerId.value = null
   selectedCategoryId.value = null
+  selectedTier.value = null
   fetchTargetMeta()
   fetchBreakdown()
   fetchRecipes()
@@ -174,50 +196,24 @@ watch(pageSize, () => {
   page.value = 1
   fetchRecipes()
 })
+watch(selectedCategoryId, () => {
+  page.value = 1
+  fetchRecipes()
+})
+watch(selectedTier, () => {
+  page.value = 1
+  fetchRecipes()
+})
 
 function setTab(value: Tab) {
   if (value === tab.value) return
   router.replace({ query: { ...route.query, kind: value } })
 }
 
-function selectHandler(handlerId: string | null) {
-  if (selectedHandlerId.value === handlerId) return
-  selectedHandlerId.value = handlerId
-  selectedCategoryId.value = null
-  page.value = 1
-  fetchRecipes()
-}
-
-function selectCategory(categoryId: string | null) {
+function selectCategory(categoryId: string) {
   if (selectedCategoryId.value === categoryId) return
   selectedCategoryId.value = categoryId
-  page.value = 1
-  fetchRecipes()
-}
-
-const totalAcrossHandlers = computed(() =>
-  breakdown.value.reduce((sum, h) => sum + h.count, 0),
-)
-
-function stripPluginPrefix(name: string): string {
-  const idx = name.indexOf(' / ')
-  return idx >= 0 ? name.slice(idx + 3) : name
-}
-
-function splitTrailingParens(name: string): { base: string; suffix: string | null } {
-  const m = name.match(/^(.+?)\s*\(([^()]+)\)\s*$/)
-  if (m) return { base: m[1].trim(), suffix: m[2].trim() }
-  return { base: name, suffix: null }
-}
-
-function handlerLabel(displayName: string): string {
-  return splitTrailingParens(stripPluginPrefix(displayName)).base
-}
-
-function chipLabel(displayName: string): string {
-  const stripped = stripPluginPrefix(displayName)
-  const { base, suffix } = splitTrailingParens(stripped)
-  return suffix ?? base
+  selectedTier.value = null
 }
 
 function onSlotPick(payload: { itemVariantId: string | null; fluidVariantId: string | null }) {
@@ -289,65 +285,37 @@ onMounted(() => {
     </template>
 
     <template v-else>
-      <div v-if="breakdown.length > 0" class="handler-tabs">
+      <div v-if="categoryTabs.length > 0" class="handler-tabs">
         <button
-          type="button"
-          class="handler-tab"
-          :class="{ active: selectedHandlerId === null }"
-          @click="selectHandler(null)"
-        >
-          <span class="handler-name">全部</span>
-          <span class="handler-badge">{{ totalAcrossHandlers }}</span>
-        </button>
-        <button
-          v-for="h in breakdown"
-          :key="h.handlerId"
-          type="button"
-          class="handler-tab"
-          :class="{ active: selectedHandlerId === h.handlerId }"
-          :title="h.handlerId"
-          @click="selectHandler(h.handlerId)"
-        >
-          <img
-            v-if="h.iconAssetUrl"
-            :src="h.iconAssetUrl"
-            class="handler-icon"
-            :alt="h.displayName"
-          />
-          <span class="handler-name">{{ handlerLabel(h.displayName) }}</span>
-          <span class="handler-badge">{{ h.count }}</span>
-        </button>
-      </div>
-
-      <div v-if="selectedHandler && hasSubCategories" class="sub-chips">
-        <button
-          type="button"
-          class="sub-chip"
-          :class="{ active: selectedCategoryId === null }"
-          @click="selectCategory(null)"
-        >
-          <span class="chip-name">全部</span>
-          <span class="chip-badge">{{ selectedHandler.count }}</span>
-        </button>
-        <button
-          v-for="c in selectedHandler.categories"
+          v-for="c in categoryTabs"
           :key="c.categoryId"
           type="button"
-          class="sub-chip"
+          class="handler-tab"
           :class="{ active: selectedCategoryId === c.categoryId }"
-          :title="c.categoryId"
+          :title="`${c.handlerDisplayName}\n${c.categoryId}`"
           @click="selectCategory(c.categoryId)"
         >
           <img
             v-if="c.iconAssetUrl"
             :src="c.iconAssetUrl"
-            class="chip-icon"
+            class="handler-icon"
             :alt="c.displayName"
           />
-          <span class="chip-name">{{ chipLabel(c.displayName) }}</span>
-          <span class="chip-badge">{{ c.count }}</span>
+          <span class="handler-name">{{ c.displayName }}</span>
+          <span class="handler-badge">{{ c.count }}</span>
         </button>
       </div>
+
+      <CategoryHeaderRows
+        v-if="selectedCategoryId"
+        :dataset-id="datasetId"
+        :category-id="selectedCategoryId"
+        :active-tier="selectedTier"
+        :hide-machines="true"
+        :target="target"
+        :kind="tab as LookupKind"
+        @update:active-tier="selectedTier = $event"
+      />
 
       <el-skeleton v-if="loading && recipes.length === 0" :rows="6" animated />
       <el-empty v-else-if="!loading && recipes.length === 0" description="没有匹配的配方" />
@@ -472,59 +440,6 @@ onMounted(() => {
   text-align: center;
 }
 .handler-tab.active .handler-badge {
-  background: var(--el-color-primary);
-  color: var(--el-color-white);
-}
-.sub-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding-bottom: 8px;
-  border-bottom: 1px dashed var(--el-border-color-lighter);
-}
-.sub-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 8px;
-  border-radius: 14px;
-  border: 1px solid var(--el-border-color-light);
-  background: var(--el-fill-color-blank);
-  color: var(--el-text-color-regular);
-  font-size: 12px;
-  line-height: 1;
-  cursor: pointer;
-  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
-}
-.sub-chip:hover {
-  border-color: var(--el-color-primary-light-5);
-  color: var(--el-color-primary);
-}
-.sub-chip.active {
-  background: var(--el-color-primary-light-9);
-  border-color: var(--el-color-primary);
-  color: var(--el-color-primary);
-}
-.chip-icon {
-  width: 14px;
-  height: 14px;
-  image-rendering: pixelated;
-}
-.chip-name {
-  white-space: nowrap;
-}
-.chip-badge {
-  min-width: 18px;
-  padding: 0 5px;
-  height: 16px;
-  line-height: 16px;
-  border-radius: 8px;
-  background: var(--el-fill-color-darker);
-  color: var(--el-text-color-secondary);
-  font-size: 10px;
-  text-align: center;
-}
-.sub-chip.active .chip-badge {
   background: var(--el-color-primary);
   color: var(--el-color-white);
 }

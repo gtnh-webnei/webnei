@@ -40,27 +40,6 @@ export interface GregTechSpecialItem {
 
 export type GregTechRecipeKind = 'PROCESSING' | 'FUEL'
 
-export type FuelMachineKind =
-  | 'diesel'
-  | 'gas_turbine'
-  | 'plasma'
-  | 'naquadah'
-  | 'semifluid'
-  | 'hot'
-  | 'magic'
-  | 'large_boiler'
-
-export type FuelConsumptionUnit = 'eu_per_mb' | 'burn_time'
-
-export interface FuelMachineProfile {
-  categoryId: string
-  machineKind: FuelMachineKind | string
-  displayName: string
-  baseEfficiencyPercent: number | null
-  tierEfficiencyFormula: string | null
-  consumptionUnit: FuelConsumptionUnit | string
-}
-
 export interface MaterialRef {
   $ref: 'Materials'
   name: string
@@ -100,22 +79,15 @@ export interface GregTechRecipeInfo {
   voltage: number | null
   amperage: number | null
   durationTicks: number
-  requiresCleanroom: boolean
-  requiresLowGravity: boolean
   specialValue: number | null
-  fuelValue: number | null
-  additionalInfo: string
   specialItems: GregTechSpecialItem[]
   metadata: Record<string, MetadataValue>
-  fuelProfile: FuelMachineProfile | null
 }
 
 export interface Recipe {
   recipeId: string
   categoryId: string
   categoryDisplayName: string
-  uiKind: string
-  uiTemplateId: string
   sourcePlugin: string
   sourceRef: string
   description: string
@@ -132,8 +104,6 @@ export interface RecipeCategory {
   plugin: string
   handlerId: string
   displayName: string
-  uiKind: string
-  uiTemplateId: string
   shapeless: boolean
   iconItemVariantId: string
   iconDisplayName: string | null
@@ -155,6 +125,21 @@ export interface RecipeCategory {
   backgroundAssetUrl: string | null
   recipeCount: number
   machineCount: number
+  // NEI HandlerInfo
+  modId: string
+  modName: string
+  handlerClass: string
+  handlerCanvasWidth: number
+  handlerCanvasHeight: number
+  handlerYShift: number
+  handlerMultipleWidgetsAllowed: boolean
+  iconImageResource: string
+  iconImageX: number
+  iconImageY: number
+  iconImageWidth: number
+  iconImageHeight: number
+  iconImageTextureWidth: number
+  iconImageTextureHeight: number
 }
 
 export type LookupKind = 'recipe' | 'usage'
@@ -172,4 +157,17 @@ export interface HandlerBreakdown {
   iconAssetUrl: string | null
   count: number
   categories: CategoryBreakdown[]
+}
+
+export interface CategoryMachine {
+  itemVariantId: string
+  displayName: string | null
+  assetUrl: string | null
+  role: string
+  displayOrder: number
+}
+
+export interface CategoryVoltageTier {
+  tier: string
+  recipeCount: number
 }
