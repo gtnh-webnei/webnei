@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import type { RecipeSlot, RecipeSlotCandidate } from '@/api/recipes.types'
+import {
+  formatCompact,
+  formatFluidCompact,
+  formatFluidFull,
+  formatFull,
+} from '@/utils/format'
 
 const props = withDefaults(
   defineProps<{
@@ -9,12 +15,14 @@ const props = withDefaults(
     isFluid?: boolean
     placeholder?: boolean
     pickHint?: string
+    showProbabilityBadge?: boolean
   }>(),
   {
     size: 52,
     isFluid: false,
     placeholder: false,
     pickHint: '左键 · 切换查看此物品 / 右键 · 合成来源 / 中键 · 用途去向',
+    showProbabilityBadge: true,
   },
 )
 
@@ -49,10 +57,25 @@ const extraCount = computed(() => {
 
 const probability = computed(() => props.slot?.probability ?? 1)
 const probPercent = computed(() => Math.round(probability.value * 100))
-const showProb = computed(() => probability.value > 0 && probability.value < 1)
+const probPercentPrecise = computed(() => {
+  const pct = probability.value * 100
+  if (pct >= 10) return pct.toFixed(0) + '%'
+  if (pct >= 1) return pct.toFixed(1) + '%'
+  if (pct >= 0.01) return pct.toFixed(2) + '%'
+  if (pct > 0) return '<0.01%'
+  return '0%'
+})
+const hasNonTrivialProb = computed(() => probability.value > 0 && probability.value < 1)
+const showProb = computed(() => props.showProbabilityBadge && hasNonTrivialProb.value)
 
 const amount = computed(() => primary.value?.amount ?? 0)
 const showAmount = computed(() => amount.value >= 1)
+const amountCompact = computed(() =>
+  props.isFluid ? formatFluidCompact(amount.value) : formatCompact(amount.value),
+)
+const amountFull = computed(() =>
+  props.isFluid ? formatFluidFull(amount.value) : formatFull(amount.value),
+)
 
 const popoverVisible = ref(false)
 
@@ -118,7 +141,7 @@ function lookupCandidate(kind: 'recipe' | 'usage', c: RecipeSlotCandidate, e?: M
       <div
         class="cell"
         :class="{ fluid: isFluid, clickable: true }"
-        :style="{ width: size + 'px', height: size + 'px' }"
+        :style="{ width: size + 'px', height: size + 'px', '--cell-size': size + 'px' }"
         @click="onClick"
         @contextmenu="onContextMenu"
         @auxclick="onAuxClick"
@@ -133,7 +156,7 @@ function lookupCandidate(kind: 'recipe' | 'usage', c: RecipeSlotCandidate, e?: M
         <span v-if="!primary?.assetUrl && isFluid" class="cell-fallback">
           {{ '液' }}
         </span>
-        <span v-if="showAmount" class="amount">{{ amount }}</span>
+        <span v-if="showAmount" class="amount">{{ amountCompact }}</span>
         <span class="badge">+{{ extraCount }}</span>
         <span v-if="showProb" class="prob">{{ probPercent }}%</span>
       </div>
@@ -163,7 +186,7 @@ function lookupCandidate(kind: 'recipe' | 'usage', c: RecipeSlotCandidate, e?: M
             <div class="popover-name">{{ c.displayName ?? c.itemVariantId ?? c.fluidVariantId }}</div>
             <div class="popover-sub">
               <span v-if="c.modId" class="mod">{{ c.modId }}</span>
-              <span v-if="c.amount >= 1" class="qty">×{{ c.amount }}</span>
+              <span v-if="c.amount >= 1" class="qty">×{{ isFluid ? formatFluidFull(c.amount) : formatFull(c.amount) }}</span>
             </div>
           </div>
         </div>
@@ -190,8 +213,8 @@ function lookupCandidate(kind: 'recipe' | 'usage', c: RecipeSlotCandidate, e?: M
             {{ primary.modId }}
           </el-tag>
           <el-tag v-if="isFluid" size="small" type="primary" effect="plain" round>流体</el-tag>
-          <span v-if="amount >= 1" class="hover-amount">×{{ amount }}</span>
-          <span v-if="showProb" class="hover-prob">{{ probPercent }}%</span>
+          <span v-if="amount >= 1" class="hover-amount">×{{ amountFull }}</span>
+          <span v-if="hasNonTrivialProb" class="hover-prob">{{ probPercentPrecise }}</span>
         </div>
         <code class="hover-id">
           {{ primary.itemVariantId ?? primary.fluidVariantId }}
@@ -206,7 +229,7 @@ function lookupCandidate(kind: 'recipe' | 'usage', c: RecipeSlotCandidate, e?: M
         clickable: !!primary,
         placeholder: placeholder && !primary,
       }"
-      :style="{ width: size + 'px', height: size + 'px' }"
+      :style="{ width: size + 'px', height: size + 'px', '--cell-size': size + 'px' }"
       @click="onClick"
       @contextmenu="onContextMenu"
       @auxclick="onAuxClick"
@@ -217,7 +240,7 @@ function lookupCandidate(kind: 'recipe' | 'usage', c: RecipeSlotCandidate, e?: M
         :alt="primary.displayName ?? ''"
         loading="lazy"
       />
-      <span v-if="showAmount" class="amount">{{ amount }}</span>
+      <span v-if="showAmount" class="amount">{{ amountCompact }}</span>
       <span v-if="showProb" class="prob">{{ probPercent }}%</span>
     </div>
   </el-tooltip>
@@ -274,25 +297,25 @@ function lookupCandidate(kind: 'recipe' | 'usage', c: RecipeSlotCandidate, e?: M
 }
 .amount {
   position: absolute;
-  right: 3px;
+  right: 2px;
   bottom: 1px;
-  font-size: 12px;
-  font-weight: 700;
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: clamp(8px, calc(var(--cell-size, 52px) * 0.24), 11px);
+  font-weight: 600;
   color: #fff;
   text-shadow:
-    1px 1px 0 rgba(0, 0, 0, 0.9),
-    -1px 1px 0 rgba(0, 0, 0, 0.9),
-    1px -1px 0 rgba(0, 0, 0, 0.9),
-    -1px -1px 0 rgba(0, 0, 0, 0.9);
+    0 0 2px rgba(0, 0, 0, 0.8),
+    0 1px 1px rgb(0, 0, 0);
   pointer-events: none;
   font-variant-numeric: tabular-nums;
   line-height: 1;
+  letter-spacing: -0.02em;
 }
 .badge {
   position: absolute;
   left: 3px;
   top: 1px;
-  font-size: 10px;
+  font-size: clamp(7px, calc(var(--cell-size, 52px) * 0.22), 10px);
   font-weight: 700;
   color: #fff;
   background: var(--el-color-primary);
@@ -305,7 +328,7 @@ function lookupCandidate(kind: 'recipe' | 'usage', c: RecipeSlotCandidate, e?: M
   position: absolute;
   right: 2px;
   top: 1px;
-  font-size: 10px;
+  font-size: clamp(7px, calc(var(--cell-size, 52px) * 0.22), 10px);
   color: #fff;
   background: rgba(245, 108, 108, 0.85);
   padding: 1px 3px;

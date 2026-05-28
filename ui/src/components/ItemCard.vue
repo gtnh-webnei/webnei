@@ -30,7 +30,6 @@ defineEmits<{
       <div class="name" :title="item.displayName || item.registryName">
         {{ item.displayName || item.registryName }}
       </div>
-      <div class="id" :title="item.itemId">{{ item.registryName }}</div>
       <div class="sub">
         <el-tag size="small" type="info" effect="plain" round class="mod-tag">
           {{ item.modId }}

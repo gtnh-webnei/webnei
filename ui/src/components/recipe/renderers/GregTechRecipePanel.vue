@@ -24,6 +24,12 @@ const declaredRows = computed(() => props.category?.itemInputHeight ?? null)
 const gt = computed(() => props.recipe.gregtech)
 
 const isFuel = computed(() => gt.value?.recipeKind === 'FUEL')
+
+// EOH 在游戏内 NEI 重写了 drawNEIOverlays，槽位上不画 chance —
+// 概率只在 hover tooltip 显示（item 的"占比"语义）。
+const showProbabilityBadge = computed(
+  () => props.category?.categoryId !== 'gregtech:tt_eyeofharmony',
+)
 </script>
 
 <template>
@@ -41,6 +47,7 @@ const isFuel = computed(() => gt.value?.recipeKind === 'FUEL')
       :slots="recipe.slots"
       :category="category"
       :pick-hint="pickHint"
+      :show-probability-badge="showProbabilityBadge"
       @pick="(p) => emit('pick', p)"
       @lookup="(k, p) => emit('lookup', k, p)"
     />

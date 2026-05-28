@@ -124,9 +124,6 @@ onMounted(() => {
             <el-tag size="default" type="info" effect="plain" round>{{ detail.modId }}</el-tag>
             <el-tag size="small" type="primary" effect="plain" round>流体</el-tag>
             <el-tag v-if="detail.gaseous" size="small" type="warning" effect="plain" round>气态</el-tag>
-            <code class="id" @click="copyId" :title="'点击复制\n' + detail.fluidVariantId">
-              {{ detail.fluidVariantId }}
-            </code>
           </div>
           <div class="actions">
             <el-button type="primary" @click="goLookup('recipe')">查看合成 (R)</el-button>

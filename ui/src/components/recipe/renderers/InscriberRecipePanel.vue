@@ -36,10 +36,15 @@ const itemOutputs = computed<RecipeSlot[]>(() =>
 const outputCategory = computed(() =>
   props.category
     ? {
+        categoryId: props.category.categoryId,
         itemInputWidth: 0,
         itemInputHeight: 0,
         itemOutputWidth: props.category.itemOutputWidth,
         itemOutputHeight: props.category.itemOutputHeight,
+        fluidInputWidth: 0,
+        fluidInputHeight: 0,
+        fluidOutputWidth: 0,
+        fluidOutputHeight: 0,
         shapeless: props.category.shapeless,
       }
     : null,

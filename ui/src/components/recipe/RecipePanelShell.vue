@@ -48,9 +48,6 @@ const descriptionLines = computed(() =>
               有序 {{ declaredCols }}×{{ declaredRows }}
             </el-tag>
           </div>
-          <el-tooltip :content="recipe.recipeId" placement="top" :show-after="200">
-            <code class="recipe-id">{{ recipe.recipeId }}</code>
-          </el-tooltip>
         </div>
         <div class="header-tag">
           <slot name="header-tag" />

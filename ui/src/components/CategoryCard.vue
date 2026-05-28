@@ -26,7 +26,6 @@ defineEmits<{
       </div>
       <div class="meta">
         <div class="name" :title="category.displayName">{{ category.displayName }}</div>
-        <code class="cat-id" :title="category.categoryId">{{ category.categoryId }}</code>
         <div class="tags">
           <el-tag size="small" type="info" effect="plain" round>{{ category.plugin }}</el-tag>
           <el-tag size="small" effect="plain" round>

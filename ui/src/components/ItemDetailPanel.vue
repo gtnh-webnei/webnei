@@ -128,9 +128,6 @@ onMounted(() => {
           <h1 class="title">{{ detail.displayName || detail.registryName }}</h1>
           <div class="subtitle">
             <el-tag size="default" type="info" effect="plain" round>{{ detail.modId }}</el-tag>
-            <code class="id" @click="copyId" :title="'点击复制\n' + detail.itemVariantId">
-              {{ detail.itemVariantId }}
-            </code>
           </div>
           <div class="actions">
             <el-button type="primary" @click="goLookup('recipe')">查看合成 (R)</el-button>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import type { RecipeSlot } from '@/api/recipes.types'
 import SlotCell from '../SlotCell.vue'
 
@@ -10,8 +10,15 @@ const props = withDefaults(
     declaredH?: number | null
     shapeless?: boolean
     pickHint?: string
+    showProbabilityBadge?: boolean
   }>(),
-  { declaredW: null, declaredH: null, shapeless: false, pickHint: undefined },
+  {
+    declaredW: null,
+    declaredH: null,
+    shapeless: false,
+    pickHint: undefined,
+    showProbabilityBadge: true,
+  },
 )
 
 defineEmits<{
@@ -19,25 +26,31 @@ defineEmits<{
   (e: 'lookup', kind: 'recipe' | 'usage', payload: { itemVariantId: string | null; fluidVariantId: string | null }): void
 }>()
 
-const MAX_AUTO_COLS = 6
-const DEFAULT_CELL = 52
-const MED_CELL = 36
-const SMALL_CELL = 28
+const MAX_COLS = 9
+const GAP = 4
+const MIN_CELL = 24
+const MAX_CELL = 52
 
 function fallbackCols(slots: RecipeSlot[]): number {
-  if (slots.length <= 1) return 1
-  if (slots.length <= 4) return 2
-  if (slots.length <= 9) return 3
-  if (slots.length <= 16) return 4
-  if (slots.length <= 25) return 5
-  return MAX_AUTO_COLS
+  return Math.min(Math.max(1, slots.length), MAX_COLS)
 }
 
-function pickCellSize(totalCells: number): number {
-  if (totalCells >= 64) return SMALL_CELL
-  if (totalCells >= 36) return MED_CELL
-  return DEFAULT_CELL
-}
+const root = ref<HTMLElement | null>(null)
+const containerWidth = ref(0)
+
+let ro: ResizeObserver | null = null
+onMounted(() => {
+  if (!root.value) return
+  containerWidth.value = root.value.clientWidth
+  ro = new ResizeObserver((entries) => {
+    for (const e of entries) containerWidth.value = e.contentRect.width
+  })
+  ro.observe(root.value)
+})
+onBeforeUnmount(() => {
+  ro?.disconnect()
+  ro = null
+})
 
 interface GridSpec {
   cols: number
@@ -50,8 +63,17 @@ interface GridSpec {
 const grid = computed<GridSpec>(() => {
   const w = props.declaredW ?? 0
   const h = props.declaredH ?? 0
-  if (!props.shapeless && w > 0 && h > 0) {
-    const cells: (RecipeSlot | null)[] = new Array(w * h).fill(null)
+  let cols: number
+  let rows: number
+  let cells: (RecipeSlot | null)[]
+  let declared: boolean
+  // declaredW > MAX_COLS means the exporter only knows the flat slot upper bound
+  // (e.g. EOH fluid_output=18 max), not real per-recipe layout. Treat as undeclared
+  // and pack actual slots into <= 9 columns instead of leaving phantom placeholders.
+  const usable = !props.shapeless && w > 0 && h > 0 && w <= MAX_COLS
+  if (usable) {
+    const total = w * h
+    cells = new Array(total).fill(null)
     for (const s of props.slots) {
       if (s.slotIndex >= 0 && s.slotIndex < cells.length) {
         cells[s.slotIndex] = s
@@ -59,23 +81,24 @@ const grid = computed<GridSpec>(() => {
         cells.push(s)
       }
     }
-    return {
-      cols: w,
-      rows: h,
-      cells,
-      declared: true,
-      cellSize: pickCellSize(w * h),
-    }
+    cols = w
+    rows = Math.max(h, Math.ceil(cells.length / Math.max(1, w)))
+    declared = true
+  } else {
+    cols = fallbackCols(props.slots)
+    rows = Math.max(1, Math.ceil(props.slots.length / cols))
+    cells = props.slots
+    declared = false
   }
-  const cols = fallbackCols(props.slots)
-  const rows = Math.max(1, Math.ceil(props.slots.length / cols))
-  return {
-    cols,
-    rows,
-    cells: props.slots,
-    declared: false,
-    cellSize: pickCellSize(props.slots.length),
+  // Single-cell size based on a 9-column reference so cell size stays consistent
+  // across recipes regardless of how many columns this particular grid uses.
+  const cw = containerWidth.value
+  let cellSize = MAX_CELL
+  if (cw > 0) {
+    const ref = (cw - GAP * (MAX_COLS - 1)) / MAX_COLS
+    cellSize = Math.max(MIN_CELL, Math.min(MAX_CELL, Math.floor(ref)))
   }
+  return { cols, rows, cells, declared, cellSize }
 })
 
 defineExpose({ grid })
@@ -83,8 +106,12 @@ defineExpose({ grid })
 
 <template>
   <div
+    ref="root"
     class="slot-grid"
-    :style="{ gridTemplateColumns: `repeat(${grid.cols}, ${grid.cellSize}px)` }"
+    :style="{
+      gridTemplateColumns: `repeat(${grid.cols}, ${grid.cellSize}px)`,
+      gap: GAP + 'px',
+    }"
   >
     <template v-for="(s, idx) in grid.cells" :key="idx">
       <slot name="cell" :slot-data="s" :index="idx" :cell-size="grid.cellSize" :declared="grid.declared">
@@ -93,6 +120,7 @@ defineExpose({ grid })
           :size="grid.cellSize"
           :placeholder="grid.declared && !s"
           :pick-hint="pickHint"
+          :show-probability-badge="showProbabilityBadge"
           @pick="$emit('pick', $event)"
           @lookup="(kind, payload) => $emit('lookup', kind, payload)"
         />
@@ -104,7 +132,6 @@ defineExpose({ grid })
 <style scoped>
 .slot-grid {
   display: grid;
-  gap: 4px;
   justify-content: start;
 }
 </style>

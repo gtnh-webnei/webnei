@@ -40,7 +40,6 @@ const imgFailed = ref(false)
     </div>
     <div class="meta">
       <div class="name" :title="fluid.displayName">{{ fluid.displayName }}</div>
-      <div class="id" :title="fluid.fluidId">{{ fluid.registryName }}</div>
       <div class="tags">
         <el-tag size="small" type="info" effect="plain" round class="mod-tag">
           {{ fluid.modId }}

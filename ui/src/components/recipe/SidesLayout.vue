@@ -8,15 +8,21 @@ const props = withDefaults(
   defineProps<{
     slots: RecipeSlot[]
     category?: {
+      categoryId: string
       itemInputWidth: number
       itemInputHeight: number
       itemOutputWidth: number
       itemOutputHeight: number
+      fluidInputWidth: number
+      fluidInputHeight: number
+      fluidOutputWidth: number
+      fluidOutputHeight: number
       shapeless: boolean
     } | null
     pickHint?: string
+    showProbabilityBadge?: boolean
   }>(),
-  { category: null, pickHint: undefined },
+  { category: null, pickHint: undefined, showProbabilityBadge: true },
 )
 
 const emit = defineEmits<{
@@ -39,6 +45,27 @@ const hasInputs = computed(() => itemInputs.value.length + fluidInputs.value.len
 const hasOutputs = computed(() => itemOutputs.value.length + fluidOutputs.value.length > 0)
 
 const shapeless = computed(() => !!props.category?.shapeless)
+
+const inputDims = computed<{ w: number | null; h: number | null }>(() => {
+  // GT exporter 把所有 RecipeMap 的 input 写成 maxItemInputs×1（flat），
+  // 但装配线 NEI handler 实际是 4×4 网格。这里按真实布局展示。
+  if (props.category?.categoryId === 'gregtech:assemblyline') {
+    return { w: 4, h: 4 }
+  }
+  return {
+    w: props.category?.itemInputWidth ?? null,
+    h: props.category?.itemInputHeight ?? null,
+  }
+})
+
+const fluidInputDims = computed<{ w: number | null; h: number | null }>(() => ({
+  w: props.category?.fluidInputWidth ?? null,
+  h: props.category?.fluidInputHeight ?? null,
+}))
+const fluidOutputDims = computed<{ w: number | null; h: number | null }>(() => ({
+  w: props.category?.fluidOutputWidth ?? null,
+  h: props.category?.fluidOutputHeight ?? null,
+}))
 
 function onPick(payload: { itemVariantId: string | null; fluidVariantId: string | null }) {
   emit('pick', payload)
@@ -67,26 +94,39 @@ function onLookup(
     <div v-if="itemInputs.length" class="group">
       <SlotGrid
         :slots="itemInputs"
-        :declared-w="category?.itemInputWidth"
-        :declared-h="category?.itemInputHeight"
+        :declared-w="inputDims.w"
+        :declared-h="inputDims.h"
         :shapeless="shapeless"
         :pick-hint="pickHint"
+        :show-probability-badge="showProbabilityBadge"
         @pick="onPick"
         @lookup="onLookup"
       />
     </div>
     <div v-if="fluidInputs.length" class="group">
-      <div class="fluid-list">
-        <SlotCell
-          v-for="s in fluidInputs"
-          :key="`fi-${s.slotIndex}`"
-          :slot="s"
-          is-fluid
-          :pick-hint="pickHint"
-          @pick="onPick"
-          @lookup="onLookup"
-        />
-      </div>
+      <SlotGrid
+        :slots="fluidInputs"
+        :declared-w="fluidInputDims.w"
+        :declared-h="fluidInputDims.h"
+        :shapeless="shapeless"
+        :pick-hint="pickHint"
+        :show-probability-badge="showProbabilityBadge"
+        @pick="onPick"
+        @lookup="onLookup"
+      >
+        <template #cell="{ slotData, cellSize, declared }">
+          <SlotCell
+            :slot="slotData"
+            :size="cellSize"
+            is-fluid
+            :placeholder="declared && !slotData"
+            :pick-hint="pickHint"
+            :show-probability-badge="showProbabilityBadge"
+            @pick="onPick"
+            @lookup="onLookup"
+          />
+        </template>
+      </SlotGrid>
     </div>
   </section>
 
@@ -115,22 +155,35 @@ function onLookup(
         :declared-h="category?.itemOutputHeight"
         :shapeless="shapeless"
         :pick-hint="pickHint"
+        :show-probability-badge="showProbabilityBadge"
         @pick="onPick"
         @lookup="onLookup"
       />
     </div>
     <div v-if="fluidOutputs.length" class="group">
-      <div class="fluid-list">
-        <SlotCell
-          v-for="s in fluidOutputs"
-          :key="`fo-${s.slotIndex}`"
-          :slot="s"
-          is-fluid
-          :pick-hint="pickHint"
-          @pick="onPick"
-          @lookup="onLookup"
-        />
-      </div>
+      <SlotGrid
+        :slots="fluidOutputs"
+        :declared-w="fluidOutputDims.w"
+        :declared-h="fluidOutputDims.h"
+        :shapeless="shapeless"
+        :pick-hint="pickHint"
+        :show-probability-badge="showProbabilityBadge"
+        @pick="onPick"
+        @lookup="onLookup"
+      >
+        <template #cell="{ slotData, cellSize, declared }">
+          <SlotCell
+            :slot="slotData"
+            :size="cellSize"
+            is-fluid
+            :placeholder="declared && !slotData"
+            :pick-hint="pickHint"
+            :show-probability-badge="showProbabilityBadge"
+            @pick="onPick"
+            @lookup="onLookup"
+          />
+        </template>
+      </SlotGrid>
     </div>
   </section>
 </template>
@@ -186,11 +239,6 @@ function onLookup(
   display: flex;
   flex-direction: column;
   gap: 4px;
-}
-.fluid-list {
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
 }
 .divider {
   display: flex;
