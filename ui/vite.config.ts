@@ -30,6 +30,8 @@ function assetsMiddleware(): Plugin {
         '.gif': 'image/gif',
         '.webp': 'image/webp',
         '.svg': 'image/svg+xml',
+        '.json': 'application/json; charset=utf-8',
+        '.lang': 'text/plain; charset=utf-8',
       }
       server.middlewares.use('/assets', (req, res, next) => {
         if (req.method !== 'GET' && req.method !== 'HEAD') {

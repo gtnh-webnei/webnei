@@ -135,7 +135,8 @@ public class DatasetDao {
                 rs.getString("exporter_version"),
                 rs.getString("minecraft_version"),
                 readOffsetDateTime(rs, "created_at"),
-                readPluginsJson(rs, "active_plugins"));
+                readPluginsJson(rs, "active_plugins"),
+                null);
     }
 
     private static OffsetDateTime readOffsetDateTime(ResultSet rs, String column) throws SQLException {

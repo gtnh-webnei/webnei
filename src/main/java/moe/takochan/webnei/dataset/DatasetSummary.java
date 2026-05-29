@@ -14,5 +14,6 @@ public record DatasetSummary(
         String exporterVersion,
         String minecraftVersion,
         OffsetDateTime createdAt,
-        List<String> activePlugins) {
+        List<String> activePlugins,
+        String displaySpecUrl) {
 }
