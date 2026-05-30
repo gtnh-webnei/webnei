@@ -12,6 +12,7 @@ import type {
   GregTechSpecialItem,
   MetadataValue,
   RecipeSlot,
+  RecipeSlotCandidate,
 } from '@/api/recipes.types'
 
 // ─────────────────────────────────────────────────────────────────────
@@ -181,6 +182,31 @@ function formatDurationAuto(seconds: number): string {
   return `${(seconds / 86400).toFixed(2)}天`
 }
 
+const VOLTAGE_TIER_LIMITS: Array<[number, string]> = [
+  [8, 'ULV'],
+  [32, 'LV'],
+  [128, 'MV'],
+  [512, 'HV'],
+  [2_048, 'EV'],
+  [8_192, 'IV'],
+  [32_768, 'LuV'],
+  [131_072, 'ZPM'],
+  [524_288, 'UV'],
+  [2_097_152, 'UHV'],
+  [8_388_608, 'UEV'],
+  [33_554_432, 'UIV'],
+  [134_217_728, 'UMV'],
+  [536_870_912, 'UXV'],
+  [2_147_483_647, 'MAX'],
+]
+
+function voltageTierName(voltage: number): string {
+  for (const [limit, tier] of VOLTAGE_TIER_LIMITS) {
+    if (voltage <= limit) return tier
+  }
+  return 'MAX+'
+}
+
 // ─────────────────────────────────────────────────────────────────────
 // Recipe context
 // ─────────────────────────────────────────────────────────────────────
@@ -213,15 +239,16 @@ export function buildCtx(
   const fluidInputs: Array<{ amount: number; fluid_id: string }> = []
   const itemInputs: Array<{ item_id: string; amount: number }> = []
   for (const slot of slots) {
+    const primary = primarySlotCandidate(slot)
     if (slot.role === 'fluid_input') {
       fluidInputs.push({
-        amount: slot.amount ?? 0,
-        fluid_id: slot.fluidVariantId ?? '',
+        amount: primary?.amount ?? slot.amount ?? 0,
+        fluid_id: primary?.fluidVariantId ?? slot.fluidVariantId ?? '',
       })
     } else if (slot.role === 'item_input') {
       itemInputs.push({
-        item_id: slot.itemVariantId ?? '',
-        amount: slot.amount ?? 0,
+        item_id: primary?.itemVariantId ?? slot.itemVariantId ?? '',
+        amount: primary?.amount ?? slot.amount ?? 0,
       })
     }
   }
@@ -258,6 +285,20 @@ function unwrapMetadata(v: MetadataValue): unknown {
   }
 }
 
+function primarySlotCandidate(slot: RecipeSlot): RecipeSlotCandidate | null {
+  if (slot.itemVariantId || slot.fluidVariantId) {
+    return {
+      itemVariantId: slot.itemVariantId,
+      fluidVariantId: slot.fluidVariantId,
+      amount: slot.amount,
+      displayName: slot.displayName,
+      modId: slot.modId,
+      assetUrl: slot.assetUrl,
+    }
+  }
+  return slot.candidates[0] ?? null
+}
+
 // ─────────────────────────────────────────────────────────────────────
 // Expression evaluation
 // ─────────────────────────────────────────────────────────────────────
@@ -276,6 +317,7 @@ const PARSER = new Parser({
 // - `comma(value)` 千分位
 // - `lookup(table, key)` 查表
 // - `fixed1(value)` 一位小数文本
+// - `tier(value)` 按 EU/t 计算电压等级名
 // - `floor / ceil / round / tanh` 数学
 PARSER.functions.str = (v: unknown) => String(v)
 PARSER.functions.int = (v: unknown) => Math.trunc(toNum(v))
@@ -285,6 +327,7 @@ PARSER.functions.lookup = (
   key: unknown,
 ) => (table ? table[String(key)] ?? '' : '')
 PARSER.functions.fixed1 = (v: unknown) => toNum(v).toFixed(1)
+PARSER.functions.tier = (v: unknown) => voltageTierName(toNum(v))
 PARSER.functions.floor = (v: unknown) => Math.floor(toNum(v))
 PARSER.functions.ceil = (v: unknown) => Math.ceil(toNum(v))
 PARSER.functions.round = (v: unknown) => Math.round(toNum(v))
