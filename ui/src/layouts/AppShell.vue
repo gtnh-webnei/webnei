@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, type RouteLocationNormalizedLoaded } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useDatasetStore } from '@/stores/dataset'
 import DatasetSwitcher from '@/components/DatasetSwitcher.vue'
@@ -25,6 +25,10 @@ const nav = computed(() => {
     { to: `/datasets/${enc}/mods`, label: 'Mod' },
   ]
 })
+
+function routeViewKey(viewRoute: RouteLocationNormalizedLoaded): string {
+  return String(viewRoute.name ?? viewRoute.path)
+}
 </script>
 
 <template>
@@ -49,10 +53,22 @@ const nav = computed(() => {
       <ThemeSwitcher />
     </el-header>
     <el-main class="app-main" :class="{ 'is-full-height': fullHeight }">
-      <div v-if="!fullHeight" class="page">
-        <router-view />
+      <div :class="fullHeight ? 'page-full' : 'page'">
+        <router-view v-slot="{ Component, route: viewRoute }">
+          <keep-alive :max="32">
+            <component
+              v-if="viewRoute.meta.keepAlive"
+              :is="Component"
+              :key="routeViewKey(viewRoute)"
+            />
+          </keep-alive>
+          <component
+            v-if="!viewRoute.meta.keepAlive"
+            :is="Component"
+            :key="viewRoute.fullPath"
+          />
+        </router-view>
       </div>
-      <router-view v-else />
     </el-main>
   </el-container>
 </template>
@@ -94,12 +110,19 @@ const nav = computed(() => {
   margin: 0 auto;
   width: 100%;
 }
+.page-full {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  width: 100%;
+}
 .app-main.is-full-height {
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
-.app-main.is-full-height > :deep(*) {
+.page-full > :deep(*) {
   flex: 1;
   min-height: 0;
 }

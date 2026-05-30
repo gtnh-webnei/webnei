@@ -24,6 +24,7 @@ const routes: RouteRecordRaw[] = [
         path: 'datasets/:datasetId/items',
         name: 'items',
         component: ItemBrowser,
+        meta: { keepAlive: true },
       },
       {
         path: 'datasets/:datasetId/items/:itemVariantId/containers',
@@ -34,16 +35,19 @@ const routes: RouteRecordRaw[] = [
         path: 'datasets/:datasetId/mods',
         name: 'mods',
         component: ModBrowser,
+        meta: { keepAlive: true },
       },
       {
         path: 'datasets/:datasetId/fluids',
         name: 'fluids',
         component: FluidBrowser,
+        meta: { keepAlive: true },
       },
       {
         path: 'datasets/:datasetId/categories',
         name: 'categories',
         component: CategoryGallery,
+        meta: { keepAlive: true },
       },
       {
         path: 'datasets/:datasetId/categories/:categoryId',
@@ -64,6 +68,7 @@ const routes: RouteRecordRaw[] = [
         path: 'datasets/:datasetId/quest-lines',
         name: 'quest-lines',
         component: QuestLineList,
+        meta: { keepAlive: true },
       },
       {
         path: 'datasets/:datasetId/quest-lines/view',
@@ -75,6 +80,7 @@ const routes: RouteRecordRaw[] = [
         path: 'datasets/:datasetId/mobs',
         name: 'mobs',
         component: MobBrowser,
+        meta: { keepAlive: true },
       },
       {
         path: 'datasets/:datasetId/mobs/:mobVariantId',

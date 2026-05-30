@@ -48,6 +48,7 @@ export type FormatName =
   | 'duration_seconds_en'
   | 'duration_ticks'
   | 'duration_auto_unit'
+  | 'java_double'
   | 'bool_yes_no'
   | 'bool_yes_no_cn'
 
@@ -73,6 +74,7 @@ export interface SpecLine {
   prefix?: string
   suffix?: string
   suffix_table?: string
+  suffix_table_lookup?: 'exact' | 'ceil'
   suffix_table_format?: string
   literal?: string
   color_code?: string
@@ -135,6 +137,7 @@ const FORMATS: Record<FormatName, (v: unknown) => string> = {
   duration_seconds_en: (v) => formatDurationSeconds(toNum(v), 'secs'),
   duration_ticks: (v) => `${toNum(v)} tick`,
   duration_auto_unit: (v) => formatDurationAuto(toNum(v)),
+  java_double: (v) => formatJavaDouble(toNum(v)),
   bool_yes_no: (v) => (v ? 'Yes' : 'No'),
   bool_yes_no_cn: (v) => (v ? '是' : '否'),
 }
@@ -155,6 +158,19 @@ function formatDurationSeconds(ticks: number, unit: string): string {
   if (ticks < 20) return `${ticks} tick`
   if (ticks % 20 === 0) return `${ticks / 20} ${unit}`
   return `${(ticks / 20).toFixed(2).replace(/\.?0+$/, '')} ${unit}`
+}
+
+function formatJavaDouble(value: number): string {
+  if (!Number.isFinite(value)) return String(value)
+  const normalized = Math.round(value * 1_000_000_000_000) / 1_000_000_000_000
+  const abs = Math.abs(normalized)
+  if (abs >= 1e7 || (abs > 0 && abs < 1e-3)) {
+    const [mantissaRaw, exponentRaw] = normalized.toExponential().split('e')
+    const mantissa = mantissaRaw.includes('.') ? mantissaRaw : `${mantissaRaw}.0`
+    return `${mantissa}E${Number(exponentRaw)}`
+  }
+  if (Number.isInteger(normalized)) return `${normalized}.0`
+  return String(normalized)
 }
 
 function formatDurationAuto(seconds: number): string {
@@ -259,7 +275,8 @@ const PARSER = new Parser({
 // - `int(value)` 截断为整数（取代 toFixed(0)）
 // - `comma(value)` 千分位
 // - `lookup(table, key)` 查表
-// - `floor / ceil / round` 数学
+// - `fixed1(value)` 一位小数文本
+// - `floor / ceil / round / tanh` 数学
 PARSER.functions.str = (v: unknown) => String(v)
 PARSER.functions.int = (v: unknown) => Math.trunc(toNum(v))
 PARSER.functions.comma = (v: unknown) => COMMA_INT_FMT.format(toNum(v))
@@ -267,9 +284,11 @@ PARSER.functions.lookup = (
   table: Record<string, string> | null | undefined,
   key: unknown,
 ) => (table ? table[String(key)] ?? '' : '')
+PARSER.functions.fixed1 = (v: unknown) => toNum(v).toFixed(1)
 PARSER.functions.floor = (v: unknown) => Math.floor(toNum(v))
 PARSER.functions.ceil = (v: unknown) => Math.ceil(toNum(v))
 PARSER.functions.round = (v: unknown) => Math.round(toNum(v))
+PARSER.functions.tanh = (v: unknown) => Math.tanh(toNum(v))
 // 位运算（expr-eval 不支持 & | >>> ^ 等运算符；用函数代替）
 PARSER.functions.band = (a: unknown, b: unknown) => toNum(a) & toNum(b)
 PARSER.functions.bor = (a: unknown, b: unknown) => toNum(a) | toNum(b)
@@ -389,12 +408,11 @@ function renderLine(
   if (line.prefix) valueText = line.prefix + valueText
   if (line.suffix) valueText = valueText + line.suffix
 
-  // suffix_table（按 raw 当 key 查表，不是 expr 后的 value）
+  // suffix_table（默认按 raw 当 key 查表；ceil 模式用于“热容上限档位”等数值区间表）
   if (line.suffix_table) {
     const tbl = tables[line.suffix_table]
     if (tbl) {
-      const key = String(raw)
-      const looked = tbl[key]
+      const looked = lookupSuffixTable(tbl, raw, line.suffix_table_lookup)
       if (looked !== undefined) {
         const tmpl = line.suffix_table_format ?? ' ({0})'
         valueText = valueText + tmpl.replace('{0}', looked)
@@ -409,6 +427,29 @@ function renderLine(
       colorCode: line.color_code,
     },
   ]
+}
+
+function lookupSuffixTable(
+  table: Record<string, string>,
+  raw: unknown,
+  mode: SpecLine['suffix_table_lookup'] = 'exact',
+): string | undefined {
+  if (mode !== 'ceil') return table[String(raw)]
+
+  const rawNum = toNum(raw)
+  if (!Number.isFinite(rawNum)) return undefined
+
+  let bestKey: string | undefined
+  let bestNum = Infinity
+  for (const key of Object.keys(table)) {
+    const n = Number(key)
+    if (!Number.isFinite(n)) continue
+    if (n >= rawNum && n < bestNum) {
+      bestNum = n
+      bestKey = key
+    }
+  }
+  return bestKey === undefined ? table['*'] : table[bestKey]
 }
 
 /** 决定 line 取什么 raw value；返回 undefined 表示这条 kind 不该渲染。 */
@@ -435,7 +476,7 @@ function takeValue(line: SpecLine, ctx: RecipeCtx): unknown {
       return v
     }
     case 'text':
-      return null // text 用 literal，不取 raw
+      return line.literal ?? '' // text 用 literal，不依赖外部数据存在性
     case 'special_item': {
       const idx = line.list_index ?? 0
       const item = ctx.special_items[idx]

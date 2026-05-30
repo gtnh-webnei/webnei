@@ -19,16 +19,18 @@ const router = useRouter()
 const datasetStore = useDatasetStore()
 const { activeDatasetId } = storeToRefs(datasetStore)
 
+function parseTab(value: unknown): Tab {
+  const v = String(value ?? 'detail')
+  if (v === 'recipe' || v === 'usage' || v === 'detail') return v
+  return 'detail'
+}
+
 const datasetId = computed(() =>
   String(route.params.datasetId ?? activeDatasetId.value ?? ''),
 )
 const target = computed(() => String(route.query.target ?? ''))
 const isFluid = computed(() => target.value.length > 0 && !target.value.includes('@'))
-const tab = computed<Tab>(() => {
-  const v = String(route.query.kind ?? 'detail')
-  if (v === 'recipe' || v === 'usage' || v === 'detail') return v
-  return 'detail'
-})
+const tab = computed<Tab>(() => parseTab(route.query.kind))
 
 const recipes = ref<Recipe[]>([])
 const total = ref(0)

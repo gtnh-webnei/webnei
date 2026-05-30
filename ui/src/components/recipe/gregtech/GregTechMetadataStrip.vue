@@ -110,5 +110,7 @@ function colorCodeToCss(code: string | undefined): string {
 }
 .freetext {
   grid-column: 1 / -1;
+  color: var(--el-text-color-regular);
+  font-weight: 600;
 }
 </style>
