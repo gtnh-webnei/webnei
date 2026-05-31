@@ -25,6 +25,7 @@ const gt = computed(() => props.recipe.gregtech)
 
 const datasetStore = useDatasetStore()
 const displaySpecUrl = computed(() => datasetStore.active?.displaySpecUrl ?? null)
+const displaySpecMessagesUrl = computed(() => datasetStore.active?.displaySpecMessagesUrl ?? null)
 
 // EOH 在游戏内 NEI 重写了 drawNEIOverlays，槽位上不画 chance —
 // 概率只在 hover tooltip 显示（item 的"占比"语义）。
@@ -71,6 +72,7 @@ const unhandledSpecialItems = computed(() => {
             :gt="gt"
             :slots="recipe.slots"
             :spec-url="displaySpecUrl"
+            :spec-messages-url="displaySpecMessagesUrl"
             :handler-id="category?.handlerId"
           />
           <GregTechSpecialItems v-if="unhandledSpecialItems.length" :items="unhandledSpecialItems" />

@@ -42,12 +42,13 @@ public class DatasetService {
         return datasetDao.listModsPage(dataset.datasetId(), query, sortField, descending, page);
     }
 
-    /** spec 文件外挂在 dataset 资源目录下：<assets>/<pack>/<ver>/<variant>/spec/<language>.json */
+    /** spec 文件外挂在 dataset 资源目录下：<assets>/<pack>/<ver>/<variant>/spec/display.json + i18n/<language>.json */
     private DatasetSummary withDisplaySpecUrl(DatasetSummary ds) {
-        String url = assetUrlBuilder.build(ds, "spec/" + ds.language() + ".json", null);
+        String specUrl = assetUrlBuilder.build(ds, "spec/display.json", null);
+        String messagesUrl = assetUrlBuilder.build(ds, "spec/i18n/" + ds.language() + ".json", null);
         return new DatasetSummary(
                 ds.datasetId(), ds.packSlug(), ds.packVersion(), ds.variant(),
                 ds.language(), ds.displayName(), ds.schemaVersion(), ds.exporterVersion(),
-                ds.minecraftVersion(), ds.createdAt(), ds.activePlugins(), url);
+                ds.minecraftVersion(), ds.createdAt(), ds.activePlugins(), specUrl, messagesUrl);
     }
 }

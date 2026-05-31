@@ -10,8 +10,10 @@ export interface DatasetSummary {
   minecraftVersion: string
   createdAt: string
   activePlugins: string[]
-  /** 外挂 spec URL，形如 /assets/gtnh/2.8.4/official/spec/zh_CN.json */
+  /** 外挂语言无关 spec URL，形如 /assets/gtnh/2.8.4/official/spec/display.json */
   displaySpecUrl: string | null
+  /** 外挂 spec i18n URL，形如 /assets/gtnh/2.8.4/official/spec/i18n/zh_CN.json */
+  displaySpecMessagesUrl: string | null
 }
 
 export interface ModSummary {

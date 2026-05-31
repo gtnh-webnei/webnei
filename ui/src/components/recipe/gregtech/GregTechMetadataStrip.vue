@@ -5,23 +5,33 @@ import {
   buildCtx,
   extractHandlerName,
   loadDisplaySpec,
+  loadDisplaySpecMessages,
   renderRecipe,
   type DisplayItem,
   type DisplaySpec,
 } from './displaySpec'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{
   gt: GregTechRecipeInfo
   slots: RecipeSlot[]
   /** spec 文件 URL（来自 dataset.displaySpecUrl，由后端 AssetUrlBuilder 拼出） */
   specUrl: string | null
+  /** spec i18n 文件 URL（来自 dataset.displaySpecMessagesUrl） */
+  specMessagesUrl: string | null
   /** category.handlerId，形如 "gregtech:macerator" */
   handlerId: string | null | undefined
 }>()
 
 const spec = ref<DisplaySpec | null>(null)
+const { t, locale } = useI18n()
 watchEffect(async () => {
-  spec.value = await loadDisplaySpec(props.specUrl)
+  const activeLocale = String(locale.value)
+  const [loadedSpec] = await Promise.all([
+    loadDisplaySpec(props.specUrl),
+    loadDisplaySpecMessages(props.specMessagesUrl, activeLocale),
+  ])
+  spec.value = loadedSpec
 })
 
 const items = computed<DisplayItem[]>(() => {
@@ -29,7 +39,7 @@ const items = computed<DisplayItem[]>(() => {
   const handler = extractHandlerName(props.handlerId)
   if (!handler) return []
   const ctx = buildCtx(handler, props.gt, props.slots)
-  return renderRecipe({ spec: spec.value, ctx })
+  return renderRecipe({ spec: spec.value, ctx, t })
 })
 
 function stripColorCode(s: string): string {

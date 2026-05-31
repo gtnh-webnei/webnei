@@ -136,6 +136,7 @@ public class DatasetDao {
                 rs.getString("minecraft_version"),
                 readOffsetDateTime(rs, "created_at"),
                 readPluginsJson(rs, "active_plugins"),
+                null,
                 null);
     }
 

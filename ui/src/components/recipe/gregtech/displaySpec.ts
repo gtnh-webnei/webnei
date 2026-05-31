@@ -1,7 +1,7 @@
 /**
  * GT 配方展示 spec 解析器。
  *
- * spec 文件按 dataset.language 加载（zh_CN.json / en_US.json / ...）。
+ * spec 文件按 dataset 加载：display.json 是语言无关规则，i18n/<locale>.json 提供文案。
  * 每条配方进来：按 handler 找 lines → 跑 kind/format/expr → 输出 DisplayItem[]。
  *
  * Schema 见 SCHEMA.md。
@@ -14,6 +14,7 @@ import type {
   RecipeSlot,
   RecipeSlotCandidate,
 } from '@/api/recipes.types'
+import { mergeLocaleMessages } from '@/i18n'
 
 // ─────────────────────────────────────────────────────────────────────
 // Spec types
@@ -46,19 +47,22 @@ export type FormatName =
   | 'decimal_2'
   | 'scientific'
   | 'duration_seconds'
-  | 'duration_seconds_en'
   | 'duration_ticks'
   | 'duration_auto_unit'
   | 'java_double'
   | 'bool_yes_no'
-  | 'bool_yes_no_cn'
+
+export type TranslateFn = (key: string, params?: Record<string, unknown>) => string
 
 export interface VoltageBlockSingle {
-  label: string
+  labelKey: string
   expr?: string
+  valueKeyExpr?: string
   format?: FormatName
-  prefix?: string
-  suffix?: string
+  prefixKey?: string
+  suffixKey?: string
+  valueTemplateKey?: string
+  templateArgs?: Record<string, string>
 }
 
 export interface SpecLine {
@@ -68,16 +72,19 @@ export interface SpecLine {
   list_index?: number
   field?: string
   // 渲染
-  label?: string | null
+  labelKey?: string | null
   expr?: string
+  valueKeyExpr?: string
   scale?: number
   format?: FormatName
-  prefix?: string
-  suffix?: string
+  prefixKey?: string
+  suffixKey?: string
   suffix_table?: string
   suffix_table_lookup?: 'exact' | 'ceil'
-  suffix_table_format?: string
-  literal?: string
+  suffixTableFormatKey?: string
+  literalKey?: string
+  valueTemplateKey?: string
+  templateArgs?: Record<string, string>
   color_code?: string
   // 显示条件
   show_if_true?: boolean
@@ -89,15 +96,15 @@ export interface SpecLine {
 }
 
 export interface HandlerSpec {
-  name_cn?: string
+  nameKey?: string
   recipe_kind?: string
   recipe_count?: number
   lines: SpecLine[]
 }
 
 export interface DisplaySpec {
+  schema: string
   version: number
-  language: string
   tables: Record<string, Record<string, string>>
   handlers: Record<string, HandlerSpec>
 }
@@ -122,25 +129,31 @@ const COMMA_DEC1_FMT = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 1,
 })
 
-const FORMATS: Record<FormatName, (v: unknown) => string> = {
-  direct: (v) => String(v),
-  as_string: (v) => String(v),
-  comma_int: (v) => COMMA_INT_FMT.format(toNum(v)),
-  comma_long: (v) => COMMA_INT_FMT.format(toNum(v)),
-  comma_double_1: (v) => COMMA_DEC1_FMT.format(toNum(v)),
-  percent_int_x100: (v) => `${toNum(v)}%`,
-  percent_double_x100: (v) => `${Math.round(toNum(v) * 100)}%`,
-  decimal_0: (v) => Math.round(toNum(v)).toString(),
-  decimal_1: (v) => toNum(v).toFixed(1),
-  decimal_2: (v) => toNum(v).toFixed(2),
-  scientific: (v) => toNum(v).toExponential(2),
-  duration_seconds: (v) => formatDurationSeconds(toNum(v), '秒'),
-  duration_seconds_en: (v) => formatDurationSeconds(toNum(v), 'secs'),
-  duration_ticks: (v) => `${toNum(v)} tick`,
-  duration_auto_unit: (v) => formatDurationAuto(toNum(v)),
-  java_double: (v) => formatJavaDouble(toNum(v)),
-  bool_yes_no: (v) => (v ? 'Yes' : 'No'),
-  bool_yes_no_cn: (v) => (v ? '是' : '否'),
+function makeFormats(t: TranslateFn): Record<FormatName, (v: unknown) => string> {
+  return {
+    direct: (v) => String(v),
+    as_string: (v) => String(v),
+    comma_int: (v) => COMMA_INT_FMT.format(toNum(v)),
+    comma_long: (v) => COMMA_INT_FMT.format(toNum(v)),
+    comma_double_1: (v) => COMMA_DEC1_FMT.format(toNum(v)),
+    percent_int_x100: (v) => `${toNum(v)}%`,
+    percent_double_x100: (v) => `${Math.round(toNum(v) * 100)}%`,
+    decimal_0: (v) => Math.round(toNum(v)).toString(),
+    decimal_1: (v) => toNum(v).toFixed(1),
+    decimal_2: (v) => toNum(v).toFixed(2),
+    scientific: (v) => toNum(v).toExponential(2),
+    duration_seconds: (v) => formatDurationSeconds(toNum(v), t),
+    duration_ticks: (v) => tr(t, 'spec.gregtech.format.duration.ticks', { value: toNum(v) }),
+    duration_auto_unit: (v) => formatDurationAuto(toNum(v), t),
+    java_double: (v) => formatJavaDouble(toNum(v)),
+    bool_yes_no: (v) => tr(t, v ? 'spec.gregtech.format.bool.yes' : 'spec.gregtech.format.bool.no'),
+  }
+}
+
+function tr(t: TranslateFn, key: string, params?: Record<string, unknown>): string {
+  const value = t(key, params)
+  if (value === key) console.warn(`[displaySpec] missing i18n key=${key}`)
+  return value
 }
 
 function toNum(v: unknown): number {
@@ -154,11 +167,13 @@ function toNum(v: unknown): number {
   return 0
 }
 
-function formatDurationSeconds(ticks: number, unit: string): string {
+function formatDurationSeconds(ticks: number, t: TranslateFn): string {
   // ticks % 20 == 0 → 整数；否则一位小数
-  if (ticks < 20) return `${ticks} tick`
-  if (ticks % 20 === 0) return `${ticks / 20} ${unit}`
-  return `${(ticks / 20).toFixed(2).replace(/\.?0+$/, '')} ${unit}`
+  if (ticks < 20) return tr(t, 'spec.gregtech.format.duration.ticks', { value: ticks })
+  const seconds = ticks % 20 === 0
+    ? String(ticks / 20)
+    : (ticks / 20).toFixed(2).replace(/\.?0+$/, '')
+  return tr(t, 'spec.gregtech.format.duration.seconds', { value: seconds })
 }
 
 function formatJavaDouble(value: number): string {
@@ -174,12 +189,18 @@ function formatJavaDouble(value: number): string {
   return String(normalized)
 }
 
-function formatDurationAuto(seconds: number): string {
+function formatDurationAuto(seconds: number, t: TranslateFn): string {
   // isotopedecay：自动选秒/分/时/天单位
-  if (seconds < 60) return `${seconds.toFixed(2)}秒`
-  if (seconds < 3600) return `${(seconds / 60).toFixed(2)}分`
-  if (seconds < 86400) return `${(seconds / 3600).toFixed(2)}时`
-  return `${(seconds / 86400).toFixed(2)}天`
+  if (seconds < 60) {
+    return tr(t, 'spec.gregtech.format.duration.autoSeconds', { value: seconds.toFixed(2) })
+  }
+  if (seconds < 3600) {
+    return tr(t, 'spec.gregtech.format.duration.autoMinutes', { value: (seconds / 60).toFixed(2) })
+  }
+  if (seconds < 86400) {
+    return tr(t, 'spec.gregtech.format.duration.autoHours', { value: (seconds / 3600).toFixed(2) })
+  }
+  return tr(t, 'spec.gregtech.format.duration.autoDays', { value: (seconds / 86400).toFixed(2) })
 }
 
 const VOLTAGE_TIER_LIMITS: Array<[number, string]> = [
@@ -370,10 +391,11 @@ function evalExpr(
 export interface RenderOptions {
   spec: DisplaySpec
   ctx: RecipeCtx
+  t: TranslateFn
 }
 
 /** 主入口：拿一条 recipe + spec → DisplayItem[]。 */
-export function renderRecipe({ spec, ctx }: RenderOptions): DisplayItem[] {
+export function renderRecipe({ spec, ctx, t }: RenderOptions): DisplayItem[] {
   const handlerSpec = spec.handlers[ctx.handler]
   if (!handlerSpec) {
     console.warn(`[displaySpec] no spec for handler=${ctx.handler}`)
@@ -381,9 +403,10 @@ export function renderRecipe({ spec, ctx }: RenderOptions): DisplayItem[] {
   }
 
   const out: DisplayItem[] = []
+  const formats = makeFormats(t)
   for (const line of handlerSpec.lines) {
     try {
-      out.push(...renderLine(line, ctx, spec.tables))
+      out.push(...renderLine(line, ctx, spec.tables, t, formats))
     } catch (e) {
       console.warn('[displaySpec] line render failed:', line, e)
     }
@@ -395,13 +418,15 @@ function renderLine(
   line: SpecLine,
   ctx: RecipeCtx,
   tables: Record<string, Record<string, string>>,
+  t: TranslateFn,
+  formats: Record<FormatName, (v: unknown) => string>,
 ): DisplayItem[] {
   // 特殊 kind 提前处理：voltage_block / large_boiler_table 不走标准 raw value 流程
   if (line.kind === 'voltage_block') {
-    return renderVoltageBlock(line, ctx, tables)
+    return renderVoltageBlock(line, ctx, tables, t, formats)
   }
   if (line.kind === 'large_boiler_table') {
-    return renderLargeBoilerTable(ctx)
+    return renderLargeBoilerTable(ctx, t)
   }
 
   // 取 raw value
@@ -420,36 +445,35 @@ function renderLine(
     if (!ok) return []
   }
 
-  // expr
   let value: unknown = raw
-  if (line.expr) {
+  let valueText = ''
+  if (line.valueKeyExpr) {
+    const keyOrValue = evalExpr(line.valueKeyExpr, { value: raw, ctx, tables })
+    valueText = renderMaybeI18nKey(keyOrValue, t)
+  } else if (line.expr) {
     value = evalExpr(line.expr, { value: raw, ctx, tables })
     if (value === null || value === undefined) return []
-  }
 
-  // scale
-  if (line.scale !== undefined && typeof value === 'number') {
-    value = value * line.scale
-  }
-
-  // 字面（flag / text）
-  let valueText = ''
-  if (line.literal !== undefined) {
-    valueText = line.literal
-  } else if (line.format) {
-    const fn = FORMATS[line.format]
-    if (!fn) {
-      console.warn(`[displaySpec] unknown format=${line.format}`)
-      return []
+    if (line.scale !== undefined && typeof value === 'number') {
+      value = value * line.scale
     }
-    valueText = fn(value)
+    valueText = line.format ? formatValue(line.format, value, formats) : renderMaybeI18nKey(value, t)
+  } else if (line.literalKey !== undefined) {
+    valueText = tr(t, line.literalKey)
+  } else if (line.format) {
+    if (line.scale !== undefined && typeof value === 'number') {
+      value = value * line.scale
+    }
+    valueText = formatValue(line.format, value, formats)
   } else {
     valueText = String(value)
   }
 
+  valueText = applyValueTemplate(line, raw, value, valueText, ctx, tables, t)
+
   // prefix / suffix
-  if (line.prefix) valueText = line.prefix + valueText
-  if (line.suffix) valueText = valueText + line.suffix
+  if (line.prefixKey) valueText = tr(t, line.prefixKey) + valueText
+  if (line.suffixKey) valueText = valueText + tr(t, line.suffixKey)
 
   // suffix_table（默认按 raw 当 key 查表；ceil 模式用于“热容上限档位”等数值区间表）
   if (line.suffix_table) {
@@ -457,19 +481,64 @@ function renderLine(
     if (tbl) {
       const looked = lookupSuffixTable(tbl, raw, line.suffix_table_lookup)
       if (looked !== undefined) {
-        const tmpl = line.suffix_table_format ?? ' ({0})'
-        valueText = valueText + tmpl.replace('{0}', looked)
+        const tmpl = line.suffixTableFormatKey ? tr(t, line.suffixTableFormatKey) : '{0}'
+        valueText = valueText + tmpl.replace('{0}', tr(t, looked))
       }
     }
   }
 
   return [
     {
-      label: line.label === undefined ? null : line.label,
+      label: resolveLabel(line.labelKey, t),
       value: valueText,
       colorCode: line.color_code,
     },
   ]
+}
+
+function formatValue(
+  format: FormatName,
+  value: unknown,
+  formats: Record<FormatName, (v: unknown) => string>,
+): string {
+  const fn = formats[format]
+  if (!fn) {
+    console.warn(`[displaySpec] unknown format=${format}`)
+    return ''
+  }
+  return fn(value)
+}
+
+function renderMaybeI18nKey(value: unknown, t: TranslateFn): string {
+  if (typeof value !== 'string') return String(value ?? '')
+  if (!value.startsWith('spec.gregtech.')) return value
+  return tr(t, value)
+}
+
+function resolveLabel(labelKey: string | null | undefined, t: TranslateFn): string | null {
+  if (labelKey === undefined || labelKey === null) return null
+  return tr(t, labelKey)
+}
+
+function applyValueTemplate(
+  spec: Pick<SpecLine, 'valueTemplateKey' | 'templateArgs'>,
+  raw: unknown,
+  result: unknown,
+  valueText: string,
+  ctx: RecipeCtx,
+  tables: Record<string, Record<string, string>>,
+  t: TranslateFn,
+): string {
+  if (!spec.valueTemplateKey) return valueText
+  const params: Record<string, unknown> = {
+    value: valueText,
+    raw,
+    result,
+  }
+  for (const [name, expr] of Object.entries(spec.templateArgs ?? {})) {
+    params[name] = evalExpr(expr, { value: raw, result, ctx, tables })
+  }
+  return tr(t, spec.valueTemplateKey, params)
 }
 
 function lookupSuffixTable(
@@ -519,7 +588,7 @@ function takeValue(line: SpecLine, ctx: RecipeCtx): unknown {
       return v
     }
     case 'text':
-      return line.literal ?? '' // text 用 literal，不依赖外部数据存在性
+      return '' // text 用 literalKey，不依赖外部数据存在性
     case 'special_item': {
       const idx = line.list_index ?? 0
       const item = ctx.special_items[idx]
@@ -545,6 +614,8 @@ function renderVoltageBlock(
   line: SpecLine,
   ctx: RecipeCtx,
   tables: Record<string, Record<string, string>>,
+  t: TranslateFn,
+  formats: Record<FormatName, (v: unknown) => string>,
 ): DisplayItem[] {
   if (ctx.voltage === null) return []
   // spec 提供哪个用哪个；amp>1 时如果两者都给了优先 split。
@@ -561,21 +632,27 @@ function renderVoltageBlock(
   for (const seg of segments) {
     if (!seg) continue
     const bindings = { value: ctx.voltage, ctx, tables }
-    let text: string
-    if (seg.expr) {
+    let text = ''
+    let result: unknown = ctx.voltage
+    if (seg.valueKeyExpr) {
+      const keyOrValue = evalExpr(seg.valueKeyExpr, bindings)
+      text = renderMaybeI18nKey(keyOrValue, t)
+    } else if (seg.expr) {
       const v = evalExpr(seg.expr, bindings)
-      text = seg.format ? FORMATS[seg.format](v) : String(v)
+      result = v
+      text = seg.format ? formatValue(seg.format, v, formats) : renderMaybeI18nKey(v, t)
     } else {
       text = String(ctx.voltage)
     }
-    if (seg.prefix) text = seg.prefix + text
-    if (seg.suffix) text = text + seg.suffix
-    out.push({ label: seg.label, value: text })
+    text = applyValueTemplate(seg, ctx.voltage, result, text, ctx, tables, t)
+    if (seg.prefixKey) text = tr(t, seg.prefixKey) + text
+    if (seg.suffixKey) text = text + tr(t, seg.suffixKey)
+    out.push({ label: resolveLabel(seg.labelKey, t), value: text })
   }
   return out
 }
 
-function renderLargeBoilerTable(ctx: RecipeCtx): DisplayItem[] {
+function renderLargeBoilerTable(ctx: RecipeCtx, t: TranslateFn): DisplayItem[] {
   // 大型锅炉燃烧时间表：special_value / 40（diesel）or / 10（dense liquid），
   // 4 个锅炉系数：青铜 ×2 / 钢制 ×1 / 钛制 ×0.3 / 钨钢 ×0.15
   // 简化：用 diesel 路径；阈值禁用判断保持原样
@@ -585,15 +662,17 @@ function renderLargeBoilerTable(ctx: RecipeCtx): DisplayItem[] {
 
   function cell(mult: number): string {
     const v = round05(base * mult)
-    return v < 0.05 ? '禁止使用' : v.toFixed(2).replace(/\.?0+$/, '')
+    return v < 0.05
+      ? tr(t, 'spec.gregtech.largeBoiler.disabled')
+      : v.toFixed(2).replace(/\.?0+$/, '')
   }
 
   return [
-    { label: '燃烧时间（秒）', value: '' },
-    { label: '青铜锅炉', value: cell(2) },
-    { label: '钢制锅炉', value: cell(1) },
-    { label: '钛制锅炉', value: cell(0.3) },
-    { label: '钨钢锅炉', value: cell(0.15) },
+    { label: tr(t, 'spec.gregtech.largeBoiler.header'), value: '' },
+    { label: tr(t, 'spec.gregtech.largeBoiler.bronze'), value: cell(2) },
+    { label: tr(t, 'spec.gregtech.largeBoiler.steel'), value: cell(1) },
+    { label: tr(t, 'spec.gregtech.largeBoiler.titanium'), value: cell(0.3) },
+    { label: tr(t, 'spec.gregtech.largeBoiler.tungstensteel'), value: cell(0.15) },
   ]
 }
 
@@ -602,12 +681,13 @@ function renderLargeBoilerTable(ctx: RecipeCtx): DisplayItem[] {
 // ─────────────────────────────────────────────────────────────────────
 
 const specCache = new Map<string, Promise<DisplaySpec | null>>()
+const messagesCache = new Map<string, Promise<void>>()
 
 /**
  * 按 spec URL 加载 spec；同 URL 只加载一次。
  *
- * URL 由后端从 dataset 资源根 + 'spec/<lang>.json' 拼出（AssetUrlBuilder），形如：
- *   /assets/gtnh/2.8.4/official/spec/zh_CN.json
+ * URL 由后端从 dataset 资源根 + 'spec/display.json' 拼出（AssetUrlBuilder），形如：
+ *   /assets/gtnh/2.8.4/official/spec/display.json
  * 跟图片/语言文件等其它资源一样，由 vite middleware (dev) / nginx (prod) 直接 serve。
  */
 export function loadDisplaySpec(specUrl: string | null | undefined): Promise<DisplaySpec | null> {
@@ -623,10 +703,38 @@ export function loadDisplaySpec(specUrl: string | null | undefined): Promise<Dis
   return p
 }
 
+export function loadDisplaySpecMessages(
+  messagesUrl: string | null | undefined,
+  locale: string,
+): Promise<void> {
+  if (!messagesUrl) return Promise.resolve()
+  const cacheKey = `${locale}:${messagesUrl}`
+  let p = messagesCache.get(cacheKey)
+  if (!p) {
+    p = fetchMessages(messagesUrl)
+      .then((messages) => mergeLocaleMessages(locale, messages))
+      .catch((e) => {
+        console.warn(`[displaySpec] messages load failed url=${messagesUrl}`, e)
+      })
+    messagesCache.set(cacheKey, p)
+  }
+  return p
+}
+
 async function fetchSpec(url: string): Promise<DisplaySpec> {
   const res = await fetch(url)
   if (!res.ok) throw new Error(`spec fetch failed: ${url} → ${res.status}`)
-  return (await res.json()) as DisplaySpec
+  const spec = (await res.json()) as DisplaySpec
+  if (spec.schema !== 'gregtech-display-spec' || spec.version !== 2) {
+    console.warn('[displaySpec] unexpected spec schema/version:', spec.schema, spec.version)
+  }
+  return spec
+}
+
+async function fetchMessages(url: string): Promise<Record<string, unknown>> {
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`spec messages fetch failed: ${url} → ${res.status}`)
+  return (await res.json()) as Record<string, unknown>
 }
 
 /** 从 categoryId/handlerId 拆出 handler 短名（去掉 'gregtech:' 前缀）。 */
