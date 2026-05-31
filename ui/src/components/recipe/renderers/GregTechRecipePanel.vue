@@ -31,6 +31,17 @@ const displaySpecUrl = computed(() => datasetStore.active?.displaySpecUrl ?? nul
 const showProbabilityBadge = computed(
   () => props.category?.categoryId !== 'gregtech:tt_eyeofharmony',
 )
+
+// 只显示没有 placement 的 special_item（未处理的新机器）
+const unhandledSpecialItems = computed(() => {
+  if (!gt.value?.specialItems?.length) return []
+  const handledIds = new Set(
+    props.recipe.slots
+      .filter(s => s.role === 'special_item' && s.placement)
+      .map(s => s.itemVariantId)
+  )
+  return gt.value.specialItems.filter(item => !handledIds.has(item.itemVariantId))
+})
 </script>
 
 <template>
@@ -62,7 +73,7 @@ const showProbabilityBadge = computed(
             :spec-url="displaySpecUrl"
             :handler-id="category?.handlerId"
           />
-          <GregTechSpecialItems v-if="gt.specialItems?.length" :items="gt.specialItems" />
+          <GregTechSpecialItems v-if="unhandledSpecialItems.length" :items="unhandledSpecialItems" />
         </div>
       </section>
     </template>

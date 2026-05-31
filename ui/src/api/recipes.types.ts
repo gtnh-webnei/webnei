@@ -6,6 +6,7 @@ export interface SlotLayout {
   width: number
   height: number
   slotStyle: string
+  placement: string | null
 }
 
 export interface RecipeSlotCandidate {
@@ -29,6 +30,7 @@ export interface RecipeSlot {
   modId: string | null
   assetUrl: string | null
   candidates: RecipeSlotCandidate[]
+  placement?: string | null
 }
 
 export interface GregTechSpecialItem {

@@ -41,6 +41,16 @@ const itemOutputs = computed(() => filterRole('item_output'))
 const fluidInputs = computed(() => filterRole('fluid_input'))
 const fluidOutputs = computed(() => filterRole('fluid_output'))
 
+// Special items: filter by placement field
+const specialInputs = computed(() =>
+  props.slots.filter((s) => s.role === 'special_item' && s.placement === 'special_input')
+    .sort((a, b) => a.slotIndex - b.slotIndex)
+)
+const specialOutputs = computed(() =>
+  props.slots.filter((s) => s.role === 'special_item' && s.placement === 'special_output')
+    .sort((a, b) => a.slotIndex - b.slotIndex)
+)
+
 const hasInputs = computed(() => itemInputs.value.length + fluidInputs.value.length > 0)
 const hasOutputs = computed(() => itemOutputs.value.length + fluidOutputs.value.length > 0)
 
@@ -79,6 +89,29 @@ function onLookup(
 </script>
 
 <template>
+  <section v-if="specialInputs.length" class="side special-inputs">
+    <div class="side-header">
+      <div class="side-label">特殊输入</div>
+      <div class="side-meta">
+        <span class="meta-chip special">
+          <span class="dot special" />{{ specialInputs.length }}
+        </span>
+      </div>
+    </div>
+    <div class="group">
+      <SlotGrid
+        :slots="specialInputs"
+        :declared-w="null"
+        :declared-h="null"
+        :shapeless="false"
+        :pick-hint="pickHint"
+        :show-probability-badge="showProbabilityBadge"
+        @pick="onPick"
+        @lookup="onLookup"
+      />
+    </div>
+  </section>
+
   <section v-if="hasInputs" class="side inputs">
     <div class="side-header">
       <div class="side-label">输入</div>
@@ -186,6 +219,29 @@ function onLookup(
       </SlotGrid>
     </div>
   </section>
+
+  <section v-if="specialOutputs.length" class="side special-outputs">
+    <div class="side-header">
+      <div class="side-label">特殊输出</div>
+      <div class="side-meta">
+        <span class="meta-chip special">
+          <span class="dot special" />{{ specialOutputs.length }}
+        </span>
+      </div>
+    </div>
+    <div class="group">
+      <SlotGrid
+        :slots="specialOutputs"
+        :declared-w="null"
+        :declared-h="null"
+        :shapeless="false"
+        :pick-hint="pickHint"
+        :show-probability-badge="showProbabilityBadge"
+        @pick="onPick"
+        @lookup="onLookup"
+      />
+    </div>
+  </section>
 </template>
 
 <style scoped>
@@ -223,6 +279,10 @@ function onLookup(
   border-radius: 10px;
   padding: 1px 8px 1px 6px;
 }
+.meta-chip.special {
+  background: rgba(230, 162, 60, 0.1);
+  color: rgba(230, 162, 60, 1);
+}
 .meta-chip .dot {
   width: 7px;
   height: 7px;
@@ -234,6 +294,9 @@ function onLookup(
 }
 .meta-chip .dot.fluid {
   background: rgba(33, 130, 230, 0.85);
+}
+.meta-chip .dot.special {
+  background: rgba(230, 162, 60, 0.85);
 }
 .group {
   display: flex;

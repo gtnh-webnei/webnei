@@ -454,6 +454,12 @@ public class RecipeDao {
             if (h == null) continue;
             CategoryLayoutMeta meta = categoryMeta.getOrDefault(h.categoryId(),
                     new CategoryLayoutMeta(null, null, null));
+
+            // Merge placement from layout into slots
+            List<RecipeSlotDto> slots = slotMap.getOrDefault(id, List.of());
+            List<SlotLayoutDto> layouts = layoutMap.getOrDefault(h.categoryId(), List.of());
+            List<RecipeSlotDto> slotsWithPlacement = mergeSlotPlacement(slots, layouts);
+
             out.add(new RecipeDto(
                     id,
                     h.categoryId(),
@@ -461,14 +467,46 @@ public class RecipeDao {
                     h.sourcePlugin(),
                     h.sourceRef(),
                     h.description(),
-                    slotMap.getOrDefault(id, List.of()),
-                    layoutMap.getOrDefault(h.categoryId(), List.of()),
+                    slotsWithPlacement,
+                    layouts,
                     meta.canvasWidth(),
                     meta.canvasHeight(),
                     assetUrlBuilder.build(dataset, meta.backgroundAssetPath(), null),
                     gtMap.get(id)));
         }
         return out;
+    }
+
+    private List<RecipeSlotDto> mergeSlotPlacement(List<RecipeSlotDto> slots, List<SlotLayoutDto> layouts) {
+        // Build a map of (role, slotIndex) -> placement
+        Map<String, String> placementMap = new HashMap<>();
+        for (SlotLayoutDto layout : layouts) {
+            String key = layout.role() + ":" + layout.slotIndex();
+            if (layout.placement() != null) {
+                placementMap.put(key, layout.placement());
+            }
+        }
+
+        // Create new slots with placement
+        List<RecipeSlotDto> result = new ArrayList<>(slots.size());
+        for (RecipeSlotDto slot : slots) {
+            String key = slot.role() + ":" + slot.slotIndex();
+            String placement = placementMap.get(key);
+            result.add(new RecipeSlotDto(
+                    slot.role(),
+                    slot.slotIndex(),
+                    slot.itemVariantId(),
+                    slot.fluidVariantId(),
+                    slot.amount(),
+                    slot.probability(),
+                    slot.groupId(),
+                    slot.displayName(),
+                    slot.modId(),
+                    slot.assetUrl(),
+                    slot.candidates(),
+                    placement));
+        }
+        return result;
     }
 
     private Map<String, GregTechRecipeDto> loadGregTechInfo(
@@ -732,9 +770,51 @@ public class RecipeDao {
                     displayName,
                     modId,
                     assetUrl,
-                    candidates);
+                    candidates,
+                    null);  // placement will be merged later in loadRecipes
             byRecipe.computeIfAbsent(r.recipeId(), k -> new ArrayList<>()).add(slot);
         }
+
+        // Load GregTech special items
+        List<SpecialItemRow> specialRows = jdbc.sql("""
+                        SELECT si.recipe_id, si.list_index, si.item_variant_id,
+                               iv.display_name, iv.mod_id, iv.asset_path
+                        FROM gregtech_recipe_special_item si
+                        LEFT JOIN v_item_variant_browser iv
+                          ON iv.dataset_id = si.dataset_id AND iv.item_variant_id = si.item_variant_id
+                        WHERE si.dataset_id = :datasetId
+                          AND si.recipe_id IN (:ids)
+                        ORDER BY si.recipe_id, si.list_index
+                        """)
+                .param("datasetId", dataset.datasetId())
+                .param("ids", recipeIds)
+                .query((rs, n) -> new SpecialItemRow(
+                        rs.getString("recipe_id"),
+                        rs.getInt("list_index"),
+                        rs.getString("item_variant_id"),
+                        rs.getString("display_name"),
+                        rs.getString("mod_id"),
+                        rs.getString("asset_path")))
+                .list();
+
+        for (SpecialItemRow si : specialRows) {
+            String assetUrl = assetUrlBuilder.build(dataset, si.assetPath(), null);
+            RecipeSlotDto slot = new RecipeSlotDto(
+                    "special_item",
+                    si.listIndex(),
+                    si.itemVariantId(),
+                    null,
+                    1,
+                    1.0,
+                    null,
+                    si.displayName(),
+                    si.modId(),
+                    assetUrl,
+                    List.of(),
+                    null);  // placement will be merged later in loadRecipes
+            byRecipe.computeIfAbsent(si.recipeId(), k -> new ArrayList<>()).add(slot);
+        }
+
         byRecipe.values().forEach(list -> list.sort(Comparator
                 .comparing(RecipeSlotDto::role)
                 .thenComparingInt(RecipeSlotDto::slotIndex)));
@@ -792,7 +872,7 @@ public class RecipeDao {
     private Map<String, List<SlotLayoutDto>> loadLayouts(DatasetSummary dataset, List<String> categoryIds) {
         if (categoryIds.isEmpty()) return Map.of();
         List<LayoutRow> rows = jdbc.sql("""
-                        SELECT category_id, role, slot_index, x, y, width, height, slot_style
+                        SELECT category_id, role, slot_index, x, y, width, height, slot_style, placement
                         FROM recipe_slot_layout
                         WHERE dataset_id = :datasetId
                           AND category_id IN (:ids)
@@ -809,7 +889,8 @@ public class RecipeDao {
                                 rs.getInt("y"),
                                 rs.getInt("width"),
                                 rs.getInt("height"),
-                                rs.getString("slot_style"))))
+                                rs.getString("slot_style"),
+                                rs.getString("placement"))))
                 .list();
         Map<String, List<SlotLayoutDto>> map = new LinkedHashMap<>();
         for (LayoutRow row : rows) {
@@ -953,6 +1034,14 @@ public class RecipeDao {
             String fluidDisplayName,
             String fluidModId,
             String fluidAssetPath) {}
+
+    private record SpecialItemRow(
+            String recipeId,
+            int listIndex,
+            String itemVariantId,
+            String displayName,
+            String modId,
+            String assetPath) {}
 
     private record LayoutRow(String categoryId, SlotLayoutDto layout) {}
 
