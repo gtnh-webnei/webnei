@@ -1,21 +1,20 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { storeToRefs } from 'pinia'
-import { Graph } from '@antv/g6'
-import { getQuestDetail, getQuestLineDetail } from '@/api/quests'
-import { useThemeStore } from '@/stores/theme'
-import QuestText from '@/components/QuestText.vue'
-import type {
-  QuestDetail,
-  QuestLineDetail,
-  QuestNode,
-} from '@/api/quests.types'
+import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
+import { storeToRefs } from 'pinia';
+import { Graph } from '@antv/g6';
+import { getQuestDetail, getQuestLineDetail } from '@/api/quests';
+import { useThemeStore } from '@/stores/theme';
+import QuestText from '@/components/QuestText.vue';
+import type { QuestDetail, QuestLineDetail, QuestNode } from '@/api/quests.types';
 
-const route = useRoute()
-const router = useRouter()
-const themeStore = useThemeStore()
-const { effective: themeMode } = storeToRefs(themeStore)
+const route = useRoute();
+const router = useRouter();
+const themeStore = useThemeStore();
+const { effective: themeMode } = storeToRefs(themeStore);
+
+const { t } = useI18n();
 
 // 配色表:画布(light/dark 双套)
 const palette = computed(() => {
@@ -30,7 +29,7 @@ const palette = computed(() => {
       tooltipBg: '#2a2f37',
       tooltipText: '#e5e7eb',
       tooltipSub: '#94a3b8',
-    }
+    };
   }
   return {
     background: '#f8fafc',
@@ -42,55 +41,55 @@ const palette = computed(() => {
     tooltipBg: '#ffffff',
     tooltipText: '#111111',
     tooltipSub: '#64748b',
-  }
-})
+  };
+});
 
-const datasetId = computed(() => String(route.params.datasetId ?? ''))
-const lineId = computed(() => String(route.query.id ?? ''))
+const datasetId = computed(() => String(route.params.datasetId ?? ''));
+const lineId = computed(() => String(route.query.id ?? ''));
 
-const lineDetail = ref<QuestLineDetail | null>(null)
-const loading = ref(false)
-const error = ref<string | null>(null)
+const lineDetail = ref<QuestLineDetail | null>(null);
+const loading = ref(false);
+const error = ref<string | null>(null);
 
-const drawerOpen = ref(false)
-const selectedQuestId = ref<string | null>(null)
-const questDetail = ref<QuestDetail | null>(null)
-const questLoading = ref(false)
-const questError = ref<string | null>(null)
+const drawerOpen = ref(false);
+const selectedQuestId = ref<string | null>(null);
+const questDetail = ref<QuestDetail | null>(null);
+const questLoading = ref(false);
+const questError = ref<string | null>(null);
 
-const containerRef = ref<HTMLElement | null>(null)
-const graph = shallowRef<Graph | null>(null)
+const containerRef = ref<HTMLElement | null>(null);
+const graph = shallowRef<Graph | null>(null);
 
 const nodeMap = computed(() => {
-  const m = new Map<string, QuestNode>()
-  for (const n of lineDetail.value?.nodes ?? []) m.set(n.questId, n)
-  return m
-})
+  const m = new Map<string, QuestNode>();
+  for (const n of lineDetail.value?.nodes ?? []) m.set(n.questId, n);
+  return m;
+});
 
 async function loadLine() {
-  if (!datasetId.value || !lineId.value) return
-  loading.value = true
-  error.value = null
+  if (!datasetId.value || !lineId.value) return;
+  loading.value = true;
+  error.value = null;
   try {
-    lineDetail.value = await getQuestLineDetail(datasetId.value, lineId.value)
-    await renderGraph()
+    lineDetail.value = await getQuestLineDetail(datasetId.value, lineId.value);
+    await renderGraph();
   } catch (e) {
-    error.value = e instanceof Error ? e.message : String(e)
+    error.value = e instanceof Error ? e.message : String(e);
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
 async function renderGraph() {
-  if (!containerRef.value || !lineDetail.value) return
+  if (!containerRef.value || !lineDetail.value) return;
 
   if (graph.value) {
-    graph.value.destroy()
-    graph.value = null
+    graph.value.destroy();
+    graph.value = null;
   }
 
-  const detail = lineDetail.value
-  const nodeIdSet = new Set(detail.nodes.map((n) => n.questId))
+  const detail = lineDetail.value;
+  const nodeIdSet = new Set(detail.nodes.map((n) => n.questId));
 
   // 预加载所有节点图标 — G6 v5 不会等图片 onload 后重绘,
   // 不预热的话首屏渲染时部分节点是空白。
@@ -98,21 +97,24 @@ async function renderGraph() {
     detail.nodes
       .map((n) => n.iconAssetUrl)
       .filter((url): url is string => !!url)
-      .map((url) => new Promise<void>((resolve) => {
-        const img = new Image()
-        img.onload = () => resolve()
-        img.onerror = () => resolve()
-        img.src = url
-      })),
-  )
+      .map(
+        (url) =>
+          new Promise<void>((resolve) => {
+            const img = new Image();
+            img.onload = () => resolve();
+            img.onerror = () => resolve();
+            img.src = url;
+          }),
+      ),
+  );
 
   // 每个节点用 rect 作底(有边框 + 背景),前景 icon 通过 iconSrc 渲染。
   // 这样能解决 image 节点没边框的问题,也能控制图标的清晰度。
   // G6 v5 的 NodeData/EdgeData 类型很严格(Cursor 枚举、Vector tuple 等),
   // 这里数据形态由我们手工拼,跳过严格类型用 any。
   const nodes: any[] = detail.nodes.map((n) => {
-    const cx = n.posX + n.sizeX / 2
-    const cy = n.posY + n.sizeY / 2
+    const cx = n.posX + n.sizeX / 2;
+    const cy = n.posY + n.sizeY / 2;
     return {
       id: n.questId,
       type: 'rect',
@@ -133,8 +135,8 @@ async function renderGraph() {
         iconHeight: n.sizeY - 4,
       },
       data: { name: n.name },
-    }
-  })
+    };
+  });
 
   const edges: any[] = detail.edges
     .filter((e) => nodeIdSet.has(e.requiredQuestId) && nodeIdSet.has(e.questId))
@@ -150,7 +152,7 @@ async function renderGraph() {
         endArrowSize: 5,
         opacity: 0.55,
       },
-    }))
+    }));
 
   const g = new Graph({
     container: containerRef.value,
@@ -187,76 +189,77 @@ async function renderGraph() {
             background: palette.value.tooltipBg,
             color: palette.value.tooltipText,
             border: `1px solid ${palette.value.nodeStroke}`,
-            'box-shadow': themeMode.value === 'dark'
-              ? '0 6px 16px rgba(0,0,0,0.4)'
-              : '0 6px 12px rgba(0,0,0,0.12)',
+            'box-shadow':
+              themeMode.value === 'dark'
+                ? '0 6px 16px rgba(0,0,0,0.4)'
+                : '0 6px 12px rgba(0,0,0,0.12)',
           },
         },
         getContent: (_evt: unknown, items: Array<{ data: { name?: string } }>) => {
-          if (!items?.length) return ''
-          const it = items[0]
-          const name = it.data?.name ?? ''
-          return `<div style="font-weight:600;font-size:13px;line-height:1.45;max-width:240px">${escapeHtml(name)}</div>`
+          if (!items?.length) return '';
+          const it = items[0];
+          const name = it.data?.name ?? '';
+          return `<div style="font-weight:600;font-size:13px;line-height:1.45;max-width:240px">${escapeHtml(name)}</div>`;
         },
       },
     ],
     data: { nodes, edges },
-  })
+  });
 
   g.on('node:click', (evt: unknown) => {
-    const id = (evt as { target?: { id?: string } })?.target?.id
-    if (id) openQuest(id)
-  })
+    const id = (evt as { target?: { id?: string } })?.target?.id;
+    if (id) openQuest(id);
+  });
 
   // hover 节点 → 入边 outbound、出边 inbound 分别染色
   // edge.source 是前置任务(必须先完成),edge.target 是后置任务。
   // 当前节点视角:
   //   该 node 作为 target → 入边(指向我的前置) → 'inbound'
   //   该 node 作为 source → 出边(从我解锁的后续) → 'outbound'
-  const inboundEdges = new Map<string, string[]>()  // node → 入边 ids
-  const outboundEdges = new Map<string, string[]>() // node → 出边 ids
+  const inboundEdges = new Map<string, string[]>(); // node → 入边 ids
+  const outboundEdges = new Map<string, string[]>(); // node → 出边 ids
   for (const e of edges) {
-    if (!inboundEdges.has(e.target)) inboundEdges.set(e.target, [])
-    if (!outboundEdges.has(e.source)) outboundEdges.set(e.source, [])
-    inboundEdges.get(e.target)!.push(e.id)
-    outboundEdges.get(e.source)!.push(e.id)
+    if (!inboundEdges.has(e.target)) inboundEdges.set(e.target, []);
+    if (!outboundEdges.has(e.source)) outboundEdges.set(e.source, []);
+    inboundEdges.get(e.target)!.push(e.id);
+    outboundEdges.get(e.source)!.push(e.id);
   }
-  let activeEdgeIds: string[] = []
+  let activeEdgeIds: string[] = [];
 
   g.on('node:pointerenter', (evt: unknown) => {
-    const id = (evt as { target?: { id?: string } })?.target?.id
-    if (!id) return
-    const ins = inboundEdges.get(id) ?? []
-    const outs = outboundEdges.get(id) ?? []
-    if (!ins.length && !outs.length) return
-    const states: Record<string, string[]> = {}
-    for (const eid of ins) states[eid] = ['inbound']
-    for (const eid of outs) states[eid] = ['outbound']
-    activeEdgeIds = [...ins, ...outs]
-    g.setElementState(states)
-  })
+    const id = (evt as { target?: { id?: string } })?.target?.id;
+    if (!id) return;
+    const ins = inboundEdges.get(id) ?? [];
+    const outs = outboundEdges.get(id) ?? [];
+    if (!ins.length && !outs.length) return;
+    const states: Record<string, string[]> = {};
+    for (const eid of ins) states[eid] = ['inbound'];
+    for (const eid of outs) states[eid] = ['outbound'];
+    activeEdgeIds = [...ins, ...outs];
+    g.setElementState(states);
+  });
 
   g.on('node:pointerleave', () => {
     if (activeEdgeIds.length) {
-      const states: Record<string, string[]> = {}
-      for (const eid of activeEdgeIds) states[eid] = []
-      g.setElementState(states)
-      activeEdgeIds = []
+      const states: Record<string, string[]> = {};
+      for (const eid of activeEdgeIds) states[eid] = [];
+      g.setElementState(states);
+      activeEdgeIds = [];
     }
-  })
+  });
 
-  await g.render()
+  await g.render();
 
   // 图标像素化 — Minecraft 贴图是 16x16/32x32 像素艺术,smooth 会糊。
   // G6 v5 在 canvas 上画图片用浏览器的 drawImage,设置 imageSmoothingEnabled=false
   // 来保持像素感。
-  const canvas = containerRef.value?.querySelector('canvas') as HTMLCanvasElement | null
+  const canvas = containerRef.value?.querySelector('canvas') as HTMLCanvasElement | null;
   if (canvas) {
-    const ctx = canvas.getContext('2d')
-    if (ctx) ctx.imageSmoothingEnabled = false
+    const ctx = canvas.getContext('2d');
+    if (ctx) ctx.imageSmoothingEnabled = false;
   }
 
-  graph.value = g
+  graph.value = g;
 }
 
 function escapeHtml(s: string): string {
@@ -264,21 +267,21 @@ function escapeHtml(s: string): string {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
+    .replace(/"/g, '&quot;');
 }
 
 async function openQuest(questId: string) {
-  selectedQuestId.value = questId
-  drawerOpen.value = true
-  questLoading.value = true
-  questError.value = null
-  questDetail.value = null
+  selectedQuestId.value = questId;
+  drawerOpen.value = true;
+  questLoading.value = true;
+  questError.value = null;
+  questDetail.value = null;
   try {
-    questDetail.value = await getQuestDetail(datasetId.value, questId)
+    questDetail.value = await getQuestDetail(datasetId.value, questId);
   } catch (e) {
-    questError.value = e instanceof Error ? e.message : String(e)
+    questError.value = e instanceof Error ? e.message : String(e);
   } finally {
-    questLoading.value = false
+    questLoading.value = false;
   }
 }
 
@@ -287,74 +290,75 @@ function goToItem(itemVariantId: string) {
     name: 'lookup',
     params: { datasetId: datasetId.value },
     query: { target: itemVariantId, kind: 'detail' },
-  })
+  });
 }
 
 function back() {
-  router.back()
+  router.back();
 }
 
-watch([datasetId, lineId], loadLine)
+watch([datasetId, lineId], loadLine);
 // 主题切换时 G6 没法只改 Graph 选项里的 background 与 edge.state 配色,
 // 简单可靠的做法是直接拿当前 lineDetail 重渲一次 — renderGraph 会 destroy 旧图。
 watch(themeMode, () => {
-  if (lineDetail.value) renderGraph()
-})
-onMounted(loadLine)
+  if (lineDetail.value) renderGraph();
+});
+onMounted(loadLine);
 
 // 画布工具栏:适应 / 1:1 / + / - / 居中。
 // G6 v5 自带 fitView / fitCenter / zoomTo / zoomBy 全部异步 + 可选动画。
-const ZOOM_STEP = 1.2
-const ZOOM_ANIM = { duration: 200 } as const
+const ZOOM_STEP = 1.2;
+const ZOOM_ANIM = { duration: 200 } as const;
 function canvasFit() {
-  graph.value?.fitView(undefined, ZOOM_ANIM)
+  graph.value?.fitView(undefined, ZOOM_ANIM);
 }
 function canvasCenter() {
-  graph.value?.fitCenter(ZOOM_ANIM)
+  graph.value?.fitCenter(ZOOM_ANIM);
 }
 function canvasReset() {
   // 1:1 像素,然后居中 — 与 BQ 客户端默认观感对齐。
-  graph.value?.zoomTo(1, ZOOM_ANIM)?.then(() => graph.value?.fitCenter(ZOOM_ANIM))
+  graph.value?.zoomTo(1, ZOOM_ANIM)?.then(() => graph.value?.fitCenter(ZOOM_ANIM));
 }
 function canvasZoomIn() {
-  graph.value?.zoomBy(ZOOM_STEP, ZOOM_ANIM)
+  graph.value?.zoomBy(ZOOM_STEP, ZOOM_ANIM);
 }
 function canvasZoomOut() {
-  graph.value?.zoomBy(1 / ZOOM_STEP, ZOOM_ANIM)
+  graph.value?.zoomBy(1 / ZOOM_STEP, ZOOM_ANIM);
 }
 onBeforeUnmount(() => {
   if (graph.value) {
-    graph.value.destroy()
-    graph.value = null
+    graph.value.destroy();
+    graph.value = null;
   }
-})
+});
 
-const taskTypeLabels: Record<string, string> = {
-  retrieval: '检索',
-  crafting: '合成',
-  hunt: '猎杀',
-  checkbox: '勾选',
-  location: '到达',
-  fluid: '流体',
-  unhandled: '未知',
-}
+const taskTypeLabels = computed<Record<string, string>>(() => ({
+  retrieval: t('quest.taskType.retrieval'),
+  crafting: t('quest.taskType.crafting'),
+  hunt: t('quest.taskType.hunt'),
+  checkbox: t('quest.taskType.checkbox'),
+  location: t('quest.taskType.location'),
+  fluid: t('quest.taskType.fluid'),
+  unhandled: t('quest.taskType.unhandled'),
+}));
 
-const rewardTypeLabels: Record<string, string> = {
-  item: '物品',
-  choice: '选择',
-  xp: '经验',
-  'complete quest': '完成任务',
-}
+const rewardTypeLabels = computed<Record<string, string>>(() => ({
+  item: t('quest.rewardType.item'),
+  choice: t('quest.rewardType.choice'),
+  xp: t('quest.rewardType.xp'),
+  'complete quest': t('quest.rewardType.completeQuest'),
+}));
 </script>
 
 <template>
   <div class="quest-line-canvas">
     <header class="header">
-      <el-button text @click="back">← 返回</el-button>
+      <el-button text @click="back">{{ $t('common.back') }}</el-button>
       <div class="title-block">
-        <h1>{{ lineDetail?.line?.name ?? '加载中…' }}</h1>
+        <h1>{{ lineDetail?.line?.name ?? $t('common.loading') }}</h1>
         <p v-if="lineDetail" class="lead">
-          {{ lineDetail.nodes.length }} 个任务 · {{ lineDetail.edges.length }} 条依赖
+          {{ $t('quest.nodeTaskCount', { count: lineDetail.nodes.length }) }} ·
+          {{ $t('quest.nodeEdgeCount', { count: lineDetail.edges.length }) }}
         </p>
       </div>
     </header>
@@ -366,40 +370,89 @@ const rewardTypeLabels: Record<string, string> = {
         <el-skeleton :rows="6" animated />
       </div>
       <div ref="containerRef" class="canvas-host" />
-      <div v-if="lineDetail" class="canvas-toolbar" role="toolbar" aria-label="画布工具">
-        <el-tooltip content="适应窗口" placement="left">
+      <div
+        v-if="lineDetail"
+        class="canvas-toolbar"
+        role="toolbar"
+        :aria-label="$t('quest.canvasToolbar')"
+      >
+        <el-tooltip :content="$t('quest.fitWindow')" placement="left">
           <button type="button" class="ct-btn" @click="canvasFit">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 9 4 4 9 4"/><polyline points="20 9 20 4 15 4"/><polyline points="4 15 4 20 9 20"/><polyline points="20 15 20 20 15 20"/></svg>
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="4 9 4 4 9 4" />
+              <polyline points="20 9 20 4 15 4" />
+              <polyline points="4 15 4 20 9 20" />
+              <polyline points="20 15 20 20 15 20" />
+            </svg>
           </button>
         </el-tooltip>
-        <el-tooltip content="还原 1:1" placement="left">
+        <el-tooltip :content="$t('quest.resetZoom')" placement="left">
           <button type="button" class="ct-btn" @click="canvasReset">1:1</button>
         </el-tooltip>
-        <el-tooltip content="居中" placement="left">
+        <el-tooltip :content="$t('quest.centerGraph')" placement="left">
           <button type="button" class="ct-btn" @click="canvasCenter">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg>
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="9" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
           </button>
         </el-tooltip>
         <div class="ct-divider" />
-        <el-tooltip content="放大" placement="left">
+        <el-tooltip :content="$t('quest.zoomIn')" placement="left">
           <button type="button" class="ct-btn" @click="canvasZoomIn">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
           </button>
         </el-tooltip>
-        <el-tooltip content="缩小" placement="left">
+        <el-tooltip :content="$t('quest.zoomOut')" placement="left">
           <button type="button" class="ct-btn" @click="canvasZoomOut">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
           </button>
         </el-tooltip>
       </div>
     </div>
 
-    <el-drawer
-      v-model="drawerOpen"
-      direction="rtl"
-      size="480px"
-      :with-header="false"
-    >
+    <el-drawer v-model="drawerOpen" direction="rtl" size="480px" :with-header="false">
       <div class="drawer-body">
         <el-skeleton v-if="questLoading" :rows="6" animated />
         <el-alert v-else-if="questError" :title="questError" type="error" :closable="false" />
@@ -411,8 +464,14 @@ const rewardTypeLabels: Record<string, string> = {
             <div class="quest-title">
               <h2>{{ questDetail.node.name }}</h2>
               <div class="quest-meta">
-                <el-tag v-if="questDetail.node.repeatTime > 0" size="small" type="info" effect="plain" round>
-                  可重复
+                <el-tag
+                  v-if="questDetail.node.repeatTime > 0"
+                  size="small"
+                  type="info"
+                  effect="plain"
+                  round
+                >
+                  {{ $t('quest.repeatable') }}
                 </el-tag>
               </div>
             </div>
@@ -425,7 +484,9 @@ const rewardTypeLabels: Record<string, string> = {
           />
 
           <section v-if="questDetail.tasks.length" class="quest-section">
-            <div class="section-title">任务条件 · {{ questDetail.tasks.length }}</div>
+            <div class="section-title">
+              {{ $t('quest.taskConditions', { count: questDetail.tasks.length }) }}
+            </div>
             <div class="task-list">
               <div v-for="task in questDetail.tasks" :key="task.taskId" class="task-card">
                 <div class="task-header">
@@ -433,7 +494,9 @@ const rewardTypeLabels: Record<string, string> = {
                     {{ taskTypeLabels[task.taskType] ?? task.taskType }}
                   </el-tag>
                   <span class="task-name">{{ task.name }}</span>
-                  <span v-if="task.numberRequired > 0" class="task-num">×{{ task.numberRequired }}</span>
+                  <span v-if="task.numberRequired > 0" class="task-num"
+                    >×{{ task.numberRequired }}</span
+                  >
                 </div>
                 <div v-if="task.itemGroups.length" class="task-items">
                   <div
@@ -449,19 +512,27 @@ const rewardTypeLabels: Record<string, string> = {
                       @click="e.itemVariantId && goToItem(e.itemVariantId)"
                     >
                       <img v-if="e.assetUrl" :src="e.assetUrl" loading="lazy" />
-                      <span class="item-name">{{ e.displayName ?? e.itemVariantId ?? e.fluidVariantId }}</span>
+                      <span class="item-name">{{
+                        e.displayName ?? e.itemVariantId ?? e.fluidVariantId
+                      }}</span>
                       <span v-if="e.amount > 1" class="item-amount">×{{ e.amount }}</span>
                     </div>
                   </div>
                 </div>
-                <div v-if="task.mobVariantId" class="task-mob">猎杀目标:{{ task.mobVariantId }}</div>
-                <div v-if="task.dimensionName" class="task-mob">维度:{{ task.dimensionName }}</div>
+                <div v-if="task.mobVariantId" class="task-mob">
+                  {{ $t('quest.huntTarget') }}{{ task.mobVariantId }}
+                </div>
+                <div v-if="task.dimensionName" class="task-mob">
+                  {{ $t('quest.dimension') }}{{ task.dimensionName }}
+                </div>
               </div>
             </div>
           </section>
 
           <section v-if="questDetail.rewards.length" class="quest-section">
-            <div class="section-title">奖励 · {{ questDetail.rewards.length }}</div>
+            <div class="section-title">
+              {{ $t('quest.rewards', { count: questDetail.rewards.length }) }}
+            </div>
             <div class="task-list">
               <div v-for="reward in questDetail.rewards" :key="reward.rewardId" class="task-card">
                 <div class="task-header">
@@ -469,7 +540,11 @@ const rewardTypeLabels: Record<string, string> = {
                     {{ rewardTypeLabels[reward.rewardType] ?? reward.rewardType }}
                   </el-tag>
                   <span class="task-name">{{ reward.name }}</span>
-                  <span v-if="reward.xp > 0" class="task-num">{{ reward.xp }}{{ reward.levels ? ' Lv' : ' XP' }}</span>
+                  <span v-if="reward.xp > 0" class="task-num">{{
+                    reward.levels
+                      ? $t('quest.xpLevel', { count: reward.xp })
+                      : $t('quest.xpPoints', { count: reward.xp })
+                  }}</span>
                 </div>
                 <div v-if="reward.itemGroups.length" class="task-items">
                   <div
@@ -485,7 +560,9 @@ const rewardTypeLabels: Record<string, string> = {
                       @click="e.itemVariantId && goToItem(e.itemVariantId)"
                     >
                       <img v-if="e.assetUrl" :src="e.assetUrl" loading="lazy" />
-                      <span class="item-name">{{ e.displayName ?? e.itemVariantId ?? e.fluidVariantId }}</span>
+                      <span class="item-name">{{
+                        e.displayName ?? e.itemVariantId ?? e.fluidVariantId
+                      }}</span>
                       <span v-if="e.amount > 1" class="item-amount">×{{ e.amount }}</span>
                     </div>
                   </div>
@@ -567,8 +644,14 @@ const rewardTypeLabels: Record<string, string> = {
   background: transparent;
   color: var(--el-text-color-regular);
   cursor: pointer;
-  font: 600 11px ui-monospace, SFMono-Regular, Menlo, monospace;
-  transition: background 0.15s, color 0.15s;
+  font:
+    600 11px ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
 .ct-btn:hover {
   background: var(--el-fill-color);
@@ -696,7 +779,9 @@ const rewardTypeLabels: Record<string, string> = {
   font-size: 12px;
   cursor: pointer;
   flex-shrink: 0;
-  transition: border-color 0.15s, background 0.15s;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
 }
 .item-chip:hover {
   border-color: var(--el-color-primary);

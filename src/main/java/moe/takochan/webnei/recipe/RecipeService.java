@@ -32,14 +32,14 @@ public class RecipeService {
     }
 
     public PageResponse<RecipeCategoryDto> listCategoriesPage(
-            String datasetId, String query, String plugin, boolean hideEmpty, PageRequest page) {
+            String datasetId, String query, String modId, boolean hideEmpty, PageRequest page) {
         DatasetSummary dataset = datasetService.requireById(datasetId);
-        return recipeDao.listCategoriesPage(dataset, query, plugin, hideEmpty, page);
+        return recipeDao.listCategoriesPage(dataset, query, modId, hideEmpty, page);
     }
 
-    public List<String> listCategoryPlugins(String datasetId) {
+    public List<String> listCategoryMods(String datasetId) {
         DatasetSummary dataset = datasetService.requireById(datasetId);
-        return recipeDao.listCategoryPlugins(dataset);
+        return recipeDao.listCategoryMods(dataset);
     }
 
     public RecipeDto detail(String datasetId, String recipeId) {

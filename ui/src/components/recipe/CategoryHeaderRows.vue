@@ -1,83 +1,86 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import { listCategoryMachines, listCategoryVoltageTiers } from '@/api/recipes'
-import type { CategoryMachine, CategoryVoltageTier, LookupKind } from '@/api/recipes.types'
+import { computed, ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
+import { listCategoryMachines, listCategoryVoltageTiers } from '@/api/recipes';
+import type { CategoryMachine, CategoryVoltageTier, LookupKind } from '@/api/recipes.types';
 
 const props = withDefaults(
   defineProps<{
-    datasetId: string
-    categoryId: string
-    activeTier: string | null
-    hideMachines?: boolean
-    target?: string | null
-    kind?: LookupKind | null
+    datasetId: string;
+    categoryId: string;
+    activeTier: string | null;
+    hideMachines?: boolean;
+    target?: string | null;
+    kind?: LookupKind | null;
   }>(),
   { hideMachines: false, target: null, kind: null },
-)
+);
+
+const { t } = useI18n();
 
 const emit = defineEmits<{
-  (e: 'update:activeTier', tier: string | null): void
-}>()
+  (e: 'update:activeTier', tier: string | null): void;
+}>();
 
-const router = useRouter()
+const router = useRouter();
 
-const machines = ref<CategoryMachine[]>([])
-const tiers = ref<CategoryVoltageTier[]>([])
+const machines = ref<CategoryMachine[]>([]);
+const tiers = ref<CategoryVoltageTier[]>([]);
 
-const tiersTotal = computed(() => tiers.value.reduce((sum, t) => sum + t.recipeCount, 0))
+const tiersTotal = computed(() => tiers.value.reduce((sum, t) => sum + t.recipeCount, 0));
 
 const TIER_COLORS: Record<string, { fg: string; bg: string }> = {
   ULV: { fg: '#64748b', bg: 'rgba(100, 116, 139, 0.12)' },
-  LV:  { fg: '#b45309', bg: 'rgba(180, 83, 9, 0.12)' },
-  MV:  { fg: '#ea580c', bg: 'rgba(234, 88, 12, 0.12)' },
-  HV:  { fg: '#a16207', bg: 'rgba(161, 98, 7, 0.14)' },
-  EV:  { fg: '#9a6c2a', bg: 'rgba(154, 108, 42, 0.12)' },
-  IV:  { fg: '#475569', bg: 'rgba(71, 85, 105, 0.14)' },
+  LV: { fg: '#b45309', bg: 'rgba(180, 83, 9, 0.12)' },
+  MV: { fg: '#ea580c', bg: 'rgba(234, 88, 12, 0.12)' },
+  HV: { fg: '#a16207', bg: 'rgba(161, 98, 7, 0.14)' },
+  EV: { fg: '#9a6c2a', bg: 'rgba(154, 108, 42, 0.12)' },
+  IV: { fg: '#475569', bg: 'rgba(71, 85, 105, 0.14)' },
   LuV: { fg: '#be185d', bg: 'rgba(190, 24, 93, 0.12)' },
   ZPM: { fg: '#7e22ce', bg: 'rgba(126, 34, 206, 0.12)' },
-  UV:  { fg: '#0369a1', bg: 'rgba(3, 105, 161, 0.12)' },
+  UV: { fg: '#0369a1', bg: 'rgba(3, 105, 161, 0.12)' },
   UHV: { fg: '#b91c1c', bg: 'rgba(185, 28, 28, 0.12)' },
   UEV: { fg: '#047857', bg: 'rgba(4, 120, 87, 0.12)' },
   UIV: { fg: '#b45309', bg: 'rgba(180, 83, 9, 0.14)' },
   UMV: { fg: '#0e7490', bg: 'rgba(14, 116, 144, 0.12)' },
   UXV: { fg: '#a21caf', bg: 'rgba(162, 28, 175, 0.12)' },
   MAX: { fg: '#991b1b', bg: 'rgba(153, 27, 27, 0.16)' },
-}
+};
 function tierColor(tier: string) {
-  return TIER_COLORS[tier] ?? TIER_COLORS.LV
+  return TIER_COLORS[tier] ?? TIER_COLORS.LV;
 }
 
 async function fetchMachines() {
   if (props.hideMachines || !props.datasetId || !props.categoryId) {
-    machines.value = []
-    return
+    machines.value = [];
+    return;
   }
   try {
-    machines.value = await listCategoryMachines(props.datasetId, props.categoryId)
+    machines.value = await listCategoryMachines(props.datasetId, props.categoryId);
   } catch {
-    machines.value = []
+    machines.value = [];
   }
 }
 
 async function fetchTiers() {
   if (!props.datasetId || !props.categoryId) {
-    tiers.value = []
-    return
+    tiers.value = [];
+    return;
   }
   try {
     tiers.value = await listCategoryVoltageTiers(props.datasetId, props.categoryId, {
       target: props.target ?? undefined,
       kind: props.kind ?? undefined,
-    })
+    });
   } catch {
-    tiers.value = []
+    tiers.value = [];
   }
 }
 
 function selectTier(tier: string | null) {
-  if (tier === props.activeTier) return
-  emit('update:activeTier', tier)
+  if (tier === props.activeTier) return;
+  emit('update:activeTier', tier);
 }
 
 function openMachine(m: CategoryMachine) {
@@ -85,24 +88,24 @@ function openMachine(m: CategoryMachine) {
     name: 'lookup',
     params: { datasetId: props.datasetId },
     query: { target: m.itemVariantId, kind: 'detail' },
-  })
+  });
 }
 
 watch(
   () => [props.datasetId, props.categoryId, props.hideMachines, props.target, props.kind],
   () => {
-    fetchMachines()
-    fetchTiers()
+    fetchMachines();
+    fetchTiers();
   },
   { immediate: true },
-)
+);
 </script>
 
 <template>
   <div v-if="machines.length > 0 || tiers.length > 0" class="header-rows">
     <section v-if="!hideMachines && machines.length > 0" class="row">
       <div class="row-label">
-        <span>适用机器</span>
+        <span>{{ t('category.applicableMachines') }}</span>
         <span class="row-count">{{ machines.length }}</span>
       </div>
       <div class="machines">
@@ -113,11 +116,7 @@ watch(
           placement="top"
           :show-after="100"
         >
-          <button
-            type="button"
-            class="machine-cell"
-            @click="openMachine(m)"
-          >
+          <button type="button" class="machine-cell" @click="openMachine(m)">
             <img
               v-if="m.assetUrl"
               :src="m.assetUrl"
@@ -132,7 +131,7 @@ watch(
 
     <section v-if="tiers.length > 0" class="row">
       <div class="row-label">
-        <span>电压</span>
+        <span>{{ t('category.voltage') }}</span>
         <span class="row-count">{{ tiers.length }}</span>
       </div>
       <div class="tier-chips">
@@ -142,7 +141,7 @@ watch(
           :class="{ active: activeTier === null }"
           @click="selectTier(null)"
         >
-          <span class="chip-name">全部</span>
+          <span class="chip-name">{{ t('category.allTiers') }}</span>
           <span class="chip-badge">{{ tiersTotal.toLocaleString() }}</span>
         </button>
         <button
@@ -217,7 +216,9 @@ watch(
   background: var(--el-bg-color);
   cursor: pointer;
   padding: 2px;
-  transition: border-color 0.12s, background-color 0.12s;
+  transition:
+    border-color 0.12s,
+    background-color 0.12s;
 }
 .machine-cell:hover {
   border-color: var(--el-color-primary);
@@ -256,7 +257,10 @@ watch(
   font-variant-numeric: tabular-nums;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-weight: 600;
-  transition: background-color 0.12s, border-color 0.12s, color 0.12s;
+  transition:
+    background-color 0.12s,
+    border-color 0.12s,
+    color 0.12s;
 }
 .chip.neutral {
   background: var(--el-bg-color);

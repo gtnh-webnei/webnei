@@ -1,29 +1,31 @@
 <script setup lang="ts">
-import { useRouter, useRoute } from 'vue-router'
-import { computed } from 'vue'
-import type { GregTechSpecialItem } from '@/api/recipes.types'
+import { useRouter, useRoute } from 'vue-router';
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+import type { GregTechSpecialItem } from '@/api/recipes.types';
 
 const props = defineProps<{
-  items: GregTechSpecialItem[]
-}>()
+  items: GregTechSpecialItem[];
+}>();
 
-const router = useRouter()
-const route = useRoute()
-const datasetId = computed(() => String(route.params.datasetId ?? ''))
+const router = useRouter();
+const route = useRoute();
+const datasetId = computed(() => String(route.params.datasetId ?? ''));
+const { t } = useI18n();
 
 function onClick(item: GregTechSpecialItem) {
-  if (!datasetId.value) return
+  if (!datasetId.value) return;
   router.replace({
     name: 'lookup',
     params: { datasetId: datasetId.value },
     query: { target: item.itemVariantId, kind: 'detail' },
-  })
+  });
 }
 </script>
 
 <template>
   <section v-if="items.length" class="specials">
-    <div class="label">特殊物品</div>
+    <div class="label">{{ t('recipe.specialItems') }}</div>
     <div class="grid">
       <button
         v-for="item in items"
@@ -73,7 +75,9 @@ function onClick(item: GregTechSpecialItem) {
   border: 1px solid var(--el-border-color-lighter);
   border-radius: 4px;
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
 }
 .cell:hover {
   border-color: var(--el-color-primary);

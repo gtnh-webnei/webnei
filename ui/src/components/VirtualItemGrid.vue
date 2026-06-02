@@ -1,20 +1,21 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { RecycleScroller } from 'vue-virtual-scroller'
-import { Loading } from '@element-plus/icons-vue'
-import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
-import type { NeiPanelEntry } from '@/api/items.types'
-import ItemIcon from './ItemIcon.vue'
+import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { RecycleScroller } from 'vue-virtual-scroller';
+import { Loading } from '@element-plus/icons-vue';
+import 'vue-virtual-scroller/dist/vue-virtual-scroller.css';
+import type { NeiPanelEntry } from '@/api/items.types';
+import ItemIcon from './ItemIcon.vue';
 
 const props = withDefaults(
   defineProps<{
-    items: NeiPanelEntry[]
-    loading?: boolean
-    iconSize?: number
-    gap?: number
-    canLoadMore?: boolean
-    total?: number
-    selectedId?: string | null
+    items: NeiPanelEntry[];
+    loading?: boolean;
+    iconSize?: number;
+    gap?: number;
+    canLoadMore?: boolean;
+    total?: number;
+    selectedId?: string | null;
   }>(),
   {
     loading: false,
@@ -24,58 +25,58 @@ const props = withDefaults(
     total: 0,
     selectedId: null,
   },
-)
+);
 
 const emit = defineEmits<{
-  (e: 'select', item: NeiPanelEntry): void
-  (e: 'lookup', kind: 'recipe' | 'usage', item: NeiPanelEntry): void
-  (e: 'loadMore'): void
-}>()
+  (e: 'select', item: NeiPanelEntry): void;
+  (e: 'lookup', kind: 'recipe' | 'usage', item: NeiPanelEntry): void;
+  (e: 'loadMore'): void;
+}>();
 
-const containerWidth = ref(0)
-const containerRef = ref<HTMLElement | null>(null)
-let resizeObs: ResizeObserver | null = null
+const containerWidth = ref(0);
+const containerRef = ref<HTMLElement | null>(null);
+let resizeObs: ResizeObserver | null = null;
 
-const cellSize = computed(() => props.iconSize + props.gap)
+const cellSize = computed(() => props.iconSize + props.gap);
 const columns = computed(() => {
-  if (containerWidth.value <= 0) return 1
-  return Math.max(1, Math.floor(containerWidth.value / cellSize.value))
-})
+  if (containerWidth.value <= 0) return 1;
+  return Math.max(1, Math.floor(containerWidth.value / cellSize.value));
+});
 
 const rows = computed(() => {
-  const cols = columns.value
-  if (cols <= 0 || props.items.length === 0) return []
-  const out: { id: number; cells: NeiPanelEntry[] }[] = []
+  const cols = columns.value;
+  if (cols <= 0 || props.items.length === 0) return [];
+  const out: { id: number; cells: NeiPanelEntry[] }[] = [];
   for (let i = 0; i < props.items.length; i += cols) {
-    out.push({ id: i, cells: props.items.slice(i, i + cols) })
+    out.push({ id: i, cells: props.items.slice(i, i + cols) });
   }
-  return out
-})
+  return out;
+});
 
 watch(
   () => containerRef.value,
   (el) => {
     if (resizeObs) {
-      resizeObs.disconnect()
-      resizeObs = null
+      resizeObs.disconnect();
+      resizeObs = null;
     }
-    if (!el) return
-    containerWidth.value = el.clientWidth
+    if (!el) return;
+    containerWidth.value = el.clientWidth;
     resizeObs = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        containerWidth.value = entry.contentRect.width
+        containerWidth.value = entry.contentRect.width;
       }
-    })
-    resizeObs.observe(el)
+    });
+    resizeObs.observe(el);
   },
   { immediate: true },
-)
+);
 
 function onScroll(_event: Event, position: { startIndex: number; endIndex: number }) {
-  if (!props.canLoadMore || props.loading) return
-  const lastRowIndex = rows.value.length - 1
+  if (!props.canLoadMore || props.loading) return;
+  const lastRowIndex = rows.value.length - 1;
   if (position.endIndex >= lastRowIndex - 2) {
-    emit('loadMore')
+    emit('loadMore');
   }
 }
 </script>
@@ -106,10 +107,10 @@ function onScroll(_event: Event, position: { startIndex: number; endIndex: numbe
     </RecycleScroller>
     <div v-if="loading" class="loading-footer">
       <el-icon class="is-loading"><Loading /></el-icon>
-      加载中…
+      {{ $t('common.loading') }}
     </div>
     <div v-else-if="!canLoadMore && items.length > 0" class="loading-footer muted">
-      共 {{ total }} 项
+      {{ $t('common.totalCount') }} {{ total }} {{ $t('common.totalSuffix') }}
     </div>
   </div>
 </template>

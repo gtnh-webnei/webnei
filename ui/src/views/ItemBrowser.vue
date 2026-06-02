@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useDatasetStore } from '@/stores/dataset'
@@ -12,6 +13,8 @@ import ItemIcon from '@/components/ItemIcon.vue'
 
 type ViewMode = 'card' | 'icon'
 const VIEW_STORAGE = 'webnei.itemBrowser.view'
+
+const { t } = useI18n()
 
 const route = useRoute()
 const router = useRouter()
@@ -60,15 +63,15 @@ function goLookup(kind: 'recipe' | 'usage', item: NeiPanelEntry) {
       v-model:q="q"
       v-model:secondary="secondary"
       :secondary-options="secondaryOptions"
-      placeholder="搜索名称 / registry / id"
+      :placeholder="t('item.searchPlaceholder')"
       :total="total"
     >
       <template #extra>
         <el-segmented
           v-model="viewMode"
           :options="[
-            { label: '卡片', value: 'card' },
-            { label: '紧凑', value: 'icon' },
+            { label: t('item.viewCard'), value: 'card' },
+            { label: t('item.viewCompact'), value: 'icon' },
           ]"
           size="small"
         />
@@ -79,7 +82,7 @@ function goLookup(kind: 'recipe' | 'usage', item: NeiPanelEntry) {
 
     <el-skeleton v-if="loading && items.length === 0" :rows="6" animated />
 
-    <el-empty v-else-if="items.length === 0" description="没有匹配的物品" />
+    <el-empty v-else-if="items.length === 0" :description="t('item.noMatch')" />
 
     <div
       v-else

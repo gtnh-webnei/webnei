@@ -1,37 +1,41 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import type { Recipe, RecipeCategory, RecipeSlot } from '@/api/recipes.types'
-import RecipePanelShell from '../RecipePanelShell.vue'
-import SlotCell from '../../SlotCell.vue'
-import SlotGrid from '../SlotGrid.vue'
-import SidesLayout from '../SidesLayout.vue'
+import { computed } from 'vue';
+import type { Recipe, RecipeCategory, RecipeSlot } from '@/api/recipes.types';
+import RecipePanelShell from '../RecipePanelShell.vue';
+import SlotCell from '../../SlotCell.vue';
+import SlotGrid from '../SlotGrid.vue';
+import SidesLayout from '../SidesLayout.vue';
 
 const props = defineProps<{
-  recipe: Recipe
-  category?: RecipeCategory | null
-  pickHint?: string
-}>()
+  recipe: Recipe;
+  category?: RecipeCategory | null;
+  pickHint?: string;
+}>();
 
 const emit = defineEmits<{
-  (e: 'pick', payload: { itemVariantId: string | null; fluidVariantId: string | null }): void
-  (e: 'lookup', kind: 'recipe' | 'usage', payload: { itemVariantId: string | null; fluidVariantId: string | null }): void
-}>()
+  (e: 'pick', payload: { itemVariantId: string | null; fluidVariantId: string | null }): void;
+  (
+    e: 'lookup',
+    kind: 'recipe' | 'usage',
+    payload: { itemVariantId: string | null; fluidVariantId: string | null },
+  ): void;
+}>();
 
 // Inscriber declares 3 input slots in roles 0/1/2, but the 2x3 visual grid
 // puts them at positions 0, 3, 4 with arrows at 1, 5 and empty at 2.
-const SLOT_REMAP: Record<number, number> = { 0: 0, 1: 3, 2: 4 }
+const SLOT_REMAP: Record<number, number> = { 0: 0, 1: 3, 2: 4 };
 
 const itemInputs = computed<RecipeSlot[]>(() =>
   props.recipe.slots
     .filter((s) => s.role === 'item_input')
     .map((s) => ({ ...s, slotIndex: SLOT_REMAP[s.slotIndex] ?? s.slotIndex })),
-)
+);
 
 const itemOutputs = computed<RecipeSlot[]>(() =>
   props.recipe.slots
     .filter((s) => s.role === 'item_output')
     .sort((a, b) => a.slotIndex - b.slotIndex),
-)
+);
 
 const outputCategory = computed(() =>
   props.category
@@ -48,31 +52,26 @@ const outputCategory = computed(() =>
         shapeless: props.category.shapeless,
       }
     : null,
-)
+);
 
 function onPick(payload: { itemVariantId: string | null; fluidVariantId: string | null }) {
-  emit('pick', payload)
+  emit('pick', payload);
 }
 function onLookup(
   kind: 'recipe' | 'usage',
   payload: { itemVariantId: string | null; fluidVariantId: string | null },
 ) {
-  emit('lookup', kind, payload)
+  emit('lookup', kind, payload);
 }
 </script>
 
 <template>
-  <RecipePanelShell
-    :recipe="recipe"
-    :category="category"
-    :declared-cols="2"
-    :declared-rows="3"
-  >
+  <RecipePanelShell :recipe="recipe" :category="category" :declared-cols="2" :declared-rows="3">
     <section class="side inputs">
       <div class="side-header">
-        <div class="side-label">输入</div>
+        <div class="side-label">{{ $t('recipe.input') }}</div>
         <span v-if="itemInputs.length" class="meta-chip">
-          <span class="dot item" />物品 {{ itemInputs.length }}
+          <span class="dot item" />{{ $t('recipe.itemCountLabel', { count: itemInputs.length }) }}
         </span>
       </div>
       <div class="group">
@@ -86,11 +85,7 @@ function onLookup(
           @lookup="onLookup"
         >
           <template #cell="{ slotData, index, cellSize, declared }">
-            <div
-              v-if="index === 1"
-              class="inscriber-arrow"
-              aria-hidden="true"
-            >
+            <div v-if="index === 1" class="inscriber-arrow" aria-hidden="true">
               <svg viewBox="0 0 52 52" width="100%" height="100%">
                 <path
                   d="M 4 26 H 26 V 48"
@@ -110,11 +105,7 @@ function onLookup(
                 />
               </svg>
             </div>
-            <div
-              v-else-if="index === 5"
-              class="inscriber-arrow"
-              aria-hidden="true"
-            >
+            <div v-else-if="index === 5" class="inscriber-arrow" aria-hidden="true">
               <svg viewBox="0 0 52 52" width="100%" height="100%">
                 <path
                   d="M 4 26 H 26 V 4"
@@ -151,7 +142,7 @@ function onLookup(
 
     <div v-if="itemOutputs.length" class="divider">
       <span class="divider-line" />
-      <span class="divider-label">产出</span>
+      <span class="divider-label">{{ $t('recipe.outputDivider') }}</span>
       <span class="divider-line" />
     </div>
 

@@ -20,7 +20,7 @@ export async function listRecipeCategoriesPage(
   datasetId: string,
   params: {
     q?: string
-    plugin?: string
+    modId?: string
     hideEmpty?: boolean
     page: number
     size: number
@@ -31,7 +31,7 @@ export async function listRecipeCategoriesPage(
     size: params.size,
   }
   if (params.q) qs.q = params.q
-  if (params.plugin) qs.plugin = params.plugin
+  if (params.modId) qs.modId = params.modId
   if (params.hideEmpty) qs.hideEmpty = true
   const { data } = await http.get<PageResponse<RecipeCategory>>(
     `/datasets/${encodeURIComponent(datasetId)}/recipe-categories/page`,
@@ -40,9 +40,9 @@ export async function listRecipeCategoriesPage(
   return data
 }
 
-export async function listRecipeCategoryPlugins(datasetId: string): Promise<string[]> {
+export async function listRecipeCategoryMods(datasetId: string): Promise<string[]> {
   const { data } = await http.get<string[]>(
-    `/datasets/${encodeURIComponent(datasetId)}/recipe-categories/plugins`,
+    `/datasets/${encodeURIComponent(datasetId)}/recipe-categories/mods`,
   )
   return data
 }

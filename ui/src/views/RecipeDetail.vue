@@ -1,80 +1,80 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { storeToRefs } from 'pinia'
-import { useDatasetStore } from '@/stores/dataset'
-import { getRecipeDetail, listRecipeCategories } from '@/api/recipes'
-import type { Recipe, RecipeCategory } from '@/api/recipes.types'
-import RecipePanel from '@/components/RecipePanel.vue'
+import { computed, onMounted, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
+import { storeToRefs } from 'pinia';
+import { useDatasetStore } from '@/stores/dataset';
+import { getRecipeDetail, listRecipeCategories } from '@/api/recipes';
+import type { Recipe, RecipeCategory } from '@/api/recipes.types';
+import RecipePanel from '@/components/RecipePanel.vue';
 
-const route = useRoute()
-const router = useRouter()
-const datasetStore = useDatasetStore()
-const { activeDatasetId } = storeToRefs(datasetStore)
+const route = useRoute();
+const router = useRouter();
+const datasetStore = useDatasetStore();
+const { activeDatasetId } = storeToRefs(datasetStore);
+const { t } = useI18n();
 
-const datasetId = computed(() =>
-  String(route.params.datasetId ?? activeDatasetId.value ?? ''),
-)
-const recipeId = computed(() => String(route.params.recipeId ?? ''))
+const datasetId = computed(() => String(route.params.datasetId ?? activeDatasetId.value ?? ''));
+const recipeId = computed(() => String(route.params.recipeId ?? ''));
 
-const recipe = ref<Recipe | null>(null)
-const category = ref<RecipeCategory | null>(null)
-const loading = ref(false)
-const error = ref<string | null>(null)
+const recipe = ref<Recipe | null>(null);
+const category = ref<RecipeCategory | null>(null);
+const loading = ref(false);
+const error = ref<string | null>(null);
 
 async function fetchRecipe() {
-  if (!datasetId.value || !recipeId.value) return
-  loading.value = true
-  error.value = null
+  if (!datasetId.value || !recipeId.value) return;
+  loading.value = true;
+  error.value = null;
   try {
-    const r = await getRecipeDetail(datasetId.value, recipeId.value)
-    recipe.value = r
-    const categories = await listRecipeCategories(datasetId.value)
-    category.value = categories.find((c) => c.categoryId === r.categoryId) ?? null
+    const r = await getRecipeDetail(datasetId.value, recipeId.value);
+    recipe.value = r;
+    const categories = await listRecipeCategories(datasetId.value);
+    category.value = categories.find((c) => c.categoryId === r.categoryId) ?? null;
   } catch (e) {
-    error.value = e instanceof Error ? e.message : String(e)
-    recipe.value = null
-    category.value = null
+    error.value = e instanceof Error ? e.message : String(e);
+    recipe.value = null;
+    category.value = null;
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
 function onSlotPick(payload: { itemVariantId: string | null; fluidVariantId: string | null }) {
-  const tgt = payload.itemVariantId ?? payload.fluidVariantId
-  if (!tgt) return
+  const tgt = payload.itemVariantId ?? payload.fluidVariantId;
+  if (!tgt) return;
   router.push({
     name: 'lookup',
     params: { datasetId: datasetId.value },
     query: { target: tgt, kind: 'detail' },
-  })
+  });
 }
 
 function onSlotLookup(
   next: 'recipe' | 'usage',
   payload: { itemVariantId: string | null; fluidVariantId: string | null },
 ) {
-  const tgt = payload.itemVariantId ?? payload.fluidVariantId
-  if (!tgt) return
+  const tgt = payload.itemVariantId ?? payload.fluidVariantId;
+  if (!tgt) return;
   router.push({
     name: 'lookup',
     params: { datasetId: datasetId.value },
     query: { target: tgt, kind: next },
-  })
+  });
 }
 
 function back() {
-  router.back()
+  router.back();
 }
 
-watch([datasetId, recipeId], fetchRecipe)
-onMounted(fetchRecipe)
+watch([datasetId, recipeId], fetchRecipe);
+onMounted(fetchRecipe);
 </script>
 
 <template>
   <div class="recipe-detail">
     <header class="header">
-      <el-button text @click="back">← 返回</el-button>
+      <el-button text @click="back">{{ t('common.back') }}</el-button>
       <span v-if="recipe" class="title">{{ recipe.categoryDisplayName }}</span>
     </header>
 
@@ -84,14 +84,14 @@ onMounted(fetchRecipe)
     <template v-else-if="recipe">
       <section class="meta">
         <dl class="meta-list">
-          <dt>配方 ID</dt>
+          <dt>{{ t('recipe.recipeId') }}</dt>
           <dd class="mono">{{ recipe.recipeId }}</dd>
-          <dt>来源插件</dt>
-          <dd>{{ recipe.sourcePlugin || '—' }}</dd>
-          <dt>来源引用</dt>
-          <dd class="mono">{{ recipe.sourceRef || '—' }}</dd>
+          <dt>{{ t('recipe.sourcePlugin') }}</dt>
+          <dd>{{ recipe.sourcePlugin || t('recipe.placeholder') }}</dd>
+          <dt>{{ t('recipe.sourceRef') }}</dt>
+          <dd class="mono">{{ recipe.sourceRef || t('recipe.placeholder') }}</dd>
           <template v-if="recipe.description">
-            <dt>说明</dt>
+            <dt>{{ t('recipe.description') }}</dt>
             <dd>{{ recipe.description }}</dd>
           </template>
         </dl>
@@ -107,7 +107,7 @@ onMounted(fetchRecipe)
       </section>
     </template>
 
-    <el-empty v-else description="未找到配方" />
+    <el-empty v-else :description="t('recipe.notFound')" />
   </div>
 </template>
 

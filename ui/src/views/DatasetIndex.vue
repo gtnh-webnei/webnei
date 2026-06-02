@@ -1,32 +1,26 @@
 <script setup lang="ts">
-import { storeToRefs } from 'pinia'
-import { useDatasetStore } from '@/stores/dataset'
+import { storeToRefs } from 'pinia';
+import { useI18n } from 'vue-i18n';
+import { useDatasetStore } from '@/stores/dataset';
 
-const store = useDatasetStore()
-const { datasets, loading, error } = storeToRefs(store)
+const { t } = useI18n();
+const store = useDatasetStore();
+const { datasets, loading, error } = storeToRefs(store);
 </script>
 
 <template>
   <div class="dataset-index">
     <header class="page-header">
-      <h1>WebNEI</h1>
-      <p class="lead">浏览 NESQL 导出的整包数据。选择一个数据集开始。</p>
+      <h1>{{ t('dataset.brandName') }}</h1>
+      <p class="lead">{{ t('dataset.leadText') }}</p>
     </header>
 
     <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
     <el-skeleton v-if="loading" :rows="4" animated />
-    <el-empty v-else-if="datasets.length === 0" description="数据库里还没有任何数据集" />
+    <el-empty v-else-if="datasets.length === 0" :description="t('dataset.emptyState')" />
 
     <el-row v-else :gutter="20">
-      <el-col
-        v-for="d in datasets"
-        :key="d.datasetId"
-        :xs="24"
-        :sm="24"
-        :md="12"
-        :lg="12"
-        :xl="8"
-      >
+      <el-col v-for="d in datasets" :key="d.datasetId" :xs="24" :sm="24" :md="12" :lg="12" :xl="8">
         <el-card class="dataset-card" shadow="hover">
           <template #header>
             <div class="card-header">
@@ -36,9 +30,7 @@ const { datasets, loading, error } = storeToRefs(store)
                   {{ d.packSlug }} · {{ d.packVersion }} · {{ d.variant }} · {{ d.language }}
                 </span>
               </div>
-              <el-tag type="info" effect="plain" size="small">
-                MC {{ d.minecraftVersion }}
-              </el-tag>
+              <el-tag type="info" effect="plain" size="small"> MC {{ d.minecraftVersion }} </el-tag>
             </div>
           </template>
 
@@ -48,19 +40,13 @@ const { datasets, loading, error } = storeToRefs(store)
               <span>{{ d.exporterVersion }} · schema v{{ d.schemaVersion }}</span>
             </div>
             <div class="meta-row">
-              <span class="k">导出时间</span>
+              <span class="k">{{ t('dataset.exportTime') }}</span>
               <span>{{ new Date(d.createdAt).toLocaleString() }}</span>
             </div>
             <div class="meta-row plugins">
               <span class="k">Plugins</span>
               <span class="tags">
-                <el-tag
-                  v-for="p in d.activePlugins"
-                  :key="p"
-                  size="small"
-                  effect="light"
-                  round
-                >
+                <el-tag v-for="p in d.activePlugins" :key="p" size="small" effect="light" round>
                   {{ p }}
                 </el-tag>
               </span>
@@ -70,10 +56,10 @@ const { datasets, loading, error } = storeToRefs(store)
           <template #footer>
             <div class="actions">
               <router-link :to="`/datasets/${encodeURIComponent(d.datasetId)}/items`">
-                <el-button type="primary">开始浏览</el-button>
+                <el-button type="primary">{{ t('dataset.startBrowsing') }}</el-button>
               </router-link>
               <router-link :to="`/datasets/${encodeURIComponent(d.datasetId)}/mods`">
-                <el-button>Mod 列表</el-button>
+                <el-button>{{ t('dataset.modList') }}</el-button>
               </router-link>
             </div>
           </template>

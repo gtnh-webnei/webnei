@@ -1,28 +1,32 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import type { Recipe, RecipeCategory } from '@/api/recipes.types'
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+import type { Recipe, RecipeCategory } from '@/api/recipes.types';
 
 const props = defineProps<{
-  recipe: Recipe
-  category?: RecipeCategory | null
-  declaredCols?: number | null
-  declaredRows?: number | null
-}>()
+  recipe: Recipe;
+  category?: RecipeCategory | null;
+  declaredCols?: number | null;
+  declaredRows?: number | null;
+}>();
 
-const shapeless = computed(() => !!props.category?.shapeless)
+const { t } = useI18n();
+
+const shapeless = computed(() => !!props.category?.shapeless);
 const declaredOrdered = computed(
-  () => !shapeless.value
-    && (props.declaredCols ?? 0) > 0
-    && (props.declaredRows ?? 0) > 0,
-)
+  () => !shapeless.value && (props.declaredCols ?? 0) > 0 && (props.declaredRows ?? 0) > 0,
+);
 const itemInputCount = computed(
   () => props.recipe.slots.filter((s) => s.role === 'item_input').length,
-)
+);
 const descriptionLines = computed(() =>
   props.recipe.description
-    ? props.recipe.description.split(/\r?\n/).map((l) => l.trim()).filter((l) => l.length > 0)
+    ? props.recipe.description
+        .split(/\r?\n/)
+        .map((l) => l.trim())
+        .filter((l) => l.length > 0)
     : [],
-)
+);
 </script>
 
 <template>
@@ -36,16 +40,13 @@ const descriptionLines = computed(() =>
               {{ recipe.sourcePlugin }}
             </el-tag>
             <el-tag v-if="shapeless" size="small" type="warning" effect="dark" round>
-              无序合成<span v-if="itemInputCount"> · {{ itemInputCount }} 格</span>
+              {{ t('recipe.shapeless')
+              }}<span v-if="itemInputCount">
+                · {{ itemInputCount }}{{ t('recipe.gridSlots') }}</span
+              >
             </el-tag>
-            <el-tag
-              v-else-if="declaredOrdered"
-              size="small"
-              type="success"
-              effect="plain"
-              round
-            >
-              有序 {{ declaredCols }}×{{ declaredRows }}
+            <el-tag v-else-if="declaredOrdered" size="small" type="success" effect="plain" round>
+              {{ t('recipe.shapedPrefix', { w: declaredCols, h: declaredRows }) }}
             </el-tag>
           </div>
         </div>

@@ -1,97 +1,104 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import type { RecipeSlot } from '@/api/recipes.types'
-import SlotCell from '../SlotCell.vue'
-import SlotGrid from './SlotGrid.vue'
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+import type { RecipeSlot } from '@/api/recipes.types';
+import SlotCell from '../SlotCell.vue';
+import SlotGrid from './SlotGrid.vue';
+
+const { t } = useI18n();
 
 const props = withDefaults(
   defineProps<{
-    slots: RecipeSlot[]
+    slots: RecipeSlot[];
     category?: {
-      categoryId: string
-      itemInputWidth: number
-      itemInputHeight: number
-      itemOutputWidth: number
-      itemOutputHeight: number
-      fluidInputWidth: number
-      fluidInputHeight: number
-      fluidOutputWidth: number
-      fluidOutputHeight: number
-      shapeless: boolean
-    } | null
-    pickHint?: string
-    showProbabilityBadge?: boolean
+      categoryId: string;
+      itemInputWidth: number;
+      itemInputHeight: number;
+      itemOutputWidth: number;
+      itemOutputHeight: number;
+      fluidInputWidth: number;
+      fluidInputHeight: number;
+      fluidOutputWidth: number;
+      fluidOutputHeight: number;
+      shapeless: boolean;
+    } | null;
+    pickHint?: string;
+    showProbabilityBadge?: boolean;
   }>(),
   { category: null, pickHint: undefined, showProbabilityBadge: true },
-)
+);
 
 const emit = defineEmits<{
-  (e: 'pick', payload: { itemVariantId: string | null; fluidVariantId: string | null }): void
-  (e: 'lookup', kind: 'recipe' | 'usage', payload: { itemVariantId: string | null; fluidVariantId: string | null }): void
-}>()
+  (e: 'pick', payload: { itemVariantId: string | null; fluidVariantId: string | null }): void;
+  (
+    e: 'lookup',
+    kind: 'recipe' | 'usage',
+    payload: { itemVariantId: string | null; fluidVariantId: string | null },
+  ): void;
+}>();
 
 function filterRole(role: string): RecipeSlot[] {
-  return [...props.slots]
-    .filter((s) => s.role === role)
-    .sort((a, b) => a.slotIndex - b.slotIndex)
+  return [...props.slots].filter((s) => s.role === role).sort((a, b) => a.slotIndex - b.slotIndex);
 }
 
-const itemInputs = computed(() => filterRole('item_input'))
-const itemOutputs = computed(() => filterRole('item_output'))
-const fluidInputs = computed(() => filterRole('fluid_input'))
-const fluidOutputs = computed(() => filterRole('fluid_output'))
+const itemInputs = computed(() => filterRole('item_input'));
+const itemOutputs = computed(() => filterRole('item_output'));
+const fluidInputs = computed(() => filterRole('fluid_input'));
+const fluidOutputs = computed(() => filterRole('fluid_output'));
 
 // Special items: filter by placement field
 const specialInputs = computed(() =>
-  props.slots.filter((s) => s.role === 'special_item' && s.placement === 'special_input')
-    .sort((a, b) => a.slotIndex - b.slotIndex)
-)
+  props.slots
+    .filter((s) => s.role === 'special_item' && s.placement === 'special_input')
+    .sort((a, b) => a.slotIndex - b.slotIndex),
+);
 const specialOutputs = computed(() =>
-  props.slots.filter((s) => s.role === 'special_item' && s.placement === 'special_output')
-    .sort((a, b) => a.slotIndex - b.slotIndex)
-)
+  props.slots
+    .filter((s) => s.role === 'special_item' && s.placement === 'special_output')
+    .sort((a, b) => a.slotIndex - b.slotIndex),
+);
 
-const hasInputs = computed(() => itemInputs.value.length + fluidInputs.value.length > 0)
-const hasOutputs = computed(() => itemOutputs.value.length + fluidOutputs.value.length > 0)
+const hasInputs = computed(() => itemInputs.value.length + fluidInputs.value.length > 0);
+const hasOutputs = computed(() => itemOutputs.value.length + fluidOutputs.value.length > 0);
 
-const shapeless = computed(() => !!props.category?.shapeless)
+const shapeless = computed(() => !!props.category?.shapeless);
 
 const inputDims = computed<{ w: number | null; h: number | null }>(() => {
   // GT exporter 把所有 RecipeMap 的 input 写成 maxItemInputs×1（flat），
   // 但装配线 NEI handler 实际是 4×4 网格。这里按真实布局展示。
   if (props.category?.categoryId === 'gregtech:assemblyline') {
-    return { w: 4, h: 4 }
+    return { w: 4, h: 4 };
   }
   return {
     w: props.category?.itemInputWidth ?? null,
     h: props.category?.itemInputHeight ?? null,
-  }
-})
+  };
+});
 
 const fluidInputDims = computed<{ w: number | null; h: number | null }>(() => ({
   w: props.category?.fluidInputWidth ?? null,
   h: props.category?.fluidInputHeight ?? null,
-}))
+}));
 const fluidOutputDims = computed<{ w: number | null; h: number | null }>(() => ({
   w: props.category?.fluidOutputWidth ?? null,
   h: props.category?.fluidOutputHeight ?? null,
-}))
+}));
 
 function onPick(payload: { itemVariantId: string | null; fluidVariantId: string | null }) {
-  emit('pick', payload)
+  emit('pick', payload);
 }
 function onLookup(
   kind: 'recipe' | 'usage',
   payload: { itemVariantId: string | null; fluidVariantId: string | null },
 ) {
-  emit('lookup', kind, payload)
+  emit('lookup', kind, payload);
 }
 </script>
 
 <template>
   <section v-if="specialInputs.length" class="side special-inputs">
     <div class="side-header">
-      <div class="side-label">特殊输入</div>
+      <div class="side-label">{{ t('recipe.specialInput') }}</div>
       <div class="side-meta">
         <span class="meta-chip special">
           <span class="dot special" />{{ specialInputs.length }}
@@ -114,13 +121,13 @@ function onLookup(
 
   <section v-if="hasInputs" class="side inputs">
     <div class="side-header">
-      <div class="side-label">输入</div>
+      <div class="side-label">{{ t('recipe.input') }}</div>
       <div class="side-meta">
         <span v-if="itemInputs.length" class="meta-chip">
-          <span class="dot item" />物品 {{ itemInputs.length }}
+          <span class="dot item" />{{ t('recipe.itemCountLabel', { count: itemInputs.length }) }}
         </span>
         <span v-if="fluidInputs.length" class="meta-chip">
-          <span class="dot fluid" />流体 {{ fluidInputs.length }}
+          <span class="dot fluid" />{{ t('recipe.fluidCountLabel', { count: fluidInputs.length }) }}
         </span>
       </div>
     </div>
@@ -165,19 +172,21 @@ function onLookup(
 
   <div v-if="hasInputs && hasOutputs" class="divider">
     <span class="divider-line" />
-    <span class="divider-label">产出</span>
+    <span class="divider-label">{{ t('recipe.outputDivider') }}</span>
     <span class="divider-line" />
   </div>
 
   <section v-if="hasOutputs" class="side outputs">
     <div class="side-header">
-      <div class="side-label">输出</div>
+      <div class="side-label">{{ t('recipe.output') }}</div>
       <div class="side-meta">
         <span v-if="itemOutputs.length" class="meta-chip">
-          <span class="dot item" />物品 {{ itemOutputs.length }}
+          <span class="dot item" />{{ t('recipe.itemCountLabel', { count: itemOutputs.length }) }}
         </span>
         <span v-if="fluidOutputs.length" class="meta-chip">
-          <span class="dot fluid" />流体 {{ fluidOutputs.length }}
+          <span class="dot fluid" />{{
+            t('recipe.fluidCountLabel', { count: fluidOutputs.length })
+          }}
         </span>
       </div>
     </div>
@@ -222,7 +231,7 @@ function onLookup(
 
   <section v-if="specialOutputs.length" class="side special-outputs">
     <div class="side-header">
-      <div class="side-label">特殊输出</div>
+      <div class="side-label">{{ t('recipe.specialOutput') }}</div>
       <div class="side-meta">
         <span class="meta-chip special">
           <span class="dot special" />{{ specialOutputs.length }}

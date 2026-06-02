@@ -1,51 +1,54 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { getItemContainers } from '@/api/extras'
-import { getItemDetail } from '@/api/items'
-import type { FluidContainerEntry } from '@/api/extras.types'
-import type { ItemDetail } from '@/api/items.types'
+import { computed, onMounted, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
+import { getItemContainers } from '@/api/extras';
+import { getItemDetail } from '@/api/items';
+import type { FluidContainerEntry } from '@/api/extras.types';
+import type { ItemDetail } from '@/api/items.types';
 
-const route = useRoute()
-const router = useRouter()
+const { t } = useI18n();
+const route = useRoute();
+const router = useRouter();
 
-const datasetId = computed(() => String(route.params.datasetId ?? ''))
-const itemVariantId = computed(() => String(route.params.itemVariantId ?? ''))
+const datasetId = computed(() => String(route.params.datasetId ?? ''));
+const itemVariantId = computed(() => String(route.params.itemVariantId ?? ''));
 
-const item = ref<ItemDetail | null>(null)
-const containers = ref<FluidContainerEntry[]>([])
-const loading = ref(false)
-const error = ref<string | null>(null)
-const q = ref('')
+const item = ref<ItemDetail | null>(null);
+const containers = ref<FluidContainerEntry[]>([]);
+const loading = ref(false);
+const error = ref<string | null>(null);
+const q = ref('');
 
 const filtered = computed(() => {
-  const needle = q.value.trim().toLowerCase()
-  if (!needle) return containers.value
-  return containers.value.filter((c) =>
-    (c.fluidDisplayName ?? c.fluidVariantId).toLowerCase().includes(needle)
-    || c.fluidVariantId.toLowerCase().includes(needle)
-    || (c.containerDisplayName ?? '').toLowerCase().includes(needle)
-    || c.containerItemVariantId.toLowerCase().includes(needle)
-    || (c.emptyContainerDisplayName ?? '').toLowerCase().includes(needle)
-    || c.emptyContainerItemVariantId.toLowerCase().includes(needle),
-  )
-})
+  const needle = q.value.trim().toLowerCase();
+  if (!needle) return containers.value;
+  return containers.value.filter(
+    (c) =>
+      (c.fluidDisplayName ?? c.fluidVariantId).toLowerCase().includes(needle) ||
+      c.fluidVariantId.toLowerCase().includes(needle) ||
+      (c.containerDisplayName ?? '').toLowerCase().includes(needle) ||
+      c.containerItemVariantId.toLowerCase().includes(needle) ||
+      (c.emptyContainerDisplayName ?? '').toLowerCase().includes(needle) ||
+      c.emptyContainerItemVariantId.toLowerCase().includes(needle),
+  );
+});
 
 async function load() {
-  if (!datasetId.value || !itemVariantId.value) return
-  loading.value = true
-  error.value = null
+  if (!datasetId.value || !itemVariantId.value) return;
+  loading.value = true;
+  error.value = null;
   try {
     const [detailRes, containersRes] = await Promise.all([
       getItemDetail(datasetId.value, itemVariantId.value),
       getItemContainers(datasetId.value, itemVariantId.value),
-    ])
-    item.value = detailRes
-    containers.value = containersRes
+    ]);
+    item.value = detailRes;
+    containers.value = containersRes;
   } catch (e) {
-    error.value = e instanceof Error ? e.message : String(e)
+    error.value = e instanceof Error ? e.message : String(e);
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
@@ -54,7 +57,7 @@ function goToItem(variantId: string) {
     name: 'lookup',
     params: { datasetId: datasetId.value },
     query: { target: variantId, kind: 'detail' },
-  })
+  });
 }
 
 function goToFluid(fluidVariantId: string) {
@@ -62,52 +65,59 @@ function goToFluid(fluidVariantId: string) {
     name: 'lookup',
     params: { datasetId: datasetId.value },
     query: { target: fluidVariantId, kind: 'detail' },
-  })
+  });
 }
 
 function back() {
-  router.back()
+  router.back();
 }
 
-watch([datasetId, itemVariantId], load)
-onMounted(load)
+watch([datasetId, itemVariantId], load);
+onMounted(load);
 </script>
 
 <template>
   <div class="item-containers">
     <header class="header">
-      <el-button text @click="back">← 返回</el-button>
+      <el-button text @click="back">{{ t('common.back') }}</el-button>
       <div class="title-row">
         <img v-if="item?.assetUrl" :src="item.assetUrl" class="hero-icon" :alt="item.displayName" />
         <div>
-          <h1>{{ item?.displayName ?? itemVariantId }} 作为流体容器</h1>
+          <h1>
+            {{ t('container.asFluidContainer', { name: item?.displayName ?? itemVariantId }) }}
+          </h1>
           <p class="lead">
             <code class="id">{{ itemVariantId }}</code>
             <span class="lead-sep">·</span>
-            共 {{ containers.length }} 条容器映射
+            {{ t('common.totalCount') }} {{ containers.length }} {{ t('container.totalMappings') }}
           </p>
         </div>
       </div>
     </header>
 
     <div class="toolbar">
-      <el-input v-model="q" placeholder="搜索流体 / 容器 / 空桶" clearable class="search-input" />
+      <el-input
+        v-model="q"
+        :placeholder="t('container.searchPlaceholder')"
+        clearable
+        class="search-input"
+      />
       <div class="spacer" />
       <div class="total">
-        显示 <strong>{{ filtered.length }}</strong> / {{ containers.length }}
+        {{ t('common.showing') }}<strong>{{ filtered.length }}</strong> / {{ containers.length }}
       </div>
     </div>
 
     <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
     <el-skeleton v-if="loading" :rows="8" animated />
 
-    <el-table
-      v-else
-      :data="filtered"
-      stripe
-      class="container-table"
-    >
-      <el-table-column label="流体" min-width="200" sortable :sort-by="(r: FluidContainerEntry) => r.fluidDisplayName ?? r.fluidVariantId">
+    <el-table v-else :data="filtered" stripe class="container-table">
+      <el-table-column
+        :label="t('container.colFluid')"
+        min-width="200"
+        sortable
+        :sort-by="(r: FluidContainerEntry) => r.fluidDisplayName ?? r.fluidVariantId"
+      >
         <template #default="{ row }">
           <a class="link" @click="goToFluid(row.fluidVariantId)">
             {{ row.fluidDisplayName ?? row.fluidVariantId }}
@@ -115,7 +125,7 @@ onMounted(load)
           <div class="sub">{{ row.fluidVariantId }}</div>
         </template>
       </el-table-column>
-      <el-table-column label="装满容器" min-width="220">
+      <el-table-column :label="t('container.colFilledContainer')" min-width="220">
         <template #default="{ row }">
           <div class="cell-row" @click="goToItem(row.containerItemVariantId)">
             <img v-if="row.containerAssetUrl" :src="row.containerAssetUrl" />
@@ -126,18 +136,26 @@ onMounted(load)
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="容量" width="110" align="right" sortable :sort-by="(r: FluidContainerEntry) => r.amount">
+      <el-table-column
+        :label="t('container.colCapacity')"
+        width="110"
+        align="right"
+        sortable
+        :sort-by="(r: FluidContainerEntry) => r.amount"
+      >
         <template #default="{ row }">
           <span v-if="row.amount > 0" class="amount">{{ row.amount }} mB</span>
           <span v-else class="amount-zero">—</span>
         </template>
       </el-table-column>
-      <el-table-column label="空容器" min-width="220">
+      <el-table-column :label="t('container.colEmptyContainer')" min-width="220">
         <template #default="{ row }">
           <div class="cell-row" @click="goToItem(row.emptyContainerItemVariantId)">
             <img v-if="row.emptyContainerAssetUrl" :src="row.emptyContainerAssetUrl" />
             <div>
-              <div class="link">{{ row.emptyContainerDisplayName ?? row.emptyContainerItemVariantId }}</div>
+              <div class="link">
+                {{ row.emptyContainerDisplayName ?? row.emptyContainerItemVariantId }}
+              </div>
               <div class="sub">{{ row.emptyContainerItemVariantId }}</div>
             </div>
           </div>
@@ -148,7 +166,7 @@ onMounted(load)
 </template>
 
 <script lang="ts">
-export default { name: 'ItemContainersView' }
+export default { name: 'ItemContainersView' };
 </script>
 
 <style scoped>

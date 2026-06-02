@@ -1,76 +1,84 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import { useExtrasStore } from '@/stores/extras'
-import { getFluidDetail } from '@/api/fluids'
-import type { FluidDetail } from '@/api/fluids.types'
-import type { FluidExtras } from '@/api/extras.types'
+import { computed, onMounted, ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
+import { useExtrasStore } from '@/stores/extras';
+import { getFluidDetail } from '@/api/fluids';
+import type { FluidDetail } from '@/api/fluids.types';
+import type { FluidExtras } from '@/api/extras.types';
 
 const props = defineProps<{
-  datasetId: string
-  fluidVariantId: string
-}>()
+  datasetId: string;
+  fluidVariantId: string;
+}>();
 
-const router = useRouter()
-const extrasStore = useExtrasStore()
+const router = useRouter();
+const extrasStore = useExtrasStore();
+const { t } = useI18n();
 
-const detail = ref<FluidDetail | null>(null)
-const loading = ref(false)
-const error = ref<string | null>(null)
-const heroImgFailed = ref(false)
-const previewImgFailed = ref(false)
+const detail = ref<FluidDetail | null>(null);
+const loading = ref(false);
+const error = ref<string | null>(null);
+const heroImgFailed = ref(false);
+const previewImgFailed = ref(false);
 
-const extras = ref<FluidExtras | null>(null)
-const extrasLoading = ref(false)
-const extrasError = ref<string | null>(null)
+const extras = ref<FluidExtras | null>(null);
+const extrasLoading = ref(false);
+const extrasError = ref<string | null>(null);
 
 const nbtLines = computed(() =>
   detail.value?.nbtText ? detail.value.nbtText.split('\n').filter(Boolean) : [],
-)
+);
 
 const hasAnyExtras = computed(() => {
-  if (!extras.value) return false
+  if (!extras.value) return false;
   return (
-    extras.value.containers.length > 0
-    || extras.value.blocks.length > 0
-    || extras.value.asInputRecipeCount > 0
-    || extras.value.asOutputRecipeCount > 0
-  )
-})
+    extras.value.containers.length > 0 ||
+    extras.value.blocks.length > 0 ||
+    extras.value.asInputRecipeCount > 0 ||
+    extras.value.asOutputRecipeCount > 0
+  );
+});
+
+const gaseousLabel = computed(() => t(detail.value?.gaseous ? 'fluid.gaseous' : 'fluid.liquid'));
+
+const gaseousShortLabel = computed(() =>
+  detail.value?.gaseous ? t('fluid.gaseous').charAt(0) : t('fluid.liquid').charAt(0),
+);
 
 async function load() {
-  if (!props.datasetId || !props.fluidVariantId) return
-  loading.value = true
-  error.value = null
-  detail.value = null
-  heroImgFailed.value = false
-  previewImgFailed.value = false
+  if (!props.datasetId || !props.fluidVariantId) return;
+  loading.value = true;
+  error.value = null;
+  detail.value = null;
+  heroImgFailed.value = false;
+  previewImgFailed.value = false;
   try {
-    detail.value = await getFluidDetail(props.datasetId, props.fluidVariantId)
+    detail.value = await getFluidDetail(props.datasetId, props.fluidVariantId);
   } catch (e) {
-    error.value = e instanceof Error ? e.message : String(e)
+    error.value = e instanceof Error ? e.message : String(e);
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
 async function loadExtras() {
-  if (!props.datasetId || !props.fluidVariantId) return
-  extrasLoading.value = true
-  extrasError.value = null
-  extras.value = null
+  if (!props.datasetId || !props.fluidVariantId) return;
+  extrasLoading.value = true;
+  extrasError.value = null;
+  extras.value = null;
   try {
-    extras.value = await extrasStore.loadFluid(props.datasetId, props.fluidVariantId)
+    extras.value = await extrasStore.loadFluid(props.datasetId, props.fluidVariantId);
   } catch (e) {
-    extrasError.value = e instanceof Error ? e.message : String(e)
+    extrasError.value = e instanceof Error ? e.message : String(e);
   } finally {
-    extrasLoading.value = false
+    extrasLoading.value = false;
   }
 }
 
 function copyId() {
-  if (!detail.value) return
-  navigator.clipboard?.writeText(detail.value.fluidVariantId)
+  if (!detail.value) return;
+  navigator.clipboard?.writeText(detail.value.fluidVariantId);
 }
 
 function goLookup(kind: 'recipe' | 'usage') {
@@ -78,7 +86,7 @@ function goLookup(kind: 'recipe' | 'usage') {
     name: 'lookup',
     params: { datasetId: props.datasetId },
     query: { target: props.fluidVariantId, kind },
-  })
+  });
 }
 
 function goToItem(itemVariantId: string) {
@@ -86,17 +94,20 @@ function goToItem(itemVariantId: string) {
     name: 'lookup',
     params: { datasetId: props.datasetId },
     query: { target: itemVariantId, kind: 'detail' },
-  })
+  });
 }
 
-watch(() => [props.datasetId, props.fluidVariantId], () => {
-  load()
-  loadExtras()
-})
+watch(
+  () => [props.datasetId, props.fluidVariantId],
+  () => {
+    load();
+    loadExtras();
+  },
+);
 onMounted(() => {
-  load()
-  loadExtras()
-})
+  load();
+  loadExtras();
+});
 </script>
 
 <template>
@@ -115,19 +126,23 @@ onMounted(() => {
             @error="heroImgFailed = true"
           />
           <div v-else class="hero-fallback" :class="{ gaseous: detail.gaseous }">
-            {{ detail.gaseous ? '气' : '液' }}
+            {{ gaseousShortLabel }}
           </div>
         </div>
         <div class="title-block">
           <h1 class="title">{{ detail.displayName || detail.registryName }}</h1>
           <div class="subtitle">
             <el-tag size="default" type="info" effect="plain" round>{{ detail.modId }}</el-tag>
-            <el-tag size="small" type="primary" effect="plain" round>流体</el-tag>
-            <el-tag v-if="detail.gaseous" size="small" type="warning" effect="plain" round>气态</el-tag>
+            <el-tag size="small" type="primary" effect="plain" round>{{ $t('fluid.tag') }}</el-tag>
+            <el-tag v-if="detail.gaseous" size="small" type="warning" effect="plain" round>{{
+              $t('fluid.gaseous')
+            }}</el-tag>
           </div>
           <div class="actions">
-            <el-button type="primary" @click="goLookup('recipe')">查看合成 (R)</el-button>
-            <el-button @click="goLookup('usage')">查看用途 (U)</el-button>
+            <el-button type="primary" @click="goLookup('recipe')">{{
+              $t('common.viewRecipe')
+            }}</el-button>
+            <el-button @click="goLookup('usage')">{{ $t('common.viewUsage') }}</el-button>
           </div>
         </div>
       </header>
@@ -136,37 +151,37 @@ onMounted(() => {
         <el-col :xs="24" :md="14">
           <el-card shadow="never" class="section">
             <template #header>
-              <span class="section-title">基本属性</span>
+              <span class="section-title">{{ $t('common.basicAttributes') }}</span>
             </template>
             <el-descriptions :column="1" border size="default">
-              <el-descriptions-item label="变体 ID">
+              <el-descriptions-item :label="$t('common.variantId')">
                 <code>{{ detail.fluidVariantId }}</code>
               </el-descriptions-item>
-              <el-descriptions-item label="流体 ID">
+              <el-descriptions-item :label="$t('fluid.fluidId')">
                 <code>{{ detail.fluidId }}</code>
               </el-descriptions-item>
-              <el-descriptions-item label="注册名">
+              <el-descriptions-item :label="$t('common.registryName')">
                 {{ detail.registryName }}
               </el-descriptions-item>
-              <el-descriptions-item label="非本地化名">
+              <el-descriptions-item :label="$t('common.unlocalizedName')">
                 {{ detail.unlocalizedName }}
               </el-descriptions-item>
-              <el-descriptions-item label="Mod">
+              <el-descriptions-item :label="$t('common.mod')">
                 {{ detail.modId }}
               </el-descriptions-item>
-              <el-descriptions-item label="形态">
-                {{ detail.gaseous ? '气态' : '液态' }}
+              <el-descriptions-item :label="$t('fluid.state')">
+                {{ gaseousLabel }}
               </el-descriptions-item>
-              <el-descriptions-item label="温度">
+              <el-descriptions-item :label="$t('fluid.temperature')">
                 {{ detail.temperature.toLocaleString() }} K
               </el-descriptions-item>
-              <el-descriptions-item label="密度">
+              <el-descriptions-item :label="$t('fluid.density')">
                 {{ detail.density.toLocaleString() }}
               </el-descriptions-item>
-              <el-descriptions-item label="粘度">
+              <el-descriptions-item :label="$t('fluid.viscosity')">
                 {{ detail.viscosity.toLocaleString() }}
               </el-descriptions-item>
-              <el-descriptions-item label="发光">
+              <el-descriptions-item :label="$t('fluid.luminosity')">
                 {{ detail.luminosity }}
               </el-descriptions-item>
               <el-descriptions-item v-if="detail.nbtHash" label="NBT Hash">
@@ -186,7 +201,7 @@ onMounted(() => {
         <el-col :xs="24" :md="10">
           <el-card shadow="never" class="section">
             <template #header>
-              <span class="section-title">渲染预览</span>
+              <span class="section-title">{{ $t('common.renderPreview') }}</span>
             </template>
             <div class="preview-box" :class="{ gaseous: detail.gaseous }">
               <img
@@ -197,14 +212,14 @@ onMounted(() => {
                 @error="previewImgFailed = true"
               />
               <div v-else class="preview-fallback" :class="{ gaseous: detail.gaseous }">
-                {{ detail.gaseous ? '气' : '液' }}
+                {{ gaseousShortLabel }}
               </div>
             </div>
           </el-card>
 
           <el-card shadow="never" class="section">
             <template #header>
-              <span class="section-title">扩展信息</span>
+              <span class="section-title">{{ $t('common.extrasInfo') }}</span>
             </template>
 
             <el-skeleton v-if="extrasLoading" :rows="3" animated />
@@ -218,9 +233,9 @@ onMounted(() => {
                   :disabled="extras.asOutputRecipeCount === 0"
                   @click="goLookup('recipe')"
                 >
-                  <span class="count-label">作为输出</span>
+                  <span class="count-label">{{ $t('common.asOutput') }}</span>
                   <span class="count-value">{{ extras.asOutputRecipeCount }}</span>
-                  <span class="count-hint">合成 →</span>
+                  <span class="count-hint">{{ $t('common.recipeArrow') }}</span>
                 </button>
                 <button
                   type="button"
@@ -228,15 +243,15 @@ onMounted(() => {
                   :disabled="extras.asInputRecipeCount === 0"
                   @click="goLookup('usage')"
                 >
-                  <span class="count-label">作为输入</span>
+                  <span class="count-label">{{ $t('common.asInput') }}</span>
                   <span class="count-value">{{ extras.asInputRecipeCount }}</span>
-                  <span class="count-hint">用途 →</span>
+                  <span class="count-hint">{{ $t('common.usageArrow') }}</span>
                 </button>
               </div>
 
               <div v-if="extras.blocks.length" class="ext-block">
                 <div class="ext-block-title">
-                  对应方块
+                  {{ $t('fluid.correspondingBlock') }}
                   <span class="ext-count">{{ extras.blocks.length }}</span>
                 </div>
                 <div class="block-list">
@@ -255,7 +270,7 @@ onMounted(() => {
 
               <div v-if="extras.containers.length" class="ext-block">
                 <div class="ext-block-title">
-                  流体容器
+                  {{ $t('common.fluidContainer') }}
                   <span class="ext-count">{{ extras.containers.length }}</span>
                 </div>
                 <div class="container-list">
@@ -264,30 +279,46 @@ onMounted(() => {
                     :key="`${c.fluidVariantId}-${c.containerItemVariantId}-${idx}`"
                     class="container-row"
                   >
-                    <div class="container-cell" :title="c.containerDisplayName ?? c.containerItemVariantId" @click="goToItem(c.containerItemVariantId)">
+                    <div
+                      class="container-cell"
+                      :title="c.containerDisplayName ?? c.containerItemVariantId"
+                      @click="goToItem(c.containerItemVariantId)"
+                    >
                       <img v-if="c.containerAssetUrl" :src="c.containerAssetUrl" loading="lazy" />
-                      <span class="container-name">{{ c.containerDisplayName ?? c.containerItemVariantId }}</span>
+                      <span class="container-name">{{
+                        c.containerDisplayName ?? c.containerItemVariantId
+                      }}</span>
                     </div>
                     <div class="container-arrow">
                       <span v-if="c.amount > 0" class="container-amount">{{ c.amount }} mB</span>
                       <span class="container-arrow-line">→</span>
                     </div>
-                    <div class="container-cell" :title="c.emptyContainerDisplayName ?? c.emptyContainerItemVariantId" @click="goToItem(c.emptyContainerItemVariantId)">
-                      <img v-if="c.emptyContainerAssetUrl" :src="c.emptyContainerAssetUrl" loading="lazy" />
-                      <span class="container-name">{{ c.emptyContainerDisplayName ?? c.emptyContainerItemVariantId }}</span>
+                    <div
+                      class="container-cell"
+                      :title="c.emptyContainerDisplayName ?? c.emptyContainerItemVariantId"
+                      @click="goToItem(c.emptyContainerItemVariantId)"
+                    >
+                      <img
+                        v-if="c.emptyContainerAssetUrl"
+                        :src="c.emptyContainerAssetUrl"
+                        loading="lazy"
+                      />
+                      <span class="container-name">{{
+                        c.emptyContainerDisplayName ?? c.emptyContainerItemVariantId
+                      }}</span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div v-if="!hasAnyExtras" class="ext-hint">无扩展信息</div>
+              <div v-if="!hasAnyExtras" class="ext-hint">{{ $t('common.noExtras') }}</div>
             </template>
           </el-card>
         </el-col>
       </el-row>
     </div>
 
-    <el-empty v-else-if="!loading" description="未找到流体" />
+    <el-empty v-else-if="!loading" :description="$t('fluid.notFound')" />
   </div>
 </template>
 
@@ -441,7 +472,9 @@ onMounted(() => {
   text-align: left;
   font: inherit;
   color: inherit;
-  transition: border-color 0.15s, background 0.15s;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
 }
 .count-card:not(:disabled):hover {
   border-color: var(--el-color-primary);

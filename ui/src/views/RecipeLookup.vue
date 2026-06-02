@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import { useDatasetStore } from '@/stores/dataset'
 import { listRecipeCategories, lookupBreakdown, lookupRecipes } from '@/api/recipes'
@@ -18,6 +19,7 @@ const route = useRoute()
 const router = useRouter()
 const datasetStore = useDatasetStore()
 const { activeDatasetId } = storeToRefs(datasetStore)
+const { t } = useI18n()
 
 function parseTab(value: unknown): Tab {
   const v = String(value ?? 'detail')
@@ -262,9 +264,9 @@ onMounted(() => {
         <el-segmented
           :model-value="tab"
           :options="[
-            { label: '详情', value: 'detail' },
-            { label: '合成 (R)', value: 'recipe' },
-            { label: '用途 (U)', value: 'usage' },
+            { label: t('lookup.detailTab'), value: 'detail' },
+            { label: t('lookup.recipeTab'), value: 'recipe' },
+            { label: t('lookup.usageTab'), value: 'usage' },
           ]"
           @update:model-value="setTab"
         />
@@ -320,7 +322,7 @@ onMounted(() => {
       />
 
       <el-skeleton v-if="loading && recipes.length === 0" :rows="6" animated />
-      <el-empty v-else-if="!loading && recipes.length === 0" description="没有匹配的配方" />
+      <el-empty v-else-if="!loading && recipes.length === 0" :description="t('lookup.noMatch')" />
 
       <div v-else v-loading="loading" class="recipes">
         <RecipePanel
@@ -328,7 +330,7 @@ onMounted(() => {
           :key="r.recipeId"
           :recipe="r"
           :category="categoryMap.get(r.categoryId) ?? null"
-          pick-hint="左键 · 物品详情 / 右键 · 合成来源 / 中键 · 用途去向"
+          :pick-hint="t('lookup.pickHint')"
           @pick="onSlotPick"
           @lookup="onSlotLookup"
         />

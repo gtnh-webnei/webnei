@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
-import { useDatasetStore } from '@/stores/dataset'
+import { onMounted } from 'vue';
+import { useDatasetStore } from '@/stores/dataset';
 
-const store = useDatasetStore()
-onMounted(() => store.load())
+const store = useDatasetStore();
+onMounted(() => store.load());
 </script>
 
 <template>

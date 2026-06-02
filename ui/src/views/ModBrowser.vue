@@ -2,12 +2,15 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
+import { useI18n } from 'vue-i18n'
 import { Check, Close } from '@element-plus/icons-vue'
 import { useDatasetStore } from '@/stores/dataset'
 import { listModsPage } from '@/api/datasets'
 import type { ModSummary } from '@/api/types'
 import { usePagedBrowser } from '@/composables/usePagedBrowser'
 import BrowserToolbar from '@/components/BrowserToolbar.vue'
+
+const { t } = useI18n()
 
 const PAGE_SIZE_KEY = 'webnei.modBrowser.pageSize'
 
@@ -57,19 +60,19 @@ function onSortChange({ prop, order }: { prop: string | null; order: 'ascending'
 <template>
   <div class="mod-browser">
     <header class="header">
-      <h1>Mod 列表</h1>
+      <h1>{{ t('mod.pageTitle') }}</h1>
       <p class="lead">
         <span v-if="datasetName">{{ datasetName }} · </span>
-        共 {{ total }} 个 mod
+        {{ t('common.totalCount') }} {{ total }} {{ t('mod.totalLabel') }}
       </p>
     </header>
 
     <BrowserToolbar
       v-model:q="q"
-      placeholder="搜索 mod id / 名称 / 版本 / 文件名"
+      :placeholder="t('mod.searchPlaceholder')"
       :show-secondary="false"
       :total="items.length"
-      total-label="显示"
+      :total-label="t('common.showing')"
       :total-suffix="`/ ${total}`"
     />
 
@@ -90,25 +93,25 @@ function onSortChange({ prop, order }: { prop: string | null; order: 'ascending'
           <code class="mod-id">{{ row.modId }}</code>
         </template>
       </el-table-column>
-      <el-table-column prop="name" label="名称" min-width="200" sortable="custom" show-overflow-tooltip />
-      <el-table-column prop="version" label="版本" min-width="140" sortable="custom">
+      <el-table-column prop="name" :label="t('mod.colName')" min-width="200" sortable="custom" show-overflow-tooltip />
+      <el-table-column prop="version" :label="t('mod.colVersion')" min-width="140" sortable="custom">
         <template #default="{ row }">
           <el-tag size="small" type="info" effect="plain">{{ row.version }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="sourceFileName" label="文件" min-width="280" show-overflow-tooltip>
+      <el-table-column prop="sourceFileName" :label="t('mod.colFile')" min-width="280" show-overflow-tooltip>
         <template #default="{ row }">
           <span class="file">{{ row.sourceFileName }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="sourceType" label="来源" min-width="100" sortable="custom">
+      <el-table-column prop="sourceType" :label="t('mod.colSource')" min-width="100" sortable="custom">
         <template #default="{ row }">
           <el-tag size="small" :type="row.sourceType === 'file' ? '' : 'warning'" effect="plain">
             {{ row.sourceType }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="enabled" label="启用" width="80" align="center" sortable="custom">
+      <el-table-column prop="enabled" :label="t('mod.colEnabled')" width="80" align="center" sortable="custom">
         <template #default="{ row }">
           <el-icon v-if="row.enabled" color="var(--el-color-success)"><Check /></el-icon>
           <el-icon v-else color="var(--el-color-danger)"><Close /></el-icon>

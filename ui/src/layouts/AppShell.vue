@@ -1,33 +1,35 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useRoute, type RouteLocationNormalizedLoaded } from 'vue-router'
-import { storeToRefs } from 'pinia'
-import { useDatasetStore } from '@/stores/dataset'
-import DatasetSwitcher from '@/components/DatasetSwitcher.vue'
-import ThemeSwitcher from '@/components/ThemeSwitcher.vue'
+import { computed } from 'vue';
+import { useRoute, type RouteLocationNormalizedLoaded } from 'vue-router';
+import { storeToRefs } from 'pinia';
+import { useI18n } from 'vue-i18n';
+import { useDatasetStore } from '@/stores/dataset';
+import DatasetSwitcher from '@/components/DatasetSwitcher.vue';
+import ThemeSwitcher from '@/components/ThemeSwitcher.vue';
 
-const route = useRoute()
-const store = useDatasetStore()
-const { activeDatasetId } = storeToRefs(store)
+const { t } = useI18n();
+const route = useRoute();
+const store = useDatasetStore();
+const { activeDatasetId } = storeToRefs(store);
 
-const fullHeight = computed(() => Boolean(route.meta?.fullHeight))
+const fullHeight = computed(() => Boolean(route.meta?.fullHeight));
 
 const nav = computed(() => {
-  const id = activeDatasetId.value ?? route.params.datasetId
-  if (!id || typeof id !== 'string') return []
-  const enc = encodeURIComponent(id)
+  const id = activeDatasetId.value ?? route.params.datasetId;
+  if (!id || typeof id !== 'string') return [];
+  const enc = encodeURIComponent(id);
   return [
-    { to: `/datasets/${enc}/items`, label: '物品' },
-    { to: `/datasets/${enc}/fluids`, label: '流体' },
-    { to: `/datasets/${enc}/categories`, label: '配方分类' },
-    { to: `/datasets/${enc}/quest-lines`, label: '任务' },
-    { to: `/datasets/${enc}/mobs`, label: '生物' },
-    { to: `/datasets/${enc}/mods`, label: 'Mod' },
-  ]
-})
+    { to: `/datasets/${enc}/items`, label: t('nav.items') },
+    { to: `/datasets/${enc}/fluids`, label: t('nav.fluids') },
+    { to: `/datasets/${enc}/categories`, label: t('nav.categories') },
+    { to: `/datasets/${enc}/quest-lines`, label: t('nav.quests') },
+    { to: `/datasets/${enc}/mobs`, label: t('nav.mobs') },
+    { to: `/datasets/${enc}/mods`, label: t('nav.mods') },
+  ];
+});
 
 function routeViewKey(viewRoute: RouteLocationNormalizedLoaded): string {
-  return String(viewRoute.name ?? viewRoute.path)
+  return String(viewRoute.name ?? viewRoute.path);
 }
 </script>
 
@@ -35,7 +37,7 @@ function routeViewKey(viewRoute: RouteLocationNormalizedLoaded): string {
   <el-container class="app-shell">
     <el-header class="app-header">
       <div class="brand">
-        <router-link to="/" class="brand-link">WebNEI</router-link>
+        <router-link to="/" class="brand-link">{{ t('dataset.brandName') }}</router-link>
       </div>
       <el-menu
         mode="horizontal"
@@ -62,11 +64,7 @@ function routeViewKey(viewRoute: RouteLocationNormalizedLoaded): string {
               :key="routeViewKey(viewRoute)"
             />
           </keep-alive>
-          <component
-            v-if="!viewRoute.meta.keepAlive"
-            :is="Component"
-            :key="viewRoute.fullPath"
-          />
+          <component v-if="!viewRoute.meta.keepAlive" :is="Component" :key="viewRoute.fullPath" />
         </router-view>
       </div>
     </el-main>

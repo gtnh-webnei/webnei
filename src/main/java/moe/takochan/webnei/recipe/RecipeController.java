@@ -35,17 +35,17 @@ public class RecipeController {
     public PageResponse<RecipeCategoryDto> listCategoriesPage(
             @PathVariable String datasetId,
             @RequestParam(required = false) String q,
-            @RequestParam(required = false) String plugin,
+            @RequestParam(required = false) String modId,
             @RequestParam(defaultValue = "false") boolean hideEmpty,
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size) {
         return recipeService.listCategoriesPage(
-                datasetId, q, plugin, hideEmpty, PageRequest.of(page, size == null ? 24 : size));
+                datasetId, q, modId, hideEmpty, PageRequest.of(page, size == null ? 24 : size));
     }
 
-    @GetMapping("/recipe-categories/plugins")
-    public List<String> listCategoryPlugins(@PathVariable String datasetId) {
-        return recipeService.listCategoryPlugins(datasetId);
+    @GetMapping("/recipe-categories/mods")
+    public List<String> listCategoryMods(@PathVariable String datasetId) {
+        return recipeService.listCategoryMods(datasetId);
     }
 
     @GetMapping("/recipes/lookup")

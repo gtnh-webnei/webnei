@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useDatasetStore } from '@/stores/dataset'
 
+const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
 const store = useDatasetStore()
@@ -22,7 +24,7 @@ function onChange(value: string) {
   <el-select
     :model-value="activeDatasetId ?? ''"
     :loading="loading"
-    placeholder="选择数据集"
+    :placeholder="t('dataset.selectDataset')"
     style="width: 280px"
     @update:model-value="onChange"
   >

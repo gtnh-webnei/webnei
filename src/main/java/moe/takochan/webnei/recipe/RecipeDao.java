@@ -53,14 +53,14 @@ public class RecipeDao {
     }
 
     public PageResponse<RecipeCategoryDto> listCategoriesPage(
-            DatasetSummary dataset, String query, String plugin, boolean hideEmpty, PageRequest page) {
+            DatasetSummary dataset, String query, String modId, boolean hideEmpty, PageRequest page) {
         String filter = (query == null || query.isBlank()) ? null : "%" + query.toLowerCase() + "%";
-        String pluginParam = (plugin == null || plugin.isBlank()) ? null : plugin;
+        String modIdParam = (modId == null || modId.isBlank()) ? null : modId;
 
         long total = jdbc.sql("""
                         SELECT COUNT(*) FROM v_recipe_category_browser
                         WHERE dataset_id = :datasetId
-                          AND (CAST(:plugin AS TEXT) IS NULL OR plugin = CAST(:plugin AS TEXT))
+                          AND (CAST(:modId AS TEXT) IS NULL OR mod_id = CAST(:modId AS TEXT))
                           AND (CAST(:hideEmpty AS BOOLEAN) IS NULL
                                OR CAST(:hideEmpty AS BOOLEAN) = false
                                OR recipe_count > 0)
@@ -70,21 +70,21 @@ public class RecipeDao {
                                OR lower(handler_id) LIKE CAST(:filter AS TEXT))
                         """)
                 .param("datasetId", dataset.datasetId())
-                .param("plugin", pluginParam)
+                .param("modId", modIdParam)
                 .param("hideEmpty", hideEmpty)
                 .param("filter", filter)
                 .query(Long.class)
                 .single();
 
-        List<RecipeCategoryDto> items = queryCategories(dataset, filter, pluginParam, hideEmpty, page);
+        List<RecipeCategoryDto> items = queryCategories(dataset, filter, modIdParam, hideEmpty, page);
         return PageResponse.of(items, page, total);
     }
 
-    public List<String> listCategoryPlugins(DatasetSummary dataset) {
+    public List<String> listCategoryMods(DatasetSummary dataset) {
         return jdbc.sql("""
-                        SELECT DISTINCT plugin FROM v_recipe_category_browser
-                        WHERE dataset_id = :datasetId AND plugin <> ''
-                        ORDER BY plugin
+                        SELECT DISTINCT mod_id FROM v_recipe_category_browser
+                        WHERE dataset_id = :datasetId AND mod_id <> ''
+                        ORDER BY mod_id
                         """)
                 .param("datasetId", dataset.datasetId())
                 .query(String.class)
@@ -92,7 +92,7 @@ public class RecipeDao {
     }
 
     private List<RecipeCategoryDto> queryCategories(
-            DatasetSummary dataset, String filter, String plugin, boolean hideEmpty, PageRequest page) {
+            DatasetSummary dataset, String filter, String modId, boolean hideEmpty, PageRequest page) {
         StringBuilder sql = new StringBuilder("""
                 SELECT v.category_id, v.plugin, v.handler_id, v.display_name,
                        v.shapeless, v.icon_item_variant_id, v.icon_display_name,
@@ -116,7 +116,7 @@ public class RecipeDao {
                  AND nei.resource = v.icon_image_resource
                  AND v.icon_asset_path IS NULL
                 WHERE v.dataset_id = :datasetId
-                  AND (CAST(:plugin AS TEXT) IS NULL OR v.plugin = CAST(:plugin AS TEXT))
+                  AND (CAST(:modId AS TEXT) IS NULL OR v.mod_id = CAST(:modId AS TEXT))
                   AND (CAST(:hideEmpty AS BOOLEAN) IS NULL
                        OR CAST(:hideEmpty AS BOOLEAN) = false
                        OR v.recipe_count > 0)
@@ -131,7 +131,7 @@ public class RecipeDao {
         }
         var spec = jdbc.sql(sql.toString())
                 .param("datasetId", dataset.datasetId())
-                .param("plugin", plugin)
+                .param("modId", modId)
                 .param("hideEmpty", hideEmpty)
                 .param("filter", filter);
         if (page != null) {
