@@ -2,6 +2,7 @@ package moe.takochan.webnei.fluid;
 
 import java.util.List;
 
+import moe.takochan.webnei.common.ModOptionDto;
 import moe.takochan.webnei.common.NotFoundException;
 import moe.takochan.webnei.common.PageRequest;
 import moe.takochan.webnei.common.PageResponse;
@@ -34,8 +35,8 @@ public class FluidService {
                 .orElseThrow(() -> new NotFoundException("Fluid variant not found: " + fluidVariantId));
     }
 
-    public List<String> listModIds(String datasetId) {
+    public List<ModOptionDto> listMods(String datasetId) {
         DatasetSummary dataset = datasetService.requireById(datasetId);
-        return fluidDao.listModIds(dataset);
+        return fluidDao.listMods(dataset);
     }
 }

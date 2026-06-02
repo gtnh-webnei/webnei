@@ -16,6 +16,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 import moe.takochan.webnei.asset.AssetUrlBuilder;
+import moe.takochan.webnei.common.ModOptionDto;
 import moe.takochan.webnei.common.PageRequest;
 import moe.takochan.webnei.common.PageResponse;
 import moe.takochan.webnei.dataset.DatasetSummary;
@@ -80,14 +81,20 @@ public class RecipeDao {
         return PageResponse.of(items, page, total);
     }
 
-    public List<String> listCategoryMods(DatasetSummary dataset) {
+    public List<ModOptionDto> listCategoryMods(DatasetSummary dataset) {
         return jdbc.sql("""
-                        SELECT DISTINCT mod_id FROM v_recipe_category_browser
-                        WHERE dataset_id = :datasetId AND mod_id <> ''
-                        ORDER BY mod_id
+                        SELECT used.mod_id, COALESCE(m.name, used.mod_id) AS name
+                        FROM (
+                            SELECT DISTINCT mod_id
+                            FROM v_recipe_category_browser
+                            WHERE dataset_id = :datasetId AND mod_id <> ''
+                        ) used
+                        LEFT JOIN mod m
+                          ON m.dataset_id = :datasetId AND m.mod_id = used.mod_id
+                        ORDER BY name, used.mod_id
                         """)
                 .param("datasetId", dataset.datasetId())
-                .query(String.class)
+                .query((rs, n) -> new ModOptionDto(rs.getString("mod_id"), rs.getString("name")))
                 .list();
     }
 

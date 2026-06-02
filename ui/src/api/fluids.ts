@@ -1,6 +1,6 @@
-import { http } from './client'
-import type { PageResponse } from './types'
-import type { FluidDetail, FluidListParams, FluidSummary } from './fluids.types'
+import { http } from './client';
+import type { ModOption, PageResponse } from './types';
+import type { FluidDetail, FluidListParams, FluidSummary } from './fluids.types';
 
 export async function listFluids(
   datasetId: string,
@@ -9,8 +9,8 @@ export async function listFluids(
   const { data } = await http.get<PageResponse<FluidSummary>>(
     `/datasets/${encodeURIComponent(datasetId)}/fluids`,
     { params },
-  )
-  return data
+  );
+  return data;
 }
 
 export async function getFluidDetail(
@@ -19,13 +19,13 @@ export async function getFluidDetail(
 ): Promise<FluidDetail> {
   const { data } = await http.get<FluidDetail>(
     `/datasets/${encodeURIComponent(datasetId)}/fluids/${encodeURIComponent(fluidVariantId)}`,
-  )
-  return data
+  );
+  return data;
 }
 
-export async function listFluidMods(datasetId: string): Promise<string[]> {
-  const { data } = await http.get<string[]>(
+export async function listFluidMods(datasetId: string): Promise<ModOption[]> {
+  const { data } = await http.get<ModOption[]>(
     `/datasets/${encodeURIComponent(datasetId)}/fluid-mods`,
-  )
-  return data
+  );
+  return data;
 }

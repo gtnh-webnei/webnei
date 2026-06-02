@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import type { ModOption } from '@/api/types';
 
 const { t } = useI18n();
 
@@ -11,7 +12,7 @@ const props = withDefaults(
   defineProps<{
     placeholder?: string;
     secondaryPlaceholder?: string;
-    secondaryOptions?: string[];
+    secondaryOptions?: ModOption[];
     showSecondary?: boolean;
     total?: number;
     totalLabel?: string;
@@ -46,7 +47,10 @@ const displayTotalSuffix = computed(() => props.totalSuffix || t('common.totalSu
       filterable
       class="secondary-select"
     >
-      <el-option v-for="o in secondaryOptions" :key="o" :label="o" :value="o" />
+      <el-option v-for="o in secondaryOptions" :key="o.modId" :label="o.name" :value="o.modId">
+        <span class="mod-option-name">{{ o.name }}</span>
+        <code class="mod-option-id">{{ o.modId }}</code>
+      </el-option>
     </el-select>
     <slot name="extra" />
     <div class="spacer" />
@@ -69,8 +73,25 @@ const displayTotalSuffix = computed(() => props.totalSuffix || t('common.totalSu
   flex-shrink: 0;
 }
 .secondary-select {
-  width: 200px;
+  width: 240px;
   flex-shrink: 0;
+}
+.mod-option-name {
+  display: inline-block;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+.mod-option-id {
+  float: right;
+  max-width: 70px;
+  overflow: hidden;
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .spacer {
   flex: 1;

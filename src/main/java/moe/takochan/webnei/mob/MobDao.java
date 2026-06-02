@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 
 import moe.takochan.webnei.asset.AssetUrlBuilder;
+import moe.takochan.webnei.common.ModOptionDto;
 import moe.takochan.webnei.common.PageRequest;
 import moe.takochan.webnei.common.PageResponse;
 import moe.takochan.webnei.dataset.DatasetSummary;
@@ -67,14 +68,20 @@ public class MobDao {
         return PageResponse.of(items, page, total);
     }
 
-    public List<String> listMods(DatasetSummary dataset) {
+    public List<ModOptionDto> listMods(DatasetSummary dataset) {
         return jdbc.sql("""
-                        SELECT DISTINCT mod_id FROM v_mob_variant_browser
-                        WHERE dataset_id = :datasetId AND mod_id <> ''
-                        ORDER BY mod_id
+                        SELECT used.mod_id, COALESCE(m.name, used.mod_id) AS name
+                        FROM (
+                            SELECT DISTINCT mod_id
+                            FROM v_mob_variant_browser
+                            WHERE dataset_id = :datasetId AND mod_id <> ''
+                        ) used
+                        LEFT JOIN mod m
+                          ON m.dataset_id = :datasetId AND m.mod_id = used.mod_id
+                        ORDER BY name, used.mod_id
                         """)
                 .param("datasetId", dataset.datasetId())
-                .query(String.class)
+                .query((rs, n) -> new ModOptionDto(rs.getString("mod_id"), rs.getString("name")))
                 .list();
     }
 

@@ -7,6 +7,7 @@ import java.util.Optional;
 import java.util.function.Function;
 
 import moe.takochan.webnei.asset.AssetUrlBuilder;
+import moe.takochan.webnei.common.ModOptionDto;
 import moe.takochan.webnei.common.PageRequest;
 import moe.takochan.webnei.dataset.DatasetSummary;
 
@@ -85,14 +86,20 @@ public class FluidDao {
                 .optional();
     }
 
-    public List<String> listModIds(DatasetSummary dataset) {
+    public List<ModOptionDto> listMods(DatasetSummary dataset) {
         return jdbc.sql("""
-                        SELECT DISTINCT mod_id FROM fluid
-                        WHERE dataset_id = :datasetId
-                        ORDER BY mod_id
+                        SELECT used.mod_id, COALESCE(m.name, used.mod_id) AS name
+                        FROM (
+                            SELECT DISTINCT mod_id
+                            FROM fluid
+                            WHERE dataset_id = :datasetId AND mod_id <> ''
+                        ) used
+                        LEFT JOIN mod m
+                          ON m.dataset_id = :datasetId AND m.mod_id = used.mod_id
+                        ORDER BY name, used.mod_id
                         """)
                 .param("datasetId", dataset.datasetId())
-                .query(String.class)
+                .query((rs, n) -> new ModOptionDto(rs.getString("mod_id"), rs.getString("name")))
                 .list();
     }
 

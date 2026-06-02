@@ -29,10 +29,53 @@ const extras = ref<ItemExtras | null>(null);
 const extrasLoading = ref(false);
 const extrasError = ref<string | null>(null);
 
+interface TooltipSegment {
+  text: string;
+  classes: string[];
+}
+
 const tooltipLines = computed(() => {
   if (!detail.value?.tooltipText) return [];
-  return detail.value.tooltipText.split('\n').filter((s) => s.length > 0);
+  return detail.value.tooltipText
+    .split('\n')
+    .filter((s) => s.length > 0)
+    .map(parseMinecraftFormatting);
 });
+
+function parseMinecraftFormatting(line: string): TooltipSegment[] {
+  const segments: TooltipSegment[] = [];
+  let classes: string[] = [];
+  let buffer = '';
+  const flush = () => {
+    if (!buffer) return;
+    segments.push({ text: buffer, classes: [...classes] });
+    buffer = '';
+  };
+  for (let i = 0; i < line.length; i++) {
+    if (line[i] === '§' && i + 1 < line.length) {
+      flush();
+      const code = line[++i].toLowerCase();
+      if (code === 'r') {
+        classes = [];
+      } else if ('0123456789abcdef'.includes(code)) {
+        classes = classes.filter((c) => !c.startsWith('mc-color-'));
+        classes.push(`mc-color-${code}`);
+      } else if (code === 'l') {
+        if (!classes.includes('mc-bold')) classes.push('mc-bold');
+      } else if (code === 'm') {
+        if (!classes.includes('mc-strikethrough')) classes.push('mc-strikethrough');
+      } else if (code === 'n') {
+        if (!classes.includes('mc-underline')) classes.push('mc-underline');
+      } else if (code === 'o') {
+        if (!classes.includes('mc-italic')) classes.push('mc-italic');
+      }
+    } else {
+      buffer += line[i];
+    }
+  }
+  flush();
+  return segments;
+}
 
 const hasAnyExtras = computed(() => {
   if (!extras.value) return false;
@@ -183,8 +226,19 @@ onMounted(() => {
               <span class="section-title">Tooltip</span>
             </template>
             <div class="tooltip-list">
-              <div v-for="(line, idx) in tooltipLines" :key="idx" class="tooltip-line">
-                {{ line }}
+              <div
+                v-for="(line, idx) in tooltipLines"
+                :key="idx"
+                class="tooltip-line"
+                :class="{ 'tooltip-title-line': idx === 0 }"
+              >
+                <span
+                  v-for="(segment, segmentIdx) in line"
+                  :key="segmentIdx"
+                  :class="segment.classes"
+                >
+                  {{ segment.text }}
+                </span>
               </div>
             </div>
           </el-card>
@@ -461,8 +515,125 @@ onMounted(() => {
   gap: 4px;
 }
 .tooltip-line {
+  color: var(--el-text-color-primary);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 13px;
   line-height: 1.6;
+  white-space: pre-wrap;
+}
+.tooltip-title-line {
+  font-weight: 700;
+}
+.mc-color-0 {
+  color: #111827;
+}
+.mc-color-1 {
+  color: #1d4ed8;
+}
+.mc-color-2 {
+  color: #15803d;
+}
+.mc-color-3 {
+  color: #0f766e;
+}
+.mc-color-4 {
+  color: #b91c1c;
+}
+.mc-color-5 {
+  color: #a21caf;
+}
+.mc-color-6 {
+  color: #c2410c;
+}
+.mc-color-7 {
+  color: #6b7280;
+}
+.mc-color-8 {
+  color: #4b5563;
+}
+.mc-color-9 {
+  color: #2563eb;
+}
+.mc-color-a {
+  color: #16a34a;
+}
+.mc-color-b {
+  color: #0891b2;
+}
+.mc-color-c {
+  color: #dc2626;
+}
+.mc-color-d {
+  color: #c026d3;
+}
+.mc-color-e {
+  color: #ca8a04;
+}
+.mc-color-f {
+  color: #111827;
+}
+html.dark .mc-color-0 {
+  color: #000000;
+}
+html.dark .mc-color-1 {
+  color: #0000aa;
+}
+html.dark .mc-color-2 {
+  color: #00aa00;
+}
+html.dark .mc-color-3 {
+  color: #00aaaa;
+}
+html.dark .mc-color-4 {
+  color: #aa0000;
+}
+html.dark .mc-color-5 {
+  color: #aa00aa;
+}
+html.dark .mc-color-6 {
+  color: #ffaa00;
+}
+html.dark .mc-color-7 {
+  color: #aaaaaa;
+}
+html.dark .mc-color-8 {
+  color: #555555;
+}
+html.dark .mc-color-9 {
+  color: #5555ff;
+}
+html.dark .mc-color-a {
+  color: #55ff55;
+}
+html.dark .mc-color-b {
+  color: #55ffff;
+}
+html.dark .mc-color-c {
+  color: #ff5555;
+}
+html.dark .mc-color-d {
+  color: #ff55ff;
+}
+html.dark .mc-color-e {
+  color: #ffff55;
+}
+html.dark .mc-color-f {
+  color: #ffffff;
+}
+.mc-bold {
+  font-weight: 700;
+}
+.mc-italic {
+  font-style: italic;
+}
+.mc-underline {
+  text-decoration-line: underline;
+}
+.mc-strikethrough {
+  text-decoration-line: line-through;
+}
+.mc-underline.mc-strikethrough {
+  text-decoration-line: underline line-through;
 }
 .nbt-text {
   background: var(--el-fill-color-light);

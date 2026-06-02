@@ -1,6 +1,6 @@
-import { http } from './client'
-import type { PageResponse } from './types'
-import type { MobDetail, MobListParams, MobSummary } from './mobs.types'
+import { http } from './client';
+import type { ModOption, PageResponse } from './types';
+import type { MobDetail, MobListParams, MobSummary } from './mobs.types';
 
 export async function listMobs(
   datasetId: string,
@@ -9,23 +9,20 @@ export async function listMobs(
   const { data } = await http.get<PageResponse<MobSummary>>(
     `/datasets/${encodeURIComponent(datasetId)}/mobs`,
     { params },
-  )
-  return data
+  );
+  return data;
 }
 
-export async function listMobMods(datasetId: string): Promise<string[]> {
-  const { data } = await http.get<string[]>(
+export async function listMobMods(datasetId: string): Promise<ModOption[]> {
+  const { data } = await http.get<ModOption[]>(
     `/datasets/${encodeURIComponent(datasetId)}/mobs/mods`,
-  )
-  return data
+  );
+  return data;
 }
 
-export async function getMobDetail(
-  datasetId: string,
-  mobVariantId: string,
-): Promise<MobDetail> {
+export async function getMobDetail(datasetId: string, mobVariantId: string): Promise<MobDetail> {
   const { data } = await http.get<MobDetail>(
     `/datasets/${encodeURIComponent(datasetId)}/mobs/${encodeURIComponent(mobVariantId)}`,
-  )
-  return data
+  );
+  return data;
 }

@@ -2,6 +2,7 @@ package moe.takochan.webnei.recipe;
 
 import java.util.List;
 
+import moe.takochan.webnei.common.ModOptionDto;
 import moe.takochan.webnei.common.NotFoundException;
 import moe.takochan.webnei.common.PageRequest;
 import moe.takochan.webnei.common.PageResponse;
@@ -37,7 +38,7 @@ public class RecipeService {
         return recipeDao.listCategoriesPage(dataset, query, modId, hideEmpty, page);
     }
 
-    public List<String> listCategoryMods(String datasetId) {
+    public List<ModOptionDto> listCategoryMods(String datasetId) {
         DatasetSummary dataset = datasetService.requireById(datasetId);
         return recipeDao.listCategoryMods(dataset);
     }

@@ -2,6 +2,7 @@ package moe.takochan.webnei.recipe;
 
 import java.util.List;
 
+import moe.takochan.webnei.common.ModOptionDto;
 import moe.takochan.webnei.common.PageRequest;
 import moe.takochan.webnei.common.PageResponse;
 import moe.takochan.webnei.recipe.dto.CategoryMachineDto;
@@ -44,7 +45,7 @@ public class RecipeController {
     }
 
     @GetMapping("/recipe-categories/mods")
-    public List<String> listCategoryMods(@PathVariable String datasetId) {
+    public List<ModOptionDto> listCategoryMods(@PathVariable String datasetId) {
         return recipeService.listCategoryMods(datasetId);
     }
 

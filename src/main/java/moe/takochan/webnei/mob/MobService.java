@@ -2,6 +2,7 @@ package moe.takochan.webnei.mob;
 
 import java.util.List;
 
+import moe.takochan.webnei.common.ModOptionDto;
 import moe.takochan.webnei.common.NotFoundException;
 import moe.takochan.webnei.common.PageRequest;
 import moe.takochan.webnei.common.PageResponse;
@@ -29,7 +30,7 @@ public class MobService {
         return mobDao.listMobs(dataset, q, modId, page);
     }
 
-    public List<String> listMods(String datasetId) {
+    public List<ModOptionDto> listMods(String datasetId) {
         DatasetSummary dataset = datasetService.requireById(datasetId);
         return mobDao.listMods(dataset);
     }

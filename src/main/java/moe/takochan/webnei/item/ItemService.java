@@ -2,6 +2,7 @@ package moe.takochan.webnei.item;
 
 import java.util.List;
 
+import moe.takochan.webnei.common.ModOptionDto;
 import moe.takochan.webnei.common.NotFoundException;
 import moe.takochan.webnei.common.PageRequest;
 import moe.takochan.webnei.common.PageResponse;
@@ -34,8 +35,8 @@ public class ItemService {
                 .orElseThrow(() -> new NotFoundException("Item variant not found: " + itemVariantId));
     }
 
-    public List<String> listModIds(String datasetId) {
+    public List<ModOptionDto> listMods(String datasetId) {
         DatasetSummary dataset = datasetService.requireById(datasetId);
-        return itemDao.listModIds(dataset);
+        return itemDao.listMods(dataset);
     }
 }
