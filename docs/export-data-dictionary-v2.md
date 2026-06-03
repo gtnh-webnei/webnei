@@ -19,13 +19,12 @@
 
 | 视图 | 用途 |
 |---|---|
-| `v_asset_with_source` | 资源、来源、代表帧合并视图。用于解释图标/GUI 纹理来自哪里。 |
 | `v_item_variant_browser` | 物品变体、物品定义、图标路径合并视图。用于 NEI 物品列表和搜索结果。 |
-| `v_nei_item_panel` | NEI 物品面板顺序 + 物品显示数据。 |
 | `v_fluid_variant_browser` | 流体变体、流体定义、图标路径合并视图。 |
 | `v_mob_variant_browser` | 实体变体、实体定义、渲染图路径合并视图。 |
-| `v_recipe_category_browser` | 配方分类、布局、图标、配方数量、机器数量合并视图。 |
-| `v_recipe_lookup_detail` | `recipe_lookup_index` 与配方/分类信息合并视图，用于 R/U 查询列表。 |
+| `v_recipe_category_base` | 配方分类、布局、图标等基础展示数据，不含数量聚合。 |
+| `v_recipe_category_counts` | 每个配方分类的配方数量和机器数量聚合。 |
+| `v_recipe_category_browser` | 分类浏览页用视图，由 `v_recipe_category_base` 与 `v_recipe_category_counts` 合并。 |
 | `v_recipe_item_slot` | 展开后的配方物品槽位。输入组会展开到候选物品，输出直接使用输出物品。 |
 | `v_recipe_fluid_slot` | 展开后的配方流体槽位。输入组会展开到候选流体，输出直接使用输出流体。 |
 | `v_nei_recipe_handler_browser` | NEI handler、tab 图标、GUI 纹理、catalyst 数量合并视图。 |

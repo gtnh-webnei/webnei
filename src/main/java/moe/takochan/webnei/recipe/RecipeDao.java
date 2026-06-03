@@ -86,7 +86,7 @@ public class RecipeDao {
                         SELECT used.mod_id, COALESCE(m.name, used.mod_id) AS name
                         FROM (
                             SELECT DISTINCT mod_id
-                            FROM v_recipe_category_browser
+                            FROM recipe_category
                             WHERE dataset_id = :datasetId AND mod_id <> ''
                         ) used
                         LEFT JOIN mod m
@@ -448,12 +448,13 @@ public class RecipeDao {
         if (recipeIds.isEmpty()) return List.of();
 
         Map<String, RecipeHeader> headers = loadHeaders(dataset, recipeIds);
-        Map<String, List<RecipeSlotDto>> slotMap = loadSlots(dataset, recipeIds);
+        List<SpecialItemRow> specialRows = loadSpecialItemRows(dataset, recipeIds);
+        Map<String, List<RecipeSlotDto>> slotMap = loadSlots(dataset, recipeIds, specialRows);
         Map<String, List<SlotLayoutDto>> layoutMap = loadLayouts(
                 dataset, headers.values().stream().map(RecipeHeader::categoryId).distinct().toList());
         Map<String, CategoryLayoutMeta> categoryMeta = loadCategoryLayoutMeta(
                 dataset, headers.values().stream().map(RecipeHeader::categoryId).distinct().toList());
-        Map<String, GregTechRecipeDto> gtMap = loadGregTechInfo(dataset, headers);
+        Map<String, GregTechRecipeDto> gtMap = loadGregTechInfo(dataset, headers, specialRows);
 
         List<RecipeDto> out = new ArrayList<>(recipeIds.size());
         for (String id : recipeIds) {
@@ -517,7 +518,7 @@ public class RecipeDao {
     }
 
     private Map<String, GregTechRecipeDto> loadGregTechInfo(
-            DatasetSummary dataset, Map<String, RecipeHeader> headers) {
+            DatasetSummary dataset, Map<String, RecipeHeader> headers, List<SpecialItemRow> specialRows) {
         if (headers.isEmpty()) return Map.of();
         List<String> recipeIds = new ArrayList<>(headers.keySet());
 
@@ -553,7 +554,7 @@ public class RecipeDao {
                 .list();
 
         Map<String, List<GregTechSpecialItemDto>> specialItems =
-                loadGregTechSpecialItems(dataset, recipeIds);
+                mapGregTechSpecialItems(dataset, specialRows);
         Map<String, Map<String, MetadataValueDto>> metadataByRecipe =
                 loadGregTechMetadata(dataset, recipeIds);
 
@@ -621,20 +622,9 @@ public class RecipeDao {
         }
     }
 
-    private Map<String, List<GregTechSpecialItemDto>> loadGregTechSpecialItems(
-            DatasetSummary dataset, List<String> recipeIds) {
-        if (recipeIds.isEmpty()) return Map.of();
-
-        record SpecialRow(
-                String recipeId,
-                int listIndex,
-                String itemVariantId,
-                String displayName,
-                String modId,
-                String assetPath,
-                String assetSha) {}
-
-        List<SpecialRow> rows = jdbc.sql("""
+    private List<SpecialItemRow> loadSpecialItemRows(DatasetSummary dataset, List<String> recipeIds) {
+        if (recipeIds.isEmpty()) return List.of();
+        return jdbc.sql("""
                         SELECT s.recipe_id, s.list_index, s.item_variant_id,
                                iv.display_name, iv.mod_id,
                                iv.asset_path, iv.asset_sha256
@@ -647,7 +637,7 @@ public class RecipeDao {
                         """)
                 .param("datasetId", dataset.datasetId())
                 .param("ids", recipeIds)
-                .query((rs, n) -> new SpecialRow(
+                .query((rs, n) -> new SpecialItemRow(
                         rs.getString("recipe_id"),
                         rs.getInt("list_index"),
                         rs.getString("item_variant_id"),
@@ -656,9 +646,12 @@ public class RecipeDao {
                         rs.getString("asset_path"),
                         rs.getString("asset_sha256")))
                 .list();
+    }
 
+    private Map<String, List<GregTechSpecialItemDto>> mapGregTechSpecialItems(
+            DatasetSummary dataset, List<SpecialItemRow> rows) {
         Map<String, List<GregTechSpecialItemDto>> map = new LinkedHashMap<>();
-        for (SpecialRow r : rows) {
+        for (SpecialItemRow r : rows) {
             map.computeIfAbsent(r.recipeId(), k -> new ArrayList<>())
                     .add(new GregTechSpecialItemDto(
                             r.itemVariantId(),
@@ -696,7 +689,8 @@ public class RecipeDao {
         return map;
     }
 
-    private Map<String, List<RecipeSlotDto>> loadSlots(DatasetSummary dataset, List<String> recipeIds) {
+    private Map<String, List<RecipeSlotDto>> loadSlots(
+            DatasetSummary dataset, List<String> recipeIds, List<SpecialItemRow> specialRows) {
         List<SlotRow> rows = jdbc.sql("""
                         SELECT rs.recipe_id, rs.role, rs.slot_index, rs.group_id, rs.amount, rs.probability,
                                rs.item_variant_id AS item_direct,
@@ -782,30 +776,8 @@ public class RecipeDao {
             byRecipe.computeIfAbsent(r.recipeId(), k -> new ArrayList<>()).add(slot);
         }
 
-        // Load GregTech special items
-        List<SpecialItemRow> specialRows = jdbc.sql("""
-                        SELECT si.recipe_id, si.list_index, si.item_variant_id,
-                               iv.display_name, iv.mod_id, iv.asset_path
-                        FROM gregtech_recipe_special_item si
-                        LEFT JOIN v_item_variant_browser iv
-                          ON iv.dataset_id = si.dataset_id AND iv.item_variant_id = si.item_variant_id
-                        WHERE si.dataset_id = :datasetId
-                          AND si.recipe_id IN (:ids)
-                        ORDER BY si.recipe_id, si.list_index
-                        """)
-                .param("datasetId", dataset.datasetId())
-                .param("ids", recipeIds)
-                .query((rs, n) -> new SpecialItemRow(
-                        rs.getString("recipe_id"),
-                        rs.getInt("list_index"),
-                        rs.getString("item_variant_id"),
-                        rs.getString("display_name"),
-                        rs.getString("mod_id"),
-                        rs.getString("asset_path")))
-                .list();
-
         for (SpecialItemRow si : specialRows) {
-            String assetUrl = assetUrlBuilder.build(dataset, si.assetPath(), null);
+            String assetUrl = assetUrlBuilder.build(dataset, si.assetPath(), si.assetSha());
             RecipeSlotDto slot = new RecipeSlotDto(
                     "special_item",
                     si.listIndex(),
@@ -1048,7 +1020,8 @@ public class RecipeDao {
             String itemVariantId,
             String displayName,
             String modId,
-            String assetPath) {}
+            String assetPath,
+            String assetSha) {}
 
     private record LayoutRow(String categoryId, SlotLayoutDto layout) {}
 
