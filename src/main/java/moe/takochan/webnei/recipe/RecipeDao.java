@@ -58,24 +58,24 @@ public class RecipeDao {
         String filter = (query == null || query.isBlank()) ? null : "%" + query.toLowerCase() + "%";
         String modIdParam = (modId == null || modId.isBlank()) ? null : modId;
 
-        long total = jdbc.sql("""
-                        SELECT COUNT(*) FROM v_recipe_category_browser
-                        WHERE dataset_id = :datasetId
-                          AND (CAST(:modId AS TEXT) IS NULL OR mod_id = CAST(:modId AS TEXT))
-                          AND (CAST(:hideEmpty AS BOOLEAN) IS NULL
-                               OR CAST(:hideEmpty AS BOOLEAN) = false
-                               OR recipe_count > 0)
-                          AND (CAST(:filter AS TEXT) IS NULL
-                               OR lower(display_name) LIKE CAST(:filter AS TEXT)
-                               OR lower(category_id) LIKE CAST(:filter AS TEXT)
-                               OR lower(handler_id) LIKE CAST(:filter AS TEXT))
-                        """)
-                .param("datasetId", dataset.datasetId())
-                .param("modId", modIdParam)
-                .param("hideEmpty", hideEmpty)
-                .param("filter", filter)
-                .query(Long.class)
-                .single();
+        // Count query — mirrored WHERE logic from queryCategories
+        StringBuilder countWhere = new StringBuilder("WHERE dataset_id = :datasetId\n");
+        if (modIdParam != null) {
+            countWhere.append("  AND mod_id = :modId\n");
+        }
+        if (hideEmpty) {
+            countWhere.append("  AND recipe_count > 0\n");
+        }
+        if (filter != null) {
+            countWhere.append("  AND (lower(display_name) LIKE :filter\n");
+            countWhere.append("       OR lower(category_id) LIKE :filter\n");
+            countWhere.append("       OR lower(handler_id) LIKE :filter)\n");
+        }
+        var totalSpec = jdbc.sql("SELECT COUNT(*) FROM v_recipe_category_browser\n" + countWhere)
+                .param("datasetId", dataset.datasetId());
+        if (modIdParam != null) totalSpec = totalSpec.param("modId", modIdParam);
+        if (filter != null) totalSpec = totalSpec.param("filter", filter);
+        long total = totalSpec.query(Long.class).single();
 
         List<RecipeCategoryDto> items = queryCategories(dataset, filter, modIdParam, hideEmpty, page);
         return PageResponse.of(items, page, total);
@@ -100,7 +100,22 @@ public class RecipeDao {
 
     private List<RecipeCategoryDto> queryCategories(
             DatasetSummary dataset, String filter, String modId, boolean hideEmpty, PageRequest page) {
-        StringBuilder sql = new StringBuilder("""
+        StringBuilder where = new StringBuilder("WHERE v.dataset_id = :datasetId\n");
+        if (modId != null && !modId.isBlank()) {
+            where.append("  AND v.mod_id = :modId\n");
+        }
+        if (hideEmpty) {
+            where.append("  AND v.recipe_count > 0\n");
+        }
+        if (filter != null) {
+            where.append("  AND (lower(v.display_name) LIKE :filter\n");
+            where.append("       OR lower(v.category_id) LIKE :filter\n");
+            where.append("       OR lower(v.handler_id) LIKE :filter)\n");
+        }
+
+        String pageClause = page != null ? "OFFSET :offset LIMIT :limit\n" : "";
+
+        String sql = """
                 SELECT v.category_id, v.plugin, v.handler_id, v.display_name,
                        v.shapeless, v.icon_item_variant_id, v.icon_display_name,
                        COALESCE(v.icon_asset_path, nei.exported_path) AS icon_asset_path,
@@ -122,25 +137,19 @@ public class RecipeDao {
                   ON nei.dataset_id = v.dataset_id
                  AND nei.resource = v.icon_image_resource
                  AND v.icon_asset_path IS NULL
-                WHERE v.dataset_id = :datasetId
-                  AND (CAST(:modId AS TEXT) IS NULL OR v.mod_id = CAST(:modId AS TEXT))
-                  AND (CAST(:hideEmpty AS BOOLEAN) IS NULL
-                       OR CAST(:hideEmpty AS BOOLEAN) = false
-                       OR v.recipe_count > 0)
-                  AND (CAST(:filter AS TEXT) IS NULL
-                       OR lower(v.display_name) LIKE CAST(:filter AS TEXT)
-                       OR lower(v.category_id) LIKE CAST(:filter AS TEXT)
-                       OR lower(v.handler_id) LIKE CAST(:filter AS TEXT))
-                ORDER BY v.display_order, v.category_id
-                """);
-        if (page != null) {
-            sql.append("OFFSET :offset LIMIT :limit\n");
+                """
+                + where
+                + "ORDER BY v.display_order, v.category_id\n"
+                + pageClause;
+
+        var spec = jdbc.sql(sql)
+                .param("datasetId", dataset.datasetId());
+        if (modId != null && !modId.isBlank()) {
+            spec = spec.param("modId", modId);
         }
-        var spec = jdbc.sql(sql.toString())
-                .param("datasetId", dataset.datasetId())
-                .param("modId", modId)
-                .param("hideEmpty", hideEmpty)
-                .param("filter", filter);
+        if (filter != null) {
+            spec = spec.param("filter", filter);
+        }
         if (page != null) {
             spec = spec.param("offset", page.offset()).param("limit", page.size());
         }
@@ -192,151 +201,159 @@ public class RecipeDao {
             DatasetSummary dataset, String categoryId, String query, String voltageTier, PageRequest page) {
         String q = (query == null) ? "" : query.trim();
         boolean hasVoltage = voltageTier != null && !voltageTier.isBlank();
-        String voltageJoin = hasVoltage
-                ? "JOIN gregtech_recipe g ON g.recipe_id = recipe.recipe_id AND g.dataset_id = recipe.dataset_id\n"
-                : "";
-        String voltageWhere = hasVoltage ? "  AND g.voltage_tier = :voltageTier\n" : "";
 
+        // Step 1: base (no search) or search
+        List<String> ids;
         if (q.isEmpty()) {
-            var totalSpec = jdbc.sql(
-                            "SELECT COUNT(*) FROM recipe\n"
-                            + voltageJoin
-                            + "WHERE recipe.dataset_id = :datasetId AND recipe.category_id = :categoryId\n"
-                            + voltageWhere)
-                    .param("datasetId", dataset.datasetId())
-                    .param("categoryId", categoryId);
-            if (hasVoltage) totalSpec = totalSpec.param("voltageTier", voltageTier);
-            long total = totalSpec.query(Long.class).single();
-
-            var idsSpec = jdbc.sql(
-                            "SELECT recipe.recipe_id FROM recipe\n"
-                            + voltageJoin
-                            + "WHERE recipe.dataset_id = :datasetId AND recipe.category_id = :categoryId\n"
-                            + voltageWhere
-                            + "ORDER BY recipe.recipe_id\n"
-                            + "OFFSET :offset LIMIT :limit\n")
+            ids = jdbc.sql("""
+                            SELECT recipe_id FROM recipe
+                            WHERE dataset_id = :datasetId
+                              AND category_id = :categoryId
+                            ORDER BY recipe_id
+                            """)
                     .param("datasetId", dataset.datasetId())
                     .param("categoryId", categoryId)
-                    .param("offset", page.offset())
-                    .param("limit", page.size());
-            if (hasVoltage) idsSpec = idsSpec.param("voltageTier", voltageTier);
-            List<String> ids = idsSpec.query(String.class).list();
-            return new LookupPage(ids, total);
-        }
-
-        String pattern = "%" + q.toLowerCase() + "%";
-        // Match recipes by item/fluid display name or id, optionally narrowed by voltage tier.
-        // The matched-id subquery is unioned across item and fluid slot views; the voltage filter
-        // is applied as an outer join because gregtech_recipe is GT-only.
-        String matchInner = """
-                SELECT DISTINCT m.recipe_id FROM (
-                  SELECT recipe_id FROM v_recipe_item_slot
-                  WHERE dataset_id = :datasetId
-                    AND category_id = :categoryId
-                    AND (LOWER(COALESCE(display_name, '')) LIKE :pattern
-                         OR LOWER(item_variant_id) LIKE :pattern)
-                  UNION ALL
-                  SELECT recipe_id FROM v_recipe_fluid_slot
-                  WHERE dataset_id = :datasetId
-                    AND category_id = :categoryId
-                    AND (LOWER(COALESCE(display_name, '')) LIKE :pattern
-                         OR LOWER(fluid_variant_id) LIKE :pattern)
-                ) m
-                """;
-        String matchSql;
-        if (hasVoltage) {
-            matchSql = matchInner
-                    + "JOIN gregtech_recipe g\n"
-                    + "  ON g.recipe_id = m.recipe_id AND g.dataset_id = :datasetId\n"
-                    + "WHERE g.voltage_tier = :voltageTier\n";
+                    .query(String.class)
+                    .list();
         } else {
-            matchSql = matchInner;
+            String pattern = "%" + q.toLowerCase() + "%";
+            ids = jdbc.sql("""
+                            SELECT DISTINCT m.recipe_id FROM (
+                              SELECT recipe_id FROM v_recipe_item_slot
+                              WHERE dataset_id = :datasetId
+                                AND category_id = :categoryId
+                                AND (LOWER(COALESCE(display_name, '')) LIKE :pattern
+                                     OR LOWER(item_variant_id) LIKE :pattern)
+                              UNION ALL
+                              SELECT recipe_id FROM v_recipe_fluid_slot
+                              WHERE dataset_id = :datasetId
+                                AND category_id = :categoryId
+                                AND (LOWER(COALESCE(display_name, '')) LIKE :pattern
+                                     OR LOWER(fluid_variant_id) LIKE :pattern)
+                            ) m
+                            ORDER BY recipe_id
+                            """)
+                    .param("datasetId", dataset.datasetId())
+                    .param("categoryId", categoryId)
+                    .param("pattern", pattern)
+                    .query(String.class)
+                    .list();
+        }
+        if (ids.isEmpty()) return new LookupPage(List.of(), 0);
+
+        // Step 2: optional voltage filter
+        if (hasVoltage) {
+            ids = jdbc.sql("""
+                            SELECT recipe_id FROM gregtech_recipe
+                            WHERE dataset_id = :datasetId
+                              AND recipe_id IN (:ids)
+                              AND voltage_tier = :voltageTier
+                            ORDER BY recipe_id
+                            """)
+                    .param("datasetId", dataset.datasetId())
+                    .param("ids", ids)
+                    .param("voltageTier", voltageTier)
+                    .query(String.class)
+                    .list();
+            if (ids.isEmpty()) return new LookupPage(List.of(), 0);
         }
 
-        var totalSpec = jdbc.sql("SELECT COUNT(*) FROM (" + matchSql + ") c")
-                .param("datasetId", dataset.datasetId())
-                .param("categoryId", categoryId)
-                .param("pattern", pattern);
-        if (hasVoltage) totalSpec = totalSpec.param("voltageTier", voltageTier);
-        long total = totalSpec.query(Long.class).single();
-
-        var idsSpec = jdbc.sql(matchSql + " ORDER BY recipe_id OFFSET :offset LIMIT :limit")
-                .param("datasetId", dataset.datasetId())
-                .param("categoryId", categoryId)
-                .param("pattern", pattern)
-                .param("offset", page.offset())
-                .param("limit", page.size());
-        if (hasVoltage) idsSpec = idsSpec.param("voltageTier", voltageTier);
-        List<String> ids = idsSpec.query(String.class).list();
-        return new LookupPage(ids, total);
+        // Step 3: count + paginate from final ids
+        long total = ids.size();
+        int from = page.offset();
+        int to = Math.min(from + page.size(), ids.size());
+        List<String> pageIds = from < ids.size() ? ids.subList(from, to) : List.of();
+        return new LookupPage(pageIds, total);
     }
 
     public LookupPage lookupRecipeIds(
             DatasetSummary dataset, RecipeLookupQuery query, PageRequest page) {
         String kind = query.isUsage() ? "usage" : "recipe";
-        String handlerId = query.hasHandlerFilter() ? query.handlerId() : null;
-        String categoryId = query.hasCategoryFilter() ? query.categoryId() : null;
-        String voltageTier = query.hasVoltageTierFilter() ? query.voltageTier() : null;
-        boolean needsCategoryJoin = handlerId != null;
-        boolean needsVoltageJoin = voltageTier != null;
+        String target = query.target();
 
-        StringBuilder baseFrom = new StringBuilder("FROM recipe_lookup_index rli\n");
-        if (needsCategoryJoin) {
-            baseFrom.append("""
-                    JOIN recipe_category rc
-                      ON rc.dataset_id = rli.dataset_id AND rc.category_id = rli.category_id
-                    """);
-        }
-        if (needsVoltageJoin) {
-            baseFrom.append("""
-                    JOIN gregtech_recipe g
-                      ON g.recipe_id = rli.recipe_id AND g.dataset_id = rli.dataset_id
-                    """);
-        }
-
-        StringBuilder filters = new StringBuilder("""
-                WHERE rli.dataset_id = :datasetId
-                  AND rli.target_id = :target
-                  AND rli.lookup_kind = :kind
-                """);
-        if (handlerId != null) {
-            filters.append("  AND rc.handler_id = :handlerId\n");
-        }
-        if (categoryId != null) {
-            filters.append("  AND rli.category_id = :categoryId\n");
-        }
-        if (voltageTier != null) {
-            filters.append("  AND g.voltage_tier = :voltageTier\n");
-        }
-
-        var totalSpec = jdbc.sql("SELECT COUNT(DISTINCT rli.recipe_id) " + baseFrom + filters)
+        List<String> baseIds = jdbc.sql("""
+                        SELECT DISTINCT recipe_id FROM recipe_lookup_index
+                        WHERE dataset_id = :datasetId
+                          AND target_id = :target
+                          AND lookup_kind = :kind
+                        """)
                 .param("datasetId", dataset.datasetId())
-                .param("target", query.target())
-                .param("kind", kind);
-        if (handlerId != null) totalSpec = totalSpec.param("handlerId", handlerId);
-        if (categoryId != null) totalSpec = totalSpec.param("categoryId", categoryId);
-        if (voltageTier != null) totalSpec = totalSpec.param("voltageTier", voltageTier);
-        long total = totalSpec.query(Long.class).single();
+                .param("target", target)
+                .param("kind", kind)
+                .query(String.class)
+                .list();
+        if (baseIds.isEmpty()) return new LookupPage(List.of(), 0);
 
-        var idsSpec = jdbc.sql("""
+        // Step 2: optional category filter
+        if (query.hasCategoryFilter()) {
+            baseIds = jdbc.sql("""
+                            SELECT recipe_id FROM recipe_lookup_index
+                            WHERE dataset_id = :datasetId
+                              AND recipe_id IN (:ids)
+                              AND category_id = :categoryId
+                            """)
+                    .param("datasetId", dataset.datasetId())
+                    .param("ids", baseIds)
+                    .param("categoryId", query.categoryId())
+                    .query(String.class)
+                    .list();
+            if (baseIds.isEmpty()) return new LookupPage(List.of(), 0);
+        }
+
+        // Step 3: optional handler filter
+        if (query.hasHandlerFilter()) {
+            baseIds = jdbc.sql("""
+                            SELECT rli.recipe_id FROM recipe_lookup_index rli
+                            JOIN recipe_category rc
+                              ON rc.dataset_id = rli.dataset_id AND rc.category_id = rli.category_id
+                            WHERE rli.dataset_id = :datasetId
+                              AND rli.recipe_id IN (:ids)
+                              AND rc.handler_id = :handlerId
+                            """)
+                    .param("datasetId", dataset.datasetId())
+                    .param("ids", baseIds)
+                    .param("handlerId", query.handlerId())
+                    .query(String.class)
+                    .list();
+            if (baseIds.isEmpty()) return new LookupPage(List.of(), 0);
+        }
+
+        // Step 4: optional voltage filter
+        if (query.hasVoltageTierFilter()) {
+            baseIds = jdbc.sql("""
+                            SELECT recipe_id FROM gregtech_recipe
+                            WHERE dataset_id = :datasetId
+                              AND recipe_id IN (:ids)
+                              AND voltage_tier = :voltageTier
+                            """)
+                    .param("datasetId", dataset.datasetId())
+                    .param("ids", baseIds)
+                    .param("voltageTier", query.voltageTier())
+                    .query(String.class)
+                    .list();
+            if (baseIds.isEmpty()) return new LookupPage(List.of(), 0);
+        }
+
+        // Step 5: count + sort + paginate
+        long total = baseIds.size();
+        List<String> pageIds = jdbc.sql("""
                         SELECT recipe_id FROM (
-                          SELECT rli.recipe_id, MIN(rli.display_order) AS ord
-                          """ + baseFrom + filters + """
-                          GROUP BY rli.recipe_id
+                          SELECT recipe_id, MIN(display_order) AS ord
+                          FROM recipe_lookup_index
+                          WHERE dataset_id = :datasetId
+                            AND recipe_id IN (:ids)
+                          GROUP BY recipe_id
                         ) t
                         ORDER BY ord, recipe_id
                         OFFSET :offset LIMIT :limit
                         """)
                 .param("datasetId", dataset.datasetId())
-                .param("target", query.target())
-                .param("kind", kind)
+                .param("ids", baseIds)
                 .param("offset", page.offset())
-                .param("limit", page.size());
-        if (handlerId != null) idsSpec = idsSpec.param("handlerId", handlerId);
-        if (categoryId != null) idsSpec = idsSpec.param("categoryId", categoryId);
-        if (voltageTier != null) idsSpec = idsSpec.param("voltageTier", voltageTier);
-        List<String> ids = idsSpec.query(String.class).list();
-        return new LookupPage(ids, total);
+                .param("limit", page.size())
+                .query(String.class)
+                .list();
+        return new LookupPage(pageIds, total);
     }
 
     public List<HandlerBreakdownDto> lookupBreakdown(
@@ -944,32 +961,49 @@ public class RecipeDao {
     public List<CategoryVoltageTierDto> listCategoryVoltageTiers(
             DatasetSummary dataset, String categoryId, String target, String kind) {
         boolean hasLookup = target != null && !target.isBlank() && kind != null && !kind.isBlank();
-        String lookupJoin = hasLookup
-                ? "JOIN recipe_lookup_index rli\n"
-                + "  ON rli.recipe_id = r.recipe_id AND rli.dataset_id = r.dataset_id\n"
-                + " AND rli.target_id = :target AND rli.lookup_kind = :kind\n"
-                : "";
-        String countExpr = hasLookup ? "COUNT(DISTINCT r.recipe_id)" : "COUNT(*)";
 
-        var spec = jdbc.sql("""
-                        SELECT g.voltage_tier AS tier,
-                               %s AS cnt
-                        FROM recipe r
-                        JOIN gregtech_recipe g
-                          ON g.recipe_id = r.recipe_id AND g.dataset_id = r.dataset_id
-                        %s
-                        WHERE r.dataset_id = :datasetId
-                          AND r.category_id = :categoryId
-                          AND g.voltage_tier IS NOT NULL
-                        GROUP BY g.voltage_tier
-                        ORDER BY MIN(g.voltage) NULLS LAST
-                        """.formatted(countExpr, lookupJoin))
-                .param("datasetId", dataset.datasetId())
-                .param("categoryId", categoryId);
+        // Step 1: get recipe_ids in scope
+        List<String> recipeIds;
         if (hasLookup) {
-            spec = spec.param("target", target).param("kind", kind);
+            recipeIds = jdbc.sql("""
+                            SELECT DISTINCT r.recipe_id FROM recipe r
+                            JOIN recipe_lookup_index rli
+                              ON rli.recipe_id = r.recipe_id AND rli.dataset_id = r.dataset_id
+                            WHERE r.dataset_id = :datasetId
+                              AND r.category_id = :categoryId
+                              AND rli.target_id = :target
+                              AND rli.lookup_kind = :kind
+                            """)
+                    .param("datasetId", dataset.datasetId())
+                    .param("categoryId", categoryId)
+                    .param("target", target)
+                    .param("kind", kind)
+                    .query(String.class)
+                    .list();
+        } else {
+            recipeIds = jdbc.sql("""
+                            SELECT recipe_id FROM recipe
+                            WHERE dataset_id = :datasetId
+                              AND category_id = :categoryId
+                            """)
+                    .param("datasetId", dataset.datasetId())
+                    .param("categoryId", categoryId)
+                    .query(String.class)
+                    .list();
         }
-        return spec
+        if (recipeIds.isEmpty()) return List.of();
+
+        // Step 2: stats from gregtech_recipe
+        return jdbc.sql("""
+                        SELECT voltage_tier AS tier, COUNT(*) AS cnt FROM gregtech_recipe
+                        WHERE dataset_id = :datasetId
+                          AND recipe_id IN (:ids)
+                          AND voltage_tier IS NOT NULL
+                        GROUP BY voltage_tier
+                        ORDER BY MIN(voltage) NULLS LAST
+                        """)
+                .param("datasetId", dataset.datasetId())
+                .param("ids", recipeIds)
                 .query((rs, n) -> new CategoryVoltageTierDto(
                         rs.getString("tier"),
                         rs.getLong("cnt")))
