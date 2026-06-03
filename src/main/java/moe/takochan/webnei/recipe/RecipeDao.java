@@ -27,7 +27,6 @@ import moe.takochan.webnei.recipe.dto.GregTechRecipeDto;
 import moe.takochan.webnei.recipe.dto.GregTechSpecialItemDto;
 import moe.takochan.webnei.recipe.dto.HandlerBreakdownDto;
 import moe.takochan.webnei.recipe.dto.MetadataValueDto;
-import moe.takochan.webnei.recipe.dto.RecipeCategoryDto;
 import moe.takochan.webnei.recipe.dto.RecipeDto;
 import moe.takochan.webnei.recipe.dto.RecipeSlotCandidateDto;
 import moe.takochan.webnei.recipe.dto.RecipeSlotDto;
@@ -49,38 +48,6 @@ public class RecipeDao {
         this.objectMapper = objectMapper;
     }
 
-    public List<RecipeCategoryDto> listCategories(DatasetSummary dataset) {
-        return queryCategories(dataset, null, null, false, null);
-    }
-
-    public PageResponse<RecipeCategoryDto> listCategoriesPage(
-            DatasetSummary dataset, String query, String modId, boolean hideEmpty, PageRequest page) {
-        String filter = (query == null || query.isBlank()) ? null : "%" + query.toLowerCase() + "%";
-        String modIdParam = (modId == null || modId.isBlank()) ? null : modId;
-
-        // Count query — mirrored WHERE logic from queryCategories
-        StringBuilder countWhere = new StringBuilder("WHERE dataset_id = :datasetId\n");
-        if (modIdParam != null) {
-            countWhere.append("  AND mod_id = :modId\n");
-        }
-        if (hideEmpty) {
-            countWhere.append("  AND recipe_count > 0\n");
-        }
-        if (filter != null) {
-            countWhere.append("  AND (lower(display_name) LIKE :filter\n");
-            countWhere.append("       OR lower(category_id) LIKE :filter\n");
-            countWhere.append("       OR lower(handler_id) LIKE :filter)\n");
-        }
-        var totalSpec = jdbc.sql("SELECT COUNT(*) FROM v_recipe_category_browser\n" + countWhere)
-                .param("datasetId", dataset.datasetId());
-        if (modIdParam != null) totalSpec = totalSpec.param("modId", modIdParam);
-        if (filter != null) totalSpec = totalSpec.param("filter", filter);
-        long total = totalSpec.query(Long.class).single();
-
-        List<RecipeCategoryDto> items = queryCategories(dataset, filter, modIdParam, hideEmpty, page);
-        return PageResponse.of(items, page, total);
-    }
-
     public List<ModOptionDto> listCategoryMods(DatasetSummary dataset) {
         return jdbc.sql("""
                         SELECT used.mod_id, COALESCE(m.name, used.mod_id) AS name
@@ -95,105 +62,6 @@ public class RecipeDao {
                         """)
                 .param("datasetId", dataset.datasetId())
                 .query((rs, n) -> new ModOptionDto(rs.getString("mod_id"), rs.getString("name")))
-                .list();
-    }
-
-    private List<RecipeCategoryDto> queryCategories(
-            DatasetSummary dataset, String filter, String modId, boolean hideEmpty, PageRequest page) {
-        StringBuilder where = new StringBuilder("WHERE v.dataset_id = :datasetId\n");
-        if (modId != null && !modId.isBlank()) {
-            where.append("  AND v.mod_id = :modId\n");
-        }
-        if (hideEmpty) {
-            where.append("  AND v.recipe_count > 0\n");
-        }
-        if (filter != null) {
-            where.append("  AND (lower(v.display_name) LIKE :filter\n");
-            where.append("       OR lower(v.category_id) LIKE :filter\n");
-            where.append("       OR lower(v.handler_id) LIKE :filter)\n");
-        }
-
-        String pageClause = page != null ? "OFFSET :offset LIMIT :limit\n" : "";
-
-        String sql = """
-                SELECT v.category_id, v.plugin, v.handler_id, v.display_name,
-                       v.shapeless, v.icon_item_variant_id, v.icon_display_name,
-                       COALESCE(v.icon_asset_path, nei.exported_path) AS icon_asset_path,
-                       v.icon_info, v.item_input_width, v.item_input_height,
-                       v.fluid_input_width, v.fluid_input_height,
-                       v.item_output_width, v.item_output_height,
-                       v.fluid_output_width, v.fluid_output_height,
-                       v.supports_recipe_lookup, v.supports_usage_lookup, v.display_order,
-                       v.canvas_width, v.canvas_height, v.background_asset_path,
-                       v.recipe_count, v.machine_count,
-                       v.mod_id, v.mod_name, v.handler_class,
-                       v.handler_canvas_width, v.handler_canvas_height, v.handler_y_shift,
-                       v.handler_multiple_widgets_allowed,
-                       v.icon_image_resource, v.icon_image_x, v.icon_image_y,
-                       v.icon_image_width, v.icon_image_height,
-                       v.icon_image_texture_width, v.icon_image_texture_height
-                FROM v_recipe_category_browser v
-                LEFT JOIN nei_texture_export nei
-                  ON nei.dataset_id = v.dataset_id
-                 AND nei.resource = v.icon_image_resource
-                 AND v.icon_asset_path IS NULL
-                """
-                + where
-                + "ORDER BY v.display_order, v.category_id\n"
-                + pageClause;
-
-        var spec = jdbc.sql(sql)
-                .param("datasetId", dataset.datasetId());
-        if (modId != null && !modId.isBlank()) {
-            spec = spec.param("modId", modId);
-        }
-        if (filter != null) {
-            spec = spec.param("filter", filter);
-        }
-        if (page != null) {
-            spec = spec.param("offset", page.offset()).param("limit", page.size());
-        }
-        return spec
-                .query((rs, n) -> new RecipeCategoryDto(
-                        rs.getString("category_id"),
-                        rs.getString("plugin"),
-                        rs.getString("handler_id"),
-                        rs.getString("display_name"),
-                        rs.getBoolean("shapeless"),
-                        rs.getString("icon_item_variant_id"),
-                        rs.getString("icon_display_name"),
-                        assetUrlBuilder.build(dataset, rs.getString("icon_asset_path"), null),
-                        rs.getString("icon_info"),
-                        rs.getInt("item_input_width"),
-                        rs.getInt("item_input_height"),
-                        rs.getInt("fluid_input_width"),
-                        rs.getInt("fluid_input_height"),
-                        rs.getInt("item_output_width"),
-                        rs.getInt("item_output_height"),
-                        rs.getInt("fluid_output_width"),
-                        rs.getInt("fluid_output_height"),
-                        rs.getBoolean("supports_recipe_lookup"),
-                        rs.getBoolean("supports_usage_lookup"),
-                        rs.getInt("display_order"),
-                        nullableInt(rs, "canvas_width"),
-                        nullableInt(rs, "canvas_height"),
-                        assetUrlBuilder.build(dataset, rs.getString("background_asset_path"), null),
-                        rs.getLong("recipe_count"),
-                        rs.getLong("machine_count"),
-                        rs.getString("mod_id"),
-                        rs.getString("mod_name"),
-                        rs.getString("handler_class"),
-                        rs.getInt("handler_canvas_width"),
-                        rs.getInt("handler_canvas_height"),
-                        rs.getInt("handler_y_shift"),
-                        rs.getBoolean("handler_multiple_widgets_allowed"),
-                        rs.getString("icon_image_resource"),
-                        rs.getInt("icon_image_x"),
-                        rs.getInt("icon_image_y"),
-                        rs.getInt("icon_image_width"),
-                        rs.getInt("icon_image_height"),
-                        rs.getInt("icon_image_texture_width"),
-                        rs.getInt("icon_image_texture_height")))
                 .list();
     }
 
@@ -287,7 +155,7 @@ public class RecipeDao {
         // Step 2: optional category filter
         if (query.hasCategoryFilter()) {
             baseIds = jdbc.sql("""
-                            SELECT recipe_id FROM recipe_lookup_index
+                            SELECT DISTINCT recipe_id FROM recipe_lookup_index
                             WHERE dataset_id = :datasetId
                               AND recipe_id IN (:ids)
                               AND category_id = :categoryId
@@ -303,7 +171,7 @@ public class RecipeDao {
         // Step 3: optional handler filter
         if (query.hasHandlerFilter()) {
             baseIds = jdbc.sql("""
-                            SELECT rli.recipe_id FROM recipe_lookup_index rli
+                            SELECT DISTINCT rli.recipe_id FROM recipe_lookup_index rli
                             JOIN recipe_category rc
                               ON rc.dataset_id = rli.dataset_id AND rc.category_id = rli.category_id
                             WHERE rli.dataset_id = :datasetId
