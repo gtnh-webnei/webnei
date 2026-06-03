@@ -1,17 +1,26 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import type { FluidSummary } from '@/api/fluids.types'
+import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
+import type { FluidSummary } from '@/api/fluids.types';
 
-defineProps<{
-  fluid: FluidSummary
-}>()
+const { t } = useI18n();
+
+const props = defineProps<{
+  fluid: FluidSummary;
+}>();
+
+const title = computed(() => `${t('fluid.cardPickHint')}\n${props.fluid.fluidId}`);
+
+const fallbackInitial = computed(() =>
+  props.fluid.gaseous ? t('fluid.gaseous') : t('fluid.liquid'),
+);
 
 defineEmits<{
-  (e: 'select', fluid: FluidSummary): void
-  (e: 'lookup', kind: 'recipe' | 'usage', fluid: FluidSummary): void
-}>()
+  (e: 'select', fluid: FluidSummary): void;
+  (e: 'lookup', kind: 'recipe' | 'usage', fluid: FluidSummary): void;
+}>();
 
-const imgFailed = ref(false)
+const imgFailed = ref(false);
 </script>
 
 <template>
@@ -19,7 +28,7 @@ const imgFailed = ref(false)
     class="fluid-card"
     tabindex="0"
     role="button"
-    :title="`左键 · 详情 · 右键 · 合成 · 中键 · 用途\n${fluid.fluidId}`"
+    :title="title"
     @click="$emit('select', fluid)"
     @contextmenu.prevent="$emit('lookup', 'recipe', fluid)"
     @auxclick="(e) => e.button === 1 && (e.preventDefault(), $emit('lookup', 'usage', fluid))"
@@ -35,24 +44,17 @@ const imgFailed = ref(false)
         @error="imgFailed = true"
       />
       <div v-else class="initial" :class="{ gaseous: fluid.gaseous }">
-        {{ fluid.gaseous ? '气' : '液' }}
+        {{ fallbackInitial }}
       </div>
     </div>
     <div class="meta">
       <div class="name" :title="fluid.displayName">{{ fluid.displayName }}</div>
-      <div class="id" :title="fluid.fluidId">{{ fluid.registryName }}</div>
       <div class="tags">
         <el-tag size="small" type="info" effect="plain" round class="mod-tag">
           {{ fluid.modId }}
         </el-tag>
-        <el-tag
-          v-if="fluid.gaseous"
-          size="small"
-          type="warning"
-          effect="plain"
-          round
-        >
-          气态
+        <el-tag v-if="fluid.gaseous" size="small" type="warning" effect="plain" round>
+          {{ t('fluid.gaseous') }}
         </el-tag>
       </div>
     </div>
@@ -69,7 +71,9 @@ const imgFailed = ref(false)
   border-radius: 6px;
   background: var(--el-bg-color);
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
   min-width: 0;
 }
 .fluid-card:hover {

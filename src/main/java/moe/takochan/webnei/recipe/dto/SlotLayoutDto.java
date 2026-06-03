@@ -7,5 +7,6 @@ public record SlotLayoutDto(
         int y,
         int width,
         int height,
-        String slotStyle) {
+        String slotStyle,
+        String placement) {
 }

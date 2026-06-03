@@ -1,30 +1,33 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { getMobDetail } from '@/api/mobs'
-import type { MobDetail, MobDropRow } from '@/api/mobs.types'
+import { computed, onMounted, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
+import { getMobDetail } from '@/api/mobs';
+import type { MobDetail, MobDropRow } from '@/api/mobs.types';
 
-const route = useRoute()
-const router = useRouter()
+const { t } = useI18n();
 
-const datasetId = computed(() => String(route.params.datasetId ?? ''))
-const mobVariantId = computed(() => String(route.params.mobVariantId ?? ''))
+const route = useRoute();
+const router = useRouter();
 
-const detail = ref<MobDetail | null>(null)
-const loading = ref(false)
-const error = ref<string | null>(null)
+const datasetId = computed(() => String(route.params.datasetId ?? ''));
+const mobVariantId = computed(() => String(route.params.mobVariantId ?? ''));
+
+const detail = ref<MobDetail | null>(null);
+const loading = ref(false);
+const error = ref<string | null>(null);
 
 async function load() {
-  if (!datasetId.value || !mobVariantId.value) return
-  loading.value = true
-  error.value = null
-  detail.value = null
+  if (!datasetId.value || !mobVariantId.value) return;
+  loading.value = true;
+  error.value = null;
+  detail.value = null;
   try {
-    detail.value = await getMobDetail(datasetId.value, mobVariantId.value)
+    detail.value = await getMobDetail(datasetId.value, mobVariantId.value);
   } catch (e) {
-    error.value = e instanceof Error ? e.message : String(e)
+    error.value = e instanceof Error ? e.message : String(e);
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
@@ -33,38 +36,55 @@ function goItem(itemVariantId: string) {
     name: 'lookup',
     params: { datasetId: datasetId.value },
     query: { target: itemVariantId, kind: 'detail' },
-  })
+  });
 }
 
 function back() {
-  router.back()
+  router.back();
 }
 
-// 掉落类型 → 中文 + 配色
-const DROP_TYPE_LABEL: Record<string, { label: string; type: 'success' | 'info' | 'warning' }> = {
-  normal: { label: '常规', type: 'success' },
-  additional: { label: '附加', type: 'info' },
-  rare: { label: '稀有', type: 'warning' },
-}
+// 掉落类型 → i18n key + 配色
+const DROP_TYPE_LABEL: Record<string, { key: string; type: 'success' | 'info' | 'warning' }> = {
+  normal: { key: 'mob.dropNormal', type: 'success' },
+  additional: { key: 'mob.dropAdditional', type: 'info' },
+  rare: { key: 'mob.dropRare', type: 'warning' },
+};
 
 function dropMeta(row: MobDropRow) {
-  return DROP_TYPE_LABEL[row.dropType] ?? { label: row.dropType, type: 'info' as const }
+  return DROP_TYPE_LABEL[row.dropType] ?? { key: row.dropType, type: 'info' as const };
 }
+
+const peaceAllowedLabel = computed(() => {
+  if (!detail.value) return '';
+  return t(detail.value.info.allowedInPeaceful ? 'mob.allowed' : 'mob.despawn');
+});
+
+const soulVialLabel = computed(() => {
+  if (!detail.value) return '';
+  return t(detail.value.info.soulVialUsable ? 'mob.fillable' : 'mob.notFillable');
+});
+
+const infernalLabel = computed(() => {
+  if (!detail.value) return '';
+  if (detail.value.info.alwaysInfernal) return t('mob.always');
+  if (detail.value.info.allowedInfernal) return t('mob.maybe');
+  return t('mob.never');
+});
 
 function pct(p: number) {
-  if (p >= 1) return '100%'
-  if (p <= 0) return '0%'
-  return `${(p * 100).toFixed(p >= 0.1 ? 1 : 2)}%`
+  if (p >= 1) return '100%';
+  if (p <= 0) return '0%';
+  return `${(p * 100).toFixed(p >= 0.1 ? 1 : 2)}%`;
 }
 
-watch([datasetId, mobVariantId], load)
-onMounted(load)
+watch([datasetId, mobVariantId], load);
+onMounted(load);
 </script>
 
 <template>
   <div class="mob-detail">
     <header class="header">
-      <el-button text @click="back">← 返回</el-button>
+      <el-button text @click="back">{{ $t('common.back') }}</el-button>
     </header>
 
     <el-skeleton v-if="loading" :rows="6" animated />
@@ -73,25 +93,43 @@ onMounted(load)
     <template v-else-if="detail">
       <section class="hero">
         <div class="portrait">
-          <img v-if="detail.summary.assetUrl" :src="detail.summary.assetUrl" :alt="detail.summary.displayName" />
+          <img
+            v-if="detail.summary.assetUrl"
+            :src="detail.summary.assetUrl"
+            :alt="detail.summary.displayName"
+          />
         </div>
         <div class="hero-meta">
           <h1>{{ detail.summary.displayName }}</h1>
           <div class="entity-name">{{ detail.summary.entityName }}</div>
           <div class="tag-row">
             <el-tag size="small" effect="plain" round>{{ detail.summary.modId }}</el-tag>
-            <el-tag size="small" type="danger" effect="plain" round>♥ {{ detail.summary.maxHealth }}</el-tag>
+            <el-tag size="small" type="danger" effect="plain" round
+              >♥ {{ detail.summary.maxHealth }}</el-tag
+            >
             <el-tag v-if="detail.summary.armor > 0" size="small" type="info" effect="plain" round>
               ⛨ {{ detail.summary.armor }}
             </el-tag>
             <el-tag size="small" type="info" effect="plain" round>
               {{ detail.summary.width.toFixed(2) }} × {{ detail.summary.height.toFixed(2) }} m
             </el-tag>
-            <el-tag v-if="detail.summary.immuneToFire" size="small" type="warning" effect="plain" round>
-              火免疫
+            <el-tag
+              v-if="detail.summary.immuneToFire"
+              size="small"
+              type="warning"
+              effect="plain"
+              round
+            >
+              {{ $t('mob.fireImmune') }}
             </el-tag>
-            <el-tag v-if="detail.summary.leashable" size="small" type="success" effect="plain" round>
-              可栓绳
+            <el-tag
+              v-if="detail.summary.leashable"
+              size="small"
+              type="success"
+              effect="plain"
+              round
+            >
+              {{ $t('mob.leashable') }}
             </el-tag>
           </div>
         </div>
@@ -99,33 +137,29 @@ onMounted(load)
 
       <section class="info-grid">
         <div class="info-card">
-          <div class="info-label">和平模式</div>
+          <div class="info-label">{{ $t('mob.peacefulMode') }}</div>
           <div class="info-value" :class="{ on: detail.info.allowedInPeaceful }">
-            {{ detail.info.allowedInPeaceful ? '允许' : '消失' }}
+            {{ peaceAllowedLabel }}
           </div>
         </div>
         <div class="info-card">
-          <div class="info-label">灵魂之瓶</div>
+          <div class="info-label">{{ $t('mob.soulVial') }}</div>
           <div class="info-value" :class="{ on: detail.info.soulVialUsable }">
-            {{ detail.info.soulVialUsable ? '可装填' : '不可' }}
+            {{ soulVialLabel }}
           </div>
         </div>
         <div class="info-card">
-          <div class="info-label">精英怪</div>
+          <div class="info-label">{{ $t('mob.infernal') }}</div>
           <div class="info-value" :class="{ on: detail.info.allowedInfernal }">
-            <template v-if="detail.info.alwaysInfernal">必定</template>
-            <template v-else-if="detail.info.allowedInfernal">可能</template>
-            <template v-else>不会</template>
+            {{ infernalLabel }}
           </div>
         </div>
       </section>
 
       <section class="drops-section">
-        <div class="section-title">
-          掉落表 · {{ detail.drops.length }}
-        </div>
+        <div class="section-title">{{ $t('mob.dropTablePrefix') }}{{ detail.drops.length }}</div>
         <div v-if="detail.drops.length === 0" class="empty-drops">
-          <el-empty description="无掉落数据" :image-size="60" />
+          <el-empty :description="$t('mob.noDropData')" :image-size="60" />
         </div>
         <div v-else class="drop-list">
           <div
@@ -139,7 +173,7 @@ onMounted(load)
             @keydown.space.prevent="goItem(d.itemVariantId)"
           >
             <el-tag size="small" :type="dropMeta(d).type" effect="plain" round>
-              {{ dropMeta(d).label }}
+              {{ $t(dropMeta(d).key) }}
             </el-tag>
             <div class="drop-icon">
               <img v-if="d.assetUrl" :src="d.assetUrl" :alt="d.displayName ?? ''" loading="lazy" />
@@ -151,10 +185,10 @@ onMounted(load)
             <div class="drop-prob">{{ pct(d.probability) }}</div>
             <div class="drop-tags">
               <el-tag v-if="d.playerOnly" size="small" type="warning" effect="plain" round>
-                需玩家击杀
+                {{ $t('mob.requirePlayerKill') }}
               </el-tag>
               <el-tag v-if="!d.lootable" size="small" type="info" effect="plain" round>
-                非战利品袋
+                {{ $t('mob.notLootBag') }}
               </el-tag>
             </div>
           </div>
@@ -284,7 +318,9 @@ onMounted(load)
   border-radius: 6px;
   cursor: pointer;
   font-size: 13px;
-  transition: border-color 0.15s, background 0.15s;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
 }
 .drop-row:hover {
   border-color: var(--el-color-primary);

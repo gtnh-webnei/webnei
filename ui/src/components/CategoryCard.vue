@@ -1,13 +1,16 @@
 <script setup lang="ts">
-import type { RecipeCategory } from '@/api/recipes.types'
+import { useI18n } from 'vue-i18n';
+import type { RecipeCategory } from '@/api/recipes.types';
+
+const { t } = useI18n();
 
 defineProps<{
-  category: RecipeCategory
-}>()
+  category: RecipeCategory;
+}>();
 
 defineEmits<{
-  (e: 'select', category: RecipeCategory): void
-}>()
+  (e: 'select', category: RecipeCategory): void;
+}>();
 </script>
 
 <template>
@@ -22,24 +25,21 @@ defineEmits<{
   >
     <div class="card-body">
       <div class="icon-wrap">
-        <img v-if="category.iconAssetUrl" :src="category.iconAssetUrl" :alt="category.displayName" />
+        <img
+          v-if="category.iconAssetUrl"
+          :src="category.iconAssetUrl"
+          :alt="category.displayName"
+        />
       </div>
       <div class="meta">
         <div class="name" :title="category.displayName">{{ category.displayName }}</div>
-        <code class="cat-id" :title="category.categoryId">{{ category.categoryId }}</code>
         <div class="tags">
-          <el-tag size="small" type="info" effect="plain" round>{{ category.plugin }}</el-tag>
+          <el-tag size="small" type="info" effect="plain" round>{{ category.modId }}</el-tag>
           <el-tag size="small" effect="plain" round>
-            {{ category.recipeCount.toLocaleString() }} 配方
+            {{ t('category.recipeCount', { count: category.recipeCount.toLocaleString() }) }}
           </el-tag>
-          <el-tag
-            v-if="category.machineCount > 0"
-            size="small"
-            type="warning"
-            effect="plain"
-            round
-          >
-            {{ category.machineCount }} 机器
+          <el-tag v-if="category.machineCount > 0" size="small" type="warning" effect="plain" round>
+            {{ t('category.machineCount', { count: category.machineCount }) }}
           </el-tag>
         </div>
       </div>
@@ -51,7 +51,9 @@ defineEmits<{
 .cat-card {
   min-height: 120px;
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
 }
 .cat-card:hover {
   border-color: var(--el-color-primary);

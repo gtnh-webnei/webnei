@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import { useDatasetStore } from '@/stores/dataset'
 import { listMobMods, listMobs } from '@/api/mobs'
@@ -8,6 +9,8 @@ import type { MobSummary } from '@/api/mobs.types'
 import { usePagedBrowser } from '@/composables/usePagedBrowser'
 import BrowserToolbar from '@/components/BrowserToolbar.vue'
 import MobCard from '@/components/MobCard.vue'
+
+const { t } = useI18n()
 
 const route = useRoute()
 const router = useRouter()
@@ -39,23 +42,23 @@ function openMob(mob: MobSummary) {
 <template>
   <div class="mob-browser">
     <header class="header">
-      <h1>生物浏览</h1>
-      <p class="lead">共 {{ total.toLocaleString() }} 个生物</p>
+      <h1>{{ $t('mob.pageTitle') }}</h1>
+      <p class="lead">{{ $t('common.totalCount') }} {{ total.toLocaleString() }}{{ $t('mob.totalLabel') }}</p>
     </header>
 
     <BrowserToolbar
       v-model:q="q"
       v-model:secondary="secondary"
       :secondary-options="secondaryOptions"
-      placeholder="搜索名称 / Entity 名"
-      secondary-placeholder="所有 Mod"
+      :placeholder="$t('mob.searchPlaceholder')"
+      :secondary-placeholder="$t('common.allMod')"
       :total="total"
-      total-suffix="条"
+      :total-suffix="$t('common.items')"
     />
 
     <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
     <el-skeleton v-if="loading && items.length === 0" :rows="6" animated />
-    <el-empty v-else-if="!loading && items.length === 0" description="没有匹配的生物" />
+    <el-empty v-else-if="!loading && items.length === 0" :description="$t('mob.noMatch')" />
 
     <div v-else v-loading="loading" class="grid">
       <MobCard

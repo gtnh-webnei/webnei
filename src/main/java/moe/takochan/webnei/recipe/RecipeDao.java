@@ -11,15 +11,22 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+
 import moe.takochan.webnei.asset.AssetUrlBuilder;
+import moe.takochan.webnei.common.ModOptionDto;
 import moe.takochan.webnei.common.PageRequest;
 import moe.takochan.webnei.common.PageResponse;
 import moe.takochan.webnei.dataset.DatasetSummary;
 import moe.takochan.webnei.recipe.dto.CategoryBreakdownDto;
+import moe.takochan.webnei.recipe.dto.CategoryMachineDto;
+import moe.takochan.webnei.recipe.dto.CategoryVoltageTierDto;
 import moe.takochan.webnei.recipe.dto.GregTechRecipeDto;
 import moe.takochan.webnei.recipe.dto.GregTechSpecialItemDto;
 import moe.takochan.webnei.recipe.dto.HandlerBreakdownDto;
-import moe.takochan.webnei.recipe.dto.RecipeCategoryDto;
+import moe.takochan.webnei.recipe.dto.MetadataValueDto;
 import moe.takochan.webnei.recipe.dto.RecipeDto;
 import moe.takochan.webnei.recipe.dto.RecipeSlotCandidateDto;
 import moe.takochan.webnei.recipe.dto.RecipeSlotDto;
@@ -33,235 +40,188 @@ public class RecipeDao {
 
     private final JdbcClient jdbc;
     private final AssetUrlBuilder assetUrlBuilder;
+    private final ObjectMapper objectMapper;
 
-    public RecipeDao(JdbcClient jdbc, AssetUrlBuilder assetUrlBuilder) {
+    public RecipeDao(JdbcClient jdbc, AssetUrlBuilder assetUrlBuilder, ObjectMapper objectMapper) {
         this.jdbc = jdbc;
         this.assetUrlBuilder = assetUrlBuilder;
+        this.objectMapper = objectMapper;
     }
 
-    public List<RecipeCategoryDto> listCategories(DatasetSummary dataset) {
-        return queryCategories(dataset, null, null, false, null);
-    }
-
-    public PageResponse<RecipeCategoryDto> listCategoriesPage(
-            DatasetSummary dataset, String query, String plugin, boolean hideEmpty, PageRequest page) {
-        String filter = (query == null || query.isBlank()) ? null : "%" + query.toLowerCase() + "%";
-        String pluginParam = (plugin == null || plugin.isBlank()) ? null : plugin;
-
-        long total = jdbc.sql("""
-                        SELECT COUNT(*) FROM v_recipe_category_browser
-                        WHERE dataset_id = :datasetId
-                          AND (CAST(:plugin AS TEXT) IS NULL OR plugin = CAST(:plugin AS TEXT))
-                          AND (CAST(:hideEmpty AS BOOLEAN) IS NULL
-                               OR CAST(:hideEmpty AS BOOLEAN) = false
-                               OR recipe_count > 0)
-                          AND (CAST(:filter AS TEXT) IS NULL
-                               OR lower(display_name) LIKE CAST(:filter AS TEXT)
-                               OR lower(category_id) LIKE CAST(:filter AS TEXT)
-                               OR lower(handler_id) LIKE CAST(:filter AS TEXT))
-                        """)
-                .param("datasetId", dataset.datasetId())
-                .param("plugin", pluginParam)
-                .param("hideEmpty", hideEmpty)
-                .param("filter", filter)
-                .query(Long.class)
-                .single();
-
-        List<RecipeCategoryDto> items = queryCategories(dataset, filter, pluginParam, hideEmpty, page);
-        return PageResponse.of(items, page, total);
-    }
-
-    public List<String> listCategoryPlugins(DatasetSummary dataset) {
+    public List<ModOptionDto> listCategoryMods(DatasetSummary dataset) {
         return jdbc.sql("""
-                        SELECT DISTINCT plugin FROM v_recipe_category_browser
-                        WHERE dataset_id = :datasetId AND plugin <> ''
-                        ORDER BY plugin
+                        SELECT used.mod_id, COALESCE(m.name, used.mod_id) AS name
+                        FROM (
+                            SELECT DISTINCT mod_id
+                            FROM recipe_category
+                            WHERE dataset_id = :datasetId AND mod_id <> ''
+                        ) used
+                        LEFT JOIN mod m
+                          ON m.dataset_id = :datasetId AND m.mod_id = used.mod_id
+                        ORDER BY name, used.mod_id
                         """)
                 .param("datasetId", dataset.datasetId())
-                .query(String.class)
-                .list();
-    }
-
-    private List<RecipeCategoryDto> queryCategories(
-            DatasetSummary dataset, String filter, String plugin, boolean hideEmpty, PageRequest page) {
-        StringBuilder sql = new StringBuilder("""
-                SELECT category_id, plugin, handler_id, display_name, ui_kind, ui_template_id,
-                       shapeless, icon_item_variant_id, icon_display_name, icon_asset_path,
-                       icon_info, item_input_width, item_input_height, fluid_input_width, fluid_input_height,
-                       item_output_width, item_output_height, fluid_output_width, fluid_output_height,
-                       supports_recipe_lookup, supports_usage_lookup, display_order,
-                       canvas_width, canvas_height, background_asset_path,
-                       recipe_count, machine_count
-                FROM v_recipe_category_browser
-                WHERE dataset_id = :datasetId
-                  AND (CAST(:plugin AS TEXT) IS NULL OR plugin = CAST(:plugin AS TEXT))
-                  AND (CAST(:hideEmpty AS BOOLEAN) IS NULL
-                       OR CAST(:hideEmpty AS BOOLEAN) = false
-                       OR recipe_count > 0)
-                  AND (CAST(:filter AS TEXT) IS NULL
-                       OR lower(display_name) LIKE CAST(:filter AS TEXT)
-                       OR lower(category_id) LIKE CAST(:filter AS TEXT)
-                       OR lower(handler_id) LIKE CAST(:filter AS TEXT))
-                ORDER BY display_order, category_id
-                """);
-        if (page != null) {
-            sql.append("OFFSET :offset LIMIT :limit\n");
-        }
-        var spec = jdbc.sql(sql.toString())
-                .param("datasetId", dataset.datasetId())
-                .param("plugin", plugin)
-                .param("hideEmpty", hideEmpty)
-                .param("filter", filter);
-        if (page != null) {
-            spec = spec.param("offset", page.offset()).param("limit", page.size());
-        }
-        return spec
-                .query((rs, n) -> new RecipeCategoryDto(
-                        rs.getString("category_id"),
-                        rs.getString("plugin"),
-                        rs.getString("handler_id"),
-                        rs.getString("display_name"),
-                        rs.getString("ui_kind"),
-                        rs.getString("ui_template_id"),
-                        rs.getBoolean("shapeless"),
-                        rs.getString("icon_item_variant_id"),
-                        rs.getString("icon_display_name"),
-                        assetUrlBuilder.build(dataset, rs.getString("icon_asset_path"), null),
-                        rs.getString("icon_info"),
-                        rs.getInt("item_input_width"),
-                        rs.getInt("item_input_height"),
-                        rs.getInt("fluid_input_width"),
-                        rs.getInt("fluid_input_height"),
-                        rs.getInt("item_output_width"),
-                        rs.getInt("item_output_height"),
-                        rs.getInt("fluid_output_width"),
-                        rs.getInt("fluid_output_height"),
-                        rs.getBoolean("supports_recipe_lookup"),
-                        rs.getBoolean("supports_usage_lookup"),
-                        rs.getInt("display_order"),
-                        nullableInt(rs, "canvas_width"),
-                        nullableInt(rs, "canvas_height"),
-                        assetUrlBuilder.build(dataset, rs.getString("background_asset_path"), null),
-                        rs.getLong("recipe_count"),
-                        rs.getLong("machine_count")))
+                .query((rs, n) -> new ModOptionDto(rs.getString("mod_id"), rs.getString("name")))
                 .list();
     }
 
     public LookupPage listRecipeIdsByCategory(
-            DatasetSummary dataset, String categoryId, String query, PageRequest page) {
+            DatasetSummary dataset, String categoryId, String query, String voltageTier, PageRequest page) {
         String q = (query == null) ? "" : query.trim();
-        if (q.isEmpty()) {
-            long total = jdbc.sql("""
-                            SELECT COUNT(*) FROM recipe
-                            WHERE dataset_id = :datasetId AND category_id = :categoryId
-                            """)
-                    .param("datasetId", dataset.datasetId())
-                    .param("categoryId", categoryId)
-                    .query(Long.class)
-                    .single();
+        boolean hasVoltage = voltageTier != null && !voltageTier.isBlank();
 
-            List<String> ids = jdbc.sql("""
+        // Step 1: base (no search) or search
+        List<String> ids;
+        if (q.isEmpty()) {
+            ids = jdbc.sql("""
                             SELECT recipe_id FROM recipe
-                            WHERE dataset_id = :datasetId AND category_id = :categoryId
+                            WHERE dataset_id = :datasetId
+                              AND category_id = :categoryId
                             ORDER BY recipe_id
-                            OFFSET :offset LIMIT :limit
                             """)
                     .param("datasetId", dataset.datasetId())
                     .param("categoryId", categoryId)
-                    .param("offset", page.offset())
-                    .param("limit", page.size())
                     .query(String.class)
                     .list();
-            return new LookupPage(ids, total);
+        } else {
+            String pattern = "%" + q.toLowerCase() + "%";
+            ids = jdbc.sql("""
+                            SELECT DISTINCT m.recipe_id FROM (
+                              SELECT recipe_id FROM v_recipe_item_slot
+                              WHERE dataset_id = :datasetId
+                                AND category_id = :categoryId
+                                AND (LOWER(COALESCE(display_name, '')) LIKE :pattern
+                                     OR LOWER(item_variant_id) LIKE :pattern)
+                              UNION ALL
+                              SELECT recipe_id FROM v_recipe_fluid_slot
+                              WHERE dataset_id = :datasetId
+                                AND category_id = :categoryId
+                                AND (LOWER(COALESCE(display_name, '')) LIKE :pattern
+                                     OR LOWER(fluid_variant_id) LIKE :pattern)
+                            ) m
+                            ORDER BY recipe_id
+                            """)
+                    .param("datasetId", dataset.datasetId())
+                    .param("categoryId", categoryId)
+                    .param("pattern", pattern)
+                    .query(String.class)
+                    .list();
+        }
+        if (ids.isEmpty()) return new LookupPage(List.of(), 0);
+
+        // Step 2: optional voltage filter
+        if (hasVoltage) {
+            ids = jdbc.sql("""
+                            SELECT recipe_id FROM gregtech_recipe
+                            WHERE dataset_id = :datasetId
+                              AND recipe_id IN (:ids)
+                              AND voltage_tier = :voltageTier
+                            ORDER BY recipe_id
+                            """)
+                    .param("datasetId", dataset.datasetId())
+                    .param("ids", ids)
+                    .param("voltageTier", voltageTier)
+                    .query(String.class)
+                    .list();
+            if (ids.isEmpty()) return new LookupPage(List.of(), 0);
         }
 
-        String pattern = "%" + q.toLowerCase() + "%";
-        String matchSql = """
-                SELECT DISTINCT recipe_id FROM (
-                  SELECT recipe_id FROM v_recipe_item_slot
-                  WHERE dataset_id = :datasetId
-                    AND category_id = :categoryId
-                    AND (LOWER(COALESCE(display_name, '')) LIKE :pattern
-                         OR LOWER(item_variant_id) LIKE :pattern)
-                  UNION ALL
-                  SELECT recipe_id FROM v_recipe_fluid_slot
-                  WHERE dataset_id = :datasetId
-                    AND category_id = :categoryId
-                    AND (LOWER(COALESCE(display_name, '')) LIKE :pattern
-                         OR LOWER(fluid_variant_id) LIKE :pattern)
-                ) m
-                """;
-
-        long total = jdbc.sql("SELECT COUNT(*) FROM (" + matchSql + ") c")
-                .param("datasetId", dataset.datasetId())
-                .param("categoryId", categoryId)
-                .param("pattern", pattern)
-                .query(Long.class)
-                .single();
-        List<String> ids = jdbc.sql(matchSql + " ORDER BY recipe_id OFFSET :offset LIMIT :limit")
-                .param("datasetId", dataset.datasetId())
-                .param("categoryId", categoryId)
-                .param("pattern", pattern)
-                .param("offset", page.offset())
-                .param("limit", page.size())
-                .query(String.class)
-                .list();
-        return new LookupPage(ids, total);
+        // Step 3: count + paginate from final ids
+        long total = ids.size();
+        int from = page.offset();
+        int to = Math.min(from + page.size(), ids.size());
+        List<String> pageIds = from < ids.size() ? ids.subList(from, to) : List.of();
+        return new LookupPage(pageIds, total);
     }
 
     public LookupPage lookupRecipeIds(
             DatasetSummary dataset, RecipeLookupQuery query, PageRequest page) {
         String kind = query.isUsage() ? "usage" : "recipe";
-        String handlerId = query.hasHandlerFilter() ? query.handlerId() : null;
-        String categoryId = query.hasCategoryFilter() ? query.categoryId() : null;
-        boolean needsCategoryJoin = handlerId != null;
+        String target = query.target();
 
-        StringBuilder baseFrom = new StringBuilder("FROM recipe_lookup_index rli\n");
-        if (needsCategoryJoin) {
-            baseFrom.append("""
-                    JOIN recipe_category rc
-                      ON rc.dataset_id = rli.dataset_id AND rc.category_id = rli.category_id
-                    """);
-        }
-
-        StringBuilder filters = new StringBuilder("""
-                WHERE rli.dataset_id = :datasetId
-                  AND rli.target_id = :target
-                  AND rli.lookup_kind = :kind
-                """);
-        if (handlerId != null) {
-            filters.append("  AND rc.handler_id = :handlerId\n");
-        }
-        if (categoryId != null) {
-            filters.append("  AND rli.category_id = :categoryId\n");
-        }
-
-        var totalSpec = jdbc.sql("SELECT COUNT(DISTINCT rli.recipe_id) " + baseFrom + filters)
+        List<String> baseIds = jdbc.sql("""
+                        SELECT DISTINCT recipe_id FROM recipe_lookup_index
+                        WHERE dataset_id = :datasetId
+                          AND target_id = :target
+                          AND lookup_kind = :kind
+                        """)
                 .param("datasetId", dataset.datasetId())
-                .param("target", query.target())
-                .param("kind", kind);
-        if (handlerId != null) totalSpec = totalSpec.param("handlerId", handlerId);
-        if (categoryId != null) totalSpec = totalSpec.param("categoryId", categoryId);
-        long total = totalSpec.query(Long.class).single();
+                .param("target", target)
+                .param("kind", kind)
+                .query(String.class)
+                .list();
+        if (baseIds.isEmpty()) return new LookupPage(List.of(), 0);
 
-        var idsSpec = jdbc.sql("""
+        // Step 2: optional category filter
+        if (query.hasCategoryFilter()) {
+            baseIds = jdbc.sql("""
+                            SELECT DISTINCT recipe_id FROM recipe_lookup_index
+                            WHERE dataset_id = :datasetId
+                              AND recipe_id IN (:ids)
+                              AND category_id = :categoryId
+                            """)
+                    .param("datasetId", dataset.datasetId())
+                    .param("ids", baseIds)
+                    .param("categoryId", query.categoryId())
+                    .query(String.class)
+                    .list();
+            if (baseIds.isEmpty()) return new LookupPage(List.of(), 0);
+        }
+
+        // Step 3: optional handler filter
+        if (query.hasHandlerFilter()) {
+            baseIds = jdbc.sql("""
+                            SELECT DISTINCT rli.recipe_id FROM recipe_lookup_index rli
+                            JOIN recipe_category rc
+                              ON rc.dataset_id = rli.dataset_id AND rc.category_id = rli.category_id
+                            WHERE rli.dataset_id = :datasetId
+                              AND rli.recipe_id IN (:ids)
+                              AND rc.handler_id = :handlerId
+                            """)
+                    .param("datasetId", dataset.datasetId())
+                    .param("ids", baseIds)
+                    .param("handlerId", query.handlerId())
+                    .query(String.class)
+                    .list();
+            if (baseIds.isEmpty()) return new LookupPage(List.of(), 0);
+        }
+
+        // Step 4: optional voltage filter
+        if (query.hasVoltageTierFilter()) {
+            baseIds = jdbc.sql("""
+                            SELECT recipe_id FROM gregtech_recipe
+                            WHERE dataset_id = :datasetId
+                              AND recipe_id IN (:ids)
+                              AND voltage_tier = :voltageTier
+                            """)
+                    .param("datasetId", dataset.datasetId())
+                    .param("ids", baseIds)
+                    .param("voltageTier", query.voltageTier())
+                    .query(String.class)
+                    .list();
+            if (baseIds.isEmpty()) return new LookupPage(List.of(), 0);
+        }
+
+        // Step 5: count + sort + paginate
+        long total = baseIds.size();
+        List<String> pageIds = jdbc.sql("""
                         SELECT recipe_id FROM (
-                          SELECT rli.recipe_id, MIN(rli.display_order) AS ord
-                          """ + baseFrom + filters + """
-                          GROUP BY rli.recipe_id
+                          SELECT recipe_id, MIN(display_order) AS ord
+                          FROM recipe_lookup_index
+                          WHERE dataset_id = :datasetId
+                            AND recipe_id IN (:ids)
+                          GROUP BY recipe_id
                         ) t
                         ORDER BY ord, recipe_id
                         OFFSET :offset LIMIT :limit
                         """)
                 .param("datasetId", dataset.datasetId())
-                .param("target", query.target())
-                .param("kind", kind)
+                .param("ids", baseIds)
                 .param("offset", page.offset())
-                .param("limit", page.size());
-        if (handlerId != null) idsSpec = idsSpec.param("handlerId", handlerId);
-        if (categoryId != null) idsSpec = idsSpec.param("categoryId", categoryId);
-        List<String> ids = idsSpec.query(String.class).list();
-        return new LookupPage(ids, total);
+                .param("limit", page.size())
+                .query(String.class)
+                .list();
+        return new LookupPage(pageIds, total);
     }
 
     public List<HandlerBreakdownDto> lookupBreakdown(
@@ -280,16 +240,22 @@ public class RecipeDao {
                         SELECT vc.handler_id,
                                rli.category_id,
                                vc.display_name,
-                               vc.icon_asset_path,
+                               COALESCE(vc.icon_asset_path, nei.exported_path) AS icon_asset_path,
                                vc.display_order,
                                COUNT(DISTINCT rli.recipe_id) AS cnt
                         FROM recipe_lookup_index rli
                         JOIN v_recipe_category_browser vc
                           ON vc.dataset_id = rli.dataset_id AND vc.category_id = rli.category_id
+                        LEFT JOIN nei_texture_export nei
+                          ON nei.dataset_id = vc.dataset_id
+                         AND nei.resource = vc.icon_image_resource
+                         AND vc.icon_asset_path IS NULL
                         WHERE rli.dataset_id = :datasetId
                           AND rli.target_id = :target
                           AND rli.lookup_kind = :kind
-                        GROUP BY vc.handler_id, rli.category_id, vc.display_name, vc.icon_asset_path, vc.display_order
+                        GROUP BY vc.handler_id, rli.category_id, vc.display_name,
+                                 COALESCE(vc.icon_asset_path, nei.exported_path),
+                                 vc.display_order
                         """)
                 .param("datasetId", dataset.datasetId())
                 .param("target", query.target())
@@ -367,12 +333,13 @@ public class RecipeDao {
         if (recipeIds.isEmpty()) return List.of();
 
         Map<String, RecipeHeader> headers = loadHeaders(dataset, recipeIds);
-        Map<String, List<RecipeSlotDto>> slotMap = loadSlots(dataset, recipeIds);
+        List<SpecialItemRow> specialRows = loadSpecialItemRows(dataset, recipeIds);
+        Map<String, List<RecipeSlotDto>> slotMap = loadSlots(dataset, recipeIds, specialRows);
         Map<String, List<SlotLayoutDto>> layoutMap = loadLayouts(
                 dataset, headers.values().stream().map(RecipeHeader::categoryId).distinct().toList());
         Map<String, CategoryLayoutMeta> categoryMeta = loadCategoryLayoutMeta(
                 dataset, headers.values().stream().map(RecipeHeader::categoryId).distinct().toList());
-        Map<String, GregTechRecipeDto> gtMap = loadGregTechInfo(dataset, recipeIds);
+        Map<String, GregTechRecipeDto> gtMap = loadGregTechInfo(dataset, headers, specialRows);
 
         List<RecipeDto> out = new ArrayList<>(recipeIds.size());
         for (String id : recipeIds) {
@@ -380,17 +347,21 @@ public class RecipeDao {
             if (h == null) continue;
             CategoryLayoutMeta meta = categoryMeta.getOrDefault(h.categoryId(),
                     new CategoryLayoutMeta(null, null, null));
+
+            // Merge placement from layout into slots
+            List<RecipeSlotDto> slots = slotMap.getOrDefault(id, List.of());
+            List<SlotLayoutDto> layouts = layoutMap.getOrDefault(h.categoryId(), List.of());
+            List<RecipeSlotDto> slotsWithPlacement = mergeSlotPlacement(slots, layouts);
+
             out.add(new RecipeDto(
                     id,
                     h.categoryId(),
                     h.categoryDisplayName(),
-                    h.uiKind(),
-                    h.uiTemplateId(),
                     h.sourcePlugin(),
                     h.sourceRef(),
                     h.description(),
-                    slotMap.getOrDefault(id, List.of()),
-                    layoutMap.getOrDefault(h.categoryId(), List.of()),
+                    slotsWithPlacement,
+                    layouts,
                     meta.canvasWidth(),
                     meta.canvasHeight(),
                     assetUrlBuilder.build(dataset, meta.backgroundAssetPath(), null),
@@ -399,22 +370,57 @@ public class RecipeDao {
         return out;
     }
 
+    private List<RecipeSlotDto> mergeSlotPlacement(List<RecipeSlotDto> slots, List<SlotLayoutDto> layouts) {
+        // Build a map of (role, slotIndex) -> placement
+        Map<String, String> placementMap = new HashMap<>();
+        for (SlotLayoutDto layout : layouts) {
+            String key = layout.role() + ":" + layout.slotIndex();
+            if (layout.placement() != null) {
+                placementMap.put(key, layout.placement());
+            }
+        }
+
+        // Create new slots with placement
+        List<RecipeSlotDto> result = new ArrayList<>(slots.size());
+        for (RecipeSlotDto slot : slots) {
+            String key = slot.role() + ":" + slot.slotIndex();
+            String placement = placementMap.get(key);
+            result.add(new RecipeSlotDto(
+                    slot.role(),
+                    slot.slotIndex(),
+                    slot.itemVariantId(),
+                    slot.fluidVariantId(),
+                    slot.amount(),
+                    slot.probability(),
+                    slot.groupId(),
+                    slot.displayName(),
+                    slot.modId(),
+                    slot.assetUrl(),
+                    slot.candidates(),
+                    placement));
+        }
+        return result;
+    }
+
     private Map<String, GregTechRecipeDto> loadGregTechInfo(
-            DatasetSummary dataset, List<String> recipeIds) {
-        if (recipeIds.isEmpty()) return Map.of();
+            DatasetSummary dataset, Map<String, RecipeHeader> headers, List<SpecialItemRow> specialRows) {
+        if (headers.isEmpty()) return Map.of();
+        List<String> recipeIds = new ArrayList<>(headers.keySet());
 
         record GtRow(
                 String recipeId,
+                String recipeKind,
+                boolean visibleInNei,
                 String voltageTier,
-                long voltage,
-                int amperage,
+                Integer voltage,
+                Integer amperage,
                 int durationTicks,
-                boolean requiresCleanroom,
-                String additionalInfo) {}
+                Integer specialValue) {}
 
         List<GtRow> rows = jdbc.sql("""
-                        SELECT recipe_id, voltage_tier, voltage, amperage, duration_ticks,
-                               requires_cleanroom, additional_info
+                        SELECT recipe_id, recipe_kind, visible_in_nei,
+                               voltage_tier, voltage, amperage, duration_ticks,
+                               special_value
                         FROM gregtech_recipe
                         WHERE dataset_id = :datasetId
                           AND recipe_id IN (:ids)
@@ -423,45 +429,87 @@ public class RecipeDao {
                 .param("ids", recipeIds)
                 .query((rs, n) -> new GtRow(
                         rs.getString("recipe_id"),
+                        rs.getString("recipe_kind"),
+                        rs.getBoolean("visible_in_nei"),
                         rs.getString("voltage_tier"),
-                        rs.getLong("voltage"),
-                        rs.getInt("amperage"),
+                        rs.getObject("voltage", Integer.class),
+                        rs.getObject("amperage", Integer.class),
                         rs.getInt("duration_ticks"),
-                        rs.getBoolean("requires_cleanroom"),
-                        rs.getString("additional_info")))
+                        rs.getObject("special_value", Integer.class)))
                 .list();
 
         Map<String, List<GregTechSpecialItemDto>> specialItems =
-                loadGregTechSpecialItems(dataset, recipeIds);
+                mapGregTechSpecialItems(dataset, specialRows);
+        Map<String, Map<String, MetadataValueDto>> metadataByRecipe =
+                loadGregTechMetadata(dataset, recipeIds);
 
         Map<String, GregTechRecipeDto> map = new HashMap<>(rows.size());
         for (GtRow r : rows) {
             map.put(r.recipeId(), new GregTechRecipeDto(
+                    r.recipeKind(),
+                    r.visibleInNei(),
                     r.voltageTier(),
                     r.voltage(),
                     r.amperage(),
                     r.durationTicks(),
-                    r.requiresCleanroom(),
-                    r.additionalInfo(),
-                    specialItems.getOrDefault(r.recipeId(), List.of())));
+                    r.specialValue(),
+                    specialItems.getOrDefault(r.recipeId(), List.of()),
+                    metadataByRecipe.getOrDefault(r.recipeId(), Map.of())));
         }
         return map;
     }
 
-    private Map<String, List<GregTechSpecialItemDto>> loadGregTechSpecialItems(
+    private Map<String, Map<String, MetadataValueDto>> loadGregTechMetadata(
             DatasetSummary dataset, List<String> recipeIds) {
         if (recipeIds.isEmpty()) return Map.of();
 
-        record SpecialRow(
+        record MetaRow(
                 String recipeId,
-                int listIndex,
-                String itemVariantId,
-                String displayName,
-                String modId,
-                String assetPath,
-                String assetSha) {}
+                String key,
+                String valueType,
+                String valueText,
+                String valueJson) {}
 
-        List<SpecialRow> rows = jdbc.sql("""
+        List<MetaRow> rows = jdbc.sql("""
+                        SELECT recipe_id, metadata_key, value_type, value_text, value_json
+                        FROM gregtech_recipe_metadata
+                        WHERE dataset_id = :datasetId
+                          AND recipe_id IN (:ids)
+                        ORDER BY recipe_id, metadata_key
+                        """)
+                .param("datasetId", dataset.datasetId())
+                .param("ids", recipeIds)
+                .query((rs, n) -> new MetaRow(
+                        rs.getString("recipe_id"),
+                        rs.getString("metadata_key"),
+                        rs.getString("value_type"),
+                        rs.getString("value_text"),
+                        rs.getString("value_json")))
+                .list();
+
+        Map<String, Map<String, MetadataValueDto>> map = new LinkedHashMap<>();
+        for (MetaRow r : rows) {
+            JsonNode parsed = parseMetadataJson(r.valueJson(), r.recipeId(), r.key());
+            map.computeIfAbsent(r.recipeId(), k -> new LinkedHashMap<>())
+                    .put(r.key(), new MetadataValueDto(r.valueType(), r.valueText(), parsed));
+        }
+        return map;
+    }
+
+    private JsonNode parseMetadataJson(String raw, String recipeId, String key) {
+        if (raw == null || raw.isBlank()) return null;
+        try {
+            return objectMapper.readTree(raw);
+        } catch (JacksonException ex) {
+            throw new IllegalStateException(
+                    "Failed to parse gregtech_recipe_metadata.value_json for recipe="
+                            + recipeId + ", key=" + key, ex);
+        }
+    }
+
+    private List<SpecialItemRow> loadSpecialItemRows(DatasetSummary dataset, List<String> recipeIds) {
+        if (recipeIds.isEmpty()) return List.of();
+        return jdbc.sql("""
                         SELECT s.recipe_id, s.list_index, s.item_variant_id,
                                iv.display_name, iv.mod_id,
                                iv.asset_path, iv.asset_sha256
@@ -474,7 +522,7 @@ public class RecipeDao {
                         """)
                 .param("datasetId", dataset.datasetId())
                 .param("ids", recipeIds)
-                .query((rs, n) -> new SpecialRow(
+                .query((rs, n) -> new SpecialItemRow(
                         rs.getString("recipe_id"),
                         rs.getInt("list_index"),
                         rs.getString("item_variant_id"),
@@ -483,9 +531,12 @@ public class RecipeDao {
                         rs.getString("asset_path"),
                         rs.getString("asset_sha256")))
                 .list();
+    }
 
+    private Map<String, List<GregTechSpecialItemDto>> mapGregTechSpecialItems(
+            DatasetSummary dataset, List<SpecialItemRow> rows) {
         Map<String, List<GregTechSpecialItemDto>> map = new LinkedHashMap<>();
-        for (SpecialRow r : rows) {
+        for (SpecialItemRow r : rows) {
             map.computeIfAbsent(r.recipeId(), k -> new ArrayList<>())
                     .add(new GregTechSpecialItemDto(
                             r.itemVariantId(),
@@ -499,7 +550,7 @@ public class RecipeDao {
     private Map<String, RecipeHeader> loadHeaders(DatasetSummary dataset, List<String> recipeIds) {
         List<RecipeHeader> rows = jdbc.sql("""
                         SELECT r.recipe_id, r.category_id, r.source_plugin, r.source_ref, r.description,
-                               rc.display_name AS category_display_name, rc.ui_kind, rc.ui_template_id
+                               rc.display_name AS category_display_name
                         FROM recipe r
                         JOIN recipe_category rc
                           ON rc.dataset_id = r.dataset_id AND rc.category_id = r.category_id
@@ -512,8 +563,6 @@ public class RecipeDao {
                         rs.getString("recipe_id"),
                         rs.getString("category_id"),
                         rs.getString("category_display_name"),
-                        rs.getString("ui_kind"),
-                        rs.getString("ui_template_id"),
                         rs.getString("source_plugin"),
                         rs.getString("source_ref"),
                         rs.getString("description")))
@@ -525,7 +574,8 @@ public class RecipeDao {
         return map;
     }
 
-    private Map<String, List<RecipeSlotDto>> loadSlots(DatasetSummary dataset, List<String> recipeIds) {
+    private Map<String, List<RecipeSlotDto>> loadSlots(
+            DatasetSummary dataset, List<String> recipeIds, List<SpecialItemRow> specialRows) {
         List<SlotRow> rows = jdbc.sql("""
                         SELECT rs.recipe_id, rs.role, rs.slot_index, rs.group_id, rs.amount, rs.probability,
                                rs.item_variant_id AS item_direct,
@@ -606,9 +656,29 @@ public class RecipeDao {
                     displayName,
                     modId,
                     assetUrl,
-                    candidates);
+                    candidates,
+                    null);  // placement will be merged later in loadRecipes
             byRecipe.computeIfAbsent(r.recipeId(), k -> new ArrayList<>()).add(slot);
         }
+
+        for (SpecialItemRow si : specialRows) {
+            String assetUrl = assetUrlBuilder.build(dataset, si.assetPath(), si.assetSha());
+            RecipeSlotDto slot = new RecipeSlotDto(
+                    "special_item",
+                    si.listIndex(),
+                    si.itemVariantId(),
+                    null,
+                    1,
+                    1.0,
+                    null,
+                    si.displayName(),
+                    si.modId(),
+                    assetUrl,
+                    List.of(),
+                    null);  // placement will be merged later in loadRecipes
+            byRecipe.computeIfAbsent(si.recipeId(), k -> new ArrayList<>()).add(slot);
+        }
+
         byRecipe.values().forEach(list -> list.sort(Comparator
                 .comparing(RecipeSlotDto::role)
                 .thenComparingInt(RecipeSlotDto::slotIndex)));
@@ -666,7 +736,7 @@ public class RecipeDao {
     private Map<String, List<SlotLayoutDto>> loadLayouts(DatasetSummary dataset, List<String> categoryIds) {
         if (categoryIds.isEmpty()) return Map.of();
         List<LayoutRow> rows = jdbc.sql("""
-                        SELECT category_id, role, slot_index, x, y, width, height, slot_style
+                        SELECT category_id, role, slot_index, x, y, width, height, slot_style, placement
                         FROM recipe_slot_layout
                         WHERE dataset_id = :datasetId
                           AND category_id IN (:ids)
@@ -683,7 +753,8 @@ public class RecipeDao {
                                 rs.getInt("y"),
                                 rs.getInt("width"),
                                 rs.getInt("height"),
-                                rs.getString("slot_style"))))
+                                rs.getString("slot_style"),
+                                rs.getString("placement"))))
                 .list();
         Map<String, List<SlotLayoutDto>> map = new LinkedHashMap<>();
         for (LayoutRow row : rows) {
@@ -729,14 +800,90 @@ public class RecipeDao {
         return s == null || s.isEmpty() ? null : s;
     }
 
+    public List<CategoryMachineDto> listCategoryMachines(DatasetSummary dataset, String categoryId) {
+        return jdbc.sql("""
+                        SELECT m.item_variant_id,
+                               iv.display_name,
+                               iv.asset_path,
+                               m.role,
+                               m.display_order
+                        FROM recipe_category_machine m
+                        LEFT JOIN v_item_variant_browser iv
+                          ON iv.item_variant_id = m.item_variant_id
+                         AND iv.dataset_id = m.dataset_id
+                        WHERE m.dataset_id = :datasetId
+                          AND m.category_id = :categoryId
+                        ORDER BY m.display_order, m.item_variant_id
+                        """)
+                .param("datasetId", dataset.datasetId())
+                .param("categoryId", categoryId)
+                .query((rs, n) -> new CategoryMachineDto(
+                        rs.getString("item_variant_id"),
+                        rs.getString("display_name"),
+                        assetUrlBuilder.build(dataset, rs.getString("asset_path"), null),
+                        rs.getString("role"),
+                        rs.getInt("display_order")))
+                .list();
+    }
+
+    public List<CategoryVoltageTierDto> listCategoryVoltageTiers(
+            DatasetSummary dataset, String categoryId, String target, String kind) {
+        boolean hasLookup = target != null && !target.isBlank() && kind != null && !kind.isBlank();
+
+        // Step 1: get recipe_ids in scope
+        List<String> recipeIds;
+        if (hasLookup) {
+            recipeIds = jdbc.sql("""
+                            SELECT DISTINCT r.recipe_id FROM recipe r
+                            JOIN recipe_lookup_index rli
+                              ON rli.recipe_id = r.recipe_id AND rli.dataset_id = r.dataset_id
+                            WHERE r.dataset_id = :datasetId
+                              AND r.category_id = :categoryId
+                              AND rli.target_id = :target
+                              AND rli.lookup_kind = :kind
+                            """)
+                    .param("datasetId", dataset.datasetId())
+                    .param("categoryId", categoryId)
+                    .param("target", target)
+                    .param("kind", kind)
+                    .query(String.class)
+                    .list();
+        } else {
+            recipeIds = jdbc.sql("""
+                            SELECT recipe_id FROM recipe
+                            WHERE dataset_id = :datasetId
+                              AND category_id = :categoryId
+                            """)
+                    .param("datasetId", dataset.datasetId())
+                    .param("categoryId", categoryId)
+                    .query(String.class)
+                    .list();
+        }
+        if (recipeIds.isEmpty()) return List.of();
+
+        // Step 2: stats from gregtech_recipe
+        return jdbc.sql("""
+                        SELECT voltage_tier AS tier, COUNT(*) AS cnt FROM gregtech_recipe
+                        WHERE dataset_id = :datasetId
+                          AND recipe_id IN (:ids)
+                          AND voltage_tier IS NOT NULL
+                        GROUP BY voltage_tier
+                        ORDER BY MIN(voltage) NULLS LAST
+                        """)
+                .param("datasetId", dataset.datasetId())
+                .param("ids", recipeIds)
+                .query((rs, n) -> new CategoryVoltageTierDto(
+                        rs.getString("tier"),
+                        rs.getLong("cnt")))
+                .list();
+    }
+
     public record LookupPage(List<String> recipeIds, long total) {}
 
     private record RecipeHeader(
             String recipeId,
             String categoryId,
             String categoryDisplayName,
-            String uiKind,
-            String uiTemplateId,
             String sourcePlugin,
             String sourceRef,
             String description) {}
@@ -768,6 +915,15 @@ public class RecipeDao {
             String fluidDisplayName,
             String fluidModId,
             String fluidAssetPath) {}
+
+    private record SpecialItemRow(
+            String recipeId,
+            int listIndex,
+            String itemVariantId,
+            String displayName,
+            String modId,
+            String assetPath,
+            String assetSha) {}
 
     private record LayoutRow(String categoryId, SlotLayoutDto layout) {}
 

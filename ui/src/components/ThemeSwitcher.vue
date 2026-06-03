@@ -1,21 +1,24 @@
 <script setup lang="ts">
-import { storeToRefs } from 'pinia'
-import { Sunny, Moon, MagicStick } from '@element-plus/icons-vue'
-import { useThemeStore, type ThemeMode } from '@/stores/theme'
+import { computed } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useI18n } from 'vue-i18n';
+import { Sunny, Moon, MagicStick } from '@element-plus/icons-vue';
+import { useThemeStore, type ThemeMode } from '@/stores/theme';
 
-const store = useThemeStore()
-const { mode } = storeToRefs(store)
+const { t } = useI18n();
+const store = useThemeStore();
+const { mode } = storeToRefs(store);
 
-const options: { value: ThemeMode; label: string; icon: typeof Sunny }[] = [
-  { value: 'light', label: '浅色', icon: Sunny },
-  { value: 'dark', label: '深色', icon: Moon },
-  { value: 'auto', label: '跟随系统', icon: MagicStick },
-]
+const options = computed<{ value: ThemeMode; label: string; icon: typeof Sunny }[]>(() => [
+  { value: 'light', label: t('theme.light'), icon: Sunny },
+  { value: 'dark', label: t('theme.dark'), icon: Moon },
+  { value: 'auto', label: t('theme.auto'), icon: MagicStick },
+]);
 </script>
 
 <template>
   <el-dropdown trigger="click" @command="(c: ThemeMode) => store.setMode(c)">
-    <el-button circle :title="`主题: ${options.find((o) => o.value === mode)?.label}`">
+    <el-button circle :title="options.find((o) => o.value === mode)?.label">
       <el-icon>
         <Sunny v-if="mode === 'light'" />
         <Moon v-else-if="mode === 'dark'" />

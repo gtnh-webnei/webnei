@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { listDatasets } from '@/api/datasets'
 import type { DatasetSummary } from '@/api/types'
 import { useExtrasStore } from '@/stores/extras'
+import { setLocale } from '@/i18n'
 
 const STORAGE_KEY = 'webnei.activeDatasetId'
 
@@ -31,6 +32,8 @@ export const useDatasetStore = defineStore('dataset', () => {
       const exists = stored && datasets.value.some((d) => d.datasetId === stored)
       if (!exists) {
         setActive(datasets.value[0].datasetId)
+      } else {
+        applyActiveLocale(activeDatasetId.value)
       }
     } catch (e) {
       error.value = e instanceof Error ? e.message : String(e)
@@ -43,9 +46,15 @@ export const useDatasetStore = defineStore('dataset', () => {
     const prev = activeDatasetId.value
     activeDatasetId.value = datasetId
     localStorage.setItem(STORAGE_KEY, datasetId)
+    applyActiveLocale(datasetId)
     if (prev && prev !== datasetId) {
       useExtrasStore().clearDataset(prev)
     }
+  }
+
+  function applyActiveLocale(datasetId: string | null) {
+    const dataset = datasetId ? datasets.value.find((d) => d.datasetId === datasetId) : null
+    setLocale(dataset?.language ?? null)
   }
 
   return { datasets, activeDatasetId, active, loading, error, load, setActive }

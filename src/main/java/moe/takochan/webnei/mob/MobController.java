@@ -2,6 +2,7 @@ package moe.takochan.webnei.mob;
 
 import java.util.List;
 
+import moe.takochan.webnei.common.ModOptionDto;
 import moe.takochan.webnei.common.PageRequest;
 import moe.takochan.webnei.common.PageResponse;
 import moe.takochan.webnei.mob.dto.MobDetail;
@@ -34,7 +35,7 @@ public class MobController {
     }
 
     @GetMapping("/mobs/mods")
-    public List<String> listMobMods(@PathVariable String datasetId) {
+    public List<ModOptionDto> listMobMods(@PathVariable String datasetId) {
         return mobService.listMods(datasetId);
     }
 

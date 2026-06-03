@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useDatasetStore } from '@/stores/dataset'
@@ -8,6 +9,8 @@ import type { FluidSummary } from '@/api/fluids.types'
 import { usePagedBrowser } from '@/composables/usePagedBrowser'
 import BrowserToolbar from '@/components/BrowserToolbar.vue'
 import FluidCard from '@/components/FluidCard.vue'
+
+const { t } = useI18n()
 
 const route = useRoute()
 const router = useRouter()
@@ -51,13 +54,13 @@ function goLookup(kind: 'recipe' | 'usage', fluid: FluidSummary) {
       v-model:q="q"
       v-model:secondary="secondary"
       :secondary-options="secondaryOptions"
-      placeholder="搜索名称 / registry / id"
+      :placeholder="t('fluid.searchPlaceholder')"
       :total="total"
     />
 
     <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
     <el-skeleton v-if="loading && items.length === 0" :rows="6" animated />
-    <el-empty v-else-if="items.length === 0" description="没有匹配的流体" />
+    <el-empty v-else-if="items.length === 0" :description="t('fluid.noMatch')" />
 
     <div v-else v-loading="loading" class="grid">
       <FluidCard

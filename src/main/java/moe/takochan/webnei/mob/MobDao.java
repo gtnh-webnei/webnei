@@ -6,8 +6,7 @@ import java.util.List;
 import java.util.Optional;
 
 import moe.takochan.webnei.asset.AssetUrlBuilder;
-import moe.takochan.webnei.common.PageRequest;
-import moe.takochan.webnei.common.PageResponse;
+import moe.takochan.webnei.common.ModOptionDto;
 import moe.takochan.webnei.dataset.DatasetSummary;
 import moe.takochan.webnei.mob.dto.MobDetail;
 import moe.takochan.webnei.mob.dto.MobDropRow;
@@ -27,54 +26,20 @@ public class MobDao {
         this.assetUrlBuilder = assetUrlBuilder;
     }
 
-    public PageResponse<MobSummary> listMobs(
-            DatasetSummary dataset, String q, String modId, PageRequest page) {
-        String filter = (q == null || q.isBlank()) ? null : "%" + q.toLowerCase() + "%";
-        long total = jdbc.sql("""
-                        SELECT COUNT(*) FROM v_mob_variant_browser
-                        WHERE dataset_id = :datasetId
-                          AND (CAST(:modId AS TEXT) IS NULL OR mod_id = CAST(:modId AS TEXT))
-                          AND (CAST(:filter AS TEXT) IS NULL
-                               OR lower(display_name) LIKE CAST(:filter AS TEXT)
-                               OR lower(entity_name) LIKE CAST(:filter AS TEXT))
-                        """)
-                .param("datasetId", dataset.datasetId())
-                .param("modId", modId)
-                .param("filter", filter)
-                .query(Long.class)
-                .single();
-
-        List<MobSummary> items = jdbc.sql("""
-                        SELECT mob_variant_id, mob_id, mod_id, entity_name, display_name,
-                               width, height, max_health, armor,
-                               immune_to_fire, leashable, asset_path
-                        FROM v_mob_variant_browser
-                        WHERE dataset_id = :datasetId
-                          AND (CAST(:modId AS TEXT) IS NULL OR mod_id = CAST(:modId AS TEXT))
-                          AND (CAST(:filter AS TEXT) IS NULL
-                               OR lower(display_name) LIKE CAST(:filter AS TEXT)
-                               OR lower(entity_name) LIKE CAST(:filter AS TEXT))
-                        ORDER BY display_name, mob_variant_id
-                        LIMIT :size OFFSET :offset
-                        """)
-                .param("datasetId", dataset.datasetId())
-                .param("modId", modId)
-                .param("filter", filter)
-                .param("size", page.size())
-                .param("offset", page.offset())
-                .query((rs, n) -> mapSummary(dataset, rs))
-                .list();
-        return PageResponse.of(items, page, total);
-    }
-
-    public List<String> listMods(DatasetSummary dataset) {
+    public List<ModOptionDto> listMods(DatasetSummary dataset) {
         return jdbc.sql("""
-                        SELECT DISTINCT mod_id FROM v_mob_variant_browser
-                        WHERE dataset_id = :datasetId AND mod_id <> ''
-                        ORDER BY mod_id
+                        SELECT used.mod_id, COALESCE(m.name, used.mod_id) AS name
+                        FROM (
+                            SELECT DISTINCT mod_id
+                            FROM v_mob_variant_browser
+                            WHERE dataset_id = :datasetId AND mod_id <> ''
+                        ) used
+                        LEFT JOIN mod m
+                          ON m.dataset_id = :datasetId AND m.mod_id = used.mod_id
+                        ORDER BY name, used.mod_id
                         """)
                 .param("datasetId", dataset.datasetId())
-                .query(String.class)
+                .query((rs, n) -> new ModOptionDto(rs.getString("mod_id"), rs.getString("name")))
                 .list();
     }
 

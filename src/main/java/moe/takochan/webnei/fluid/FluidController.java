@@ -2,6 +2,7 @@ package moe.takochan.webnei.fluid;
 
 import java.util.List;
 
+import moe.takochan.webnei.common.ModOptionDto;
 import moe.takochan.webnei.common.PageRequest;
 import moe.takochan.webnei.common.PageResponse;
 
@@ -39,7 +40,7 @@ public class FluidController {
     }
 
     @GetMapping("/fluid-mods")
-    public List<String> mods(@PathVariable String datasetId) {
-        return fluidService.listModIds(datasetId);
+    public List<ModOptionDto> mods(@PathVariable String datasetId) {
+        return fluidService.listMods(datasetId);
     }
 }

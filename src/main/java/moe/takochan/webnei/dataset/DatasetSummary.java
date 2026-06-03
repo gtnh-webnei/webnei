@@ -8,10 +8,13 @@ public record DatasetSummary(
         String packSlug,
         String packVersion,
         String variant,
+        String language,
         String displayName,
         String schemaVersion,
         String exporterVersion,
         String minecraftVersion,
         OffsetDateTime createdAt,
-        List<String> activePlugins) {
+        List<String> activePlugins,
+        String displaySpecUrl,
+        String displaySpecMessagesUrl) {
 }

@@ -1,16 +1,22 @@
 <script setup lang="ts">
-import type { NeiPanelEntry } from '@/api/items.types'
-import ItemIcon from './ItemIcon.vue'
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+import type { NeiPanelEntry } from '@/api/items.types';
+import ItemIcon from './ItemIcon.vue';
 
-defineProps<{
-  item: NeiPanelEntry
-  selected?: boolean
-}>()
+const { t } = useI18n();
+
+const props = defineProps<{
+  item: NeiPanelEntry;
+  selected?: boolean;
+}>();
+
+const title = computed(() => `${t('item.cardPickHint')}\n${props.item.itemId}`);
 
 defineEmits<{
-  (e: 'select', item: NeiPanelEntry): void
-  (e: 'lookup', kind: 'recipe' | 'usage', item: NeiPanelEntry): void
-}>()
+  (e: 'select', item: NeiPanelEntry): void;
+  (e: 'lookup', kind: 'recipe' | 'usage', item: NeiPanelEntry): void;
+}>();
 </script>
 
 <template>
@@ -19,7 +25,7 @@ defineEmits<{
     :class="{ selected }"
     tabindex="0"
     role="button"
-    :title="`左键详情 · 右键合成 · 中键用途\n${item.itemId}`"
+    :title="title"
     @click="$emit('select', item)"
     @contextmenu.prevent="$emit('lookup', 'recipe', item)"
     @auxclick="(e) => e.button === 1 && (e.preventDefault(), $emit('lookup', 'usage', item))"
@@ -30,7 +36,6 @@ defineEmits<{
       <div class="name" :title="item.displayName || item.registryName">
         {{ item.displayName || item.registryName }}
       </div>
-      <div class="id" :title="item.itemId">{{ item.registryName }}</div>
       <div class="sub">
         <el-tag size="small" type="info" effect="plain" round class="mod-tag">
           {{ item.modId }}
@@ -50,7 +55,10 @@ defineEmits<{
   border-radius: 6px;
   background: var(--el-bg-color);
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    box-shadow 0.15s;
   min-width: 0;
 }
 .item-card:hover {

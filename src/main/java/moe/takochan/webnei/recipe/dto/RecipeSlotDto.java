@@ -13,5 +13,6 @@ public record RecipeSlotDto(
         String displayName,
         String modId,
         String assetUrl,
-        List<RecipeSlotCandidateDto> candidates) {
+        List<RecipeSlotCandidateDto> candidates,
+        String placement) {
 }

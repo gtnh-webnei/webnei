@@ -7,7 +7,7 @@ import java.util.Optional;
 import java.util.function.Function;
 
 import moe.takochan.webnei.asset.AssetUrlBuilder;
-import moe.takochan.webnei.common.PageRequest;
+import moe.takochan.webnei.common.ModOptionDto;
 import moe.takochan.webnei.dataset.DatasetSummary;
 
 import org.springframework.jdbc.core.RowMapper;
@@ -17,61 +17,12 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class ItemDao {
 
-    private static final String PANEL_COLUMNS = """
-            iv.item_variant_id,
-            iv.item_id,
-            iv.mod_id,
-            iv.registry_name,
-            iv.damage,
-            iv.nbt_hash,
-            iv.display_name,
-            iv.asset_path,
-            iv.asset_sha256,
-            p.panel_index
-            """;
-
     private final JdbcClient jdbc;
     private final AssetUrlBuilder assetUrlBuilder;
 
     public ItemDao(JdbcClient jdbc, AssetUrlBuilder assetUrlBuilder) {
         this.jdbc = jdbc;
         this.assetUrlBuilder = assetUrlBuilder;
-    }
-
-    public List<NeiPanelEntryDto> listPanel(DatasetSummary dataset, ItemQuery query, PageRequest page) {
-        String sql = """
-                SELECT %s
-                FROM nei_item_panel_entry p
-                JOIN v_item_variant_browser iv
-                  ON iv.dataset_id = p.dataset_id
-                 AND iv.item_variant_id = p.item_variant_id
-                WHERE p.dataset_id = :datasetId
-                """.formatted(PANEL_COLUMNS)
-                + buildFilterClause(query)
-                + " ORDER BY p.panel_index"
-                + " OFFSET :offset LIMIT :limit";
-
-        var spec = jdbc.sql(sql)
-                .param("datasetId", dataset.datasetId())
-                .param("offset", page.offset())
-                .param("limit", page.size());
-        bindFilterParams(spec, query);
-        return spec.query(panelMapper(dataset)).list();
-    }
-
-    public long countPanel(DatasetSummary dataset, ItemQuery query) {
-        String sql = """
-                SELECT COUNT(*)
-                FROM nei_item_panel_entry p
-                JOIN v_item_variant_browser iv
-                  ON iv.dataset_id = p.dataset_id
-                 AND iv.item_variant_id = p.item_variant_id
-                WHERE p.dataset_id = :datasetId
-                """ + buildFilterClause(query);
-
-        var spec = jdbc.sql(sql).param("datasetId", dataset.datasetId());
-        bindFilterParams(spec, query);
-        return spec.query(Long.class).single();
     }
 
     public Optional<ItemDetailDto> findVariant(DatasetSummary dataset, String itemVariantId) {
@@ -103,52 +54,21 @@ public class ItemDao {
                 .optional();
     }
 
-    public List<String> listModIds(DatasetSummary dataset) {
+    public List<ModOptionDto> listMods(DatasetSummary dataset) {
         return jdbc.sql("""
-                        SELECT DISTINCT mod_id
-                        FROM item
-                        WHERE dataset_id = :datasetId
-                        ORDER BY mod_id
+                        SELECT used.mod_id, COALESCE(m.name, used.mod_id) AS name
+                        FROM (
+                            SELECT DISTINCT mod_id
+                            FROM item
+                            WHERE dataset_id = :datasetId AND mod_id <> ''
+                        ) used
+                        LEFT JOIN mod m
+                          ON m.dataset_id = :datasetId AND m.mod_id = used.mod_id
+                        ORDER BY name, used.mod_id
                         """)
                 .param("datasetId", dataset.datasetId())
-                .query(String.class)
+                .query((rs, n) -> new ModOptionDto(rs.getString("mod_id"), rs.getString("name")))
                 .list();
-    }
-
-    private static String buildFilterClause(ItemQuery query) {
-        StringBuilder sb = new StringBuilder();
-        if (query.modId() != null && !query.modId().isBlank()) {
-            sb.append(" AND iv.mod_id = :modId");
-        }
-        if (query.q() != null && !query.q().isBlank()) {
-            sb.append(" AND (iv.display_name ILIKE :q"
-                    + " OR iv.registry_name ILIKE :q"
-                    + " OR iv.item_id ILIKE :q)");
-        }
-        return sb.toString();
-    }
-
-    private static void bindFilterParams(JdbcClient.StatementSpec spec, ItemQuery query) {
-        if (query.modId() != null && !query.modId().isBlank()) {
-            spec.param("modId", query.modId());
-        }
-        if (query.q() != null && !query.q().isBlank()) {
-            spec.param("q", "%" + query.q() + "%");
-        }
-    }
-
-    private RowMapper<NeiPanelEntryDto> panelMapper(DatasetSummary dataset) {
-        Function<ResultSet, String> assetUrl = mapAssetUrl(dataset);
-        return (rs, n) -> new NeiPanelEntryDto(
-                rs.getString("item_variant_id"),
-                rs.getString("item_id"),
-                rs.getString("mod_id"),
-                rs.getString("registry_name"),
-                rs.getInt("damage"),
-                rs.getString("nbt_hash"),
-                rs.getString("display_name"),
-                assetUrl.apply(rs),
-                rs.getInt("panel_index"));
     }
 
     private RowMapper<ItemDetailDto> detailMapper(DatasetSummary dataset) {

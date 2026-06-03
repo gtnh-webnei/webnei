@@ -1,12 +1,12 @@
 <script setup lang="ts">
 defineProps<{
-  title: string
-  hint?: string
-}>()
+  title: string;
+  hint?: string;
+}>();
 </script>
 
 <template>
-  <el-empty :description="hint ?? '即将上线'">
+  <el-empty :description="hint ?? $t('dataset.comingSoon')">
     <template #image>
       <div class="placeholder-icon">🛠️</div>
     </template>

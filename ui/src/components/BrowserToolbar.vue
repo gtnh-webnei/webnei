@@ -1,55 +1,61 @@
 <script setup lang="ts">
-const q = defineModel<string>('q', { default: '' })
-const secondary = defineModel<string>('secondary', { default: '' })
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+import type { ModOption } from '@/api/types';
 
-withDefaults(
+const { t } = useI18n();
+
+const q = defineModel<string>('q', { default: '' });
+const secondary = defineModel<string>('secondary', { default: '' });
+
+const props = withDefaults(
   defineProps<{
-    placeholder?: string
-    secondaryPlaceholder?: string
-    secondaryOptions?: string[]
-    showSecondary?: boolean
-    total?: number
-    totalLabel?: string
-    totalSuffix?: string
+    placeholder?: string;
+    secondaryPlaceholder?: string;
+    secondaryOptions?: ModOption[];
+    showSecondary?: boolean;
+    total?: number;
+    totalLabel?: string;
+    totalSuffix?: string;
   }>(),
   {
-    placeholder: '搜索',
-    secondaryPlaceholder: '全部 Mod',
+    placeholder: '',
+    secondaryPlaceholder: '',
     secondaryOptions: () => [],
     showSecondary: true,
-    totalLabel: '共',
-    totalSuffix: '项',
+    totalLabel: '',
+    totalSuffix: '',
   },
-)
+);
+
+const displayPlaceholder = computed(() => props.placeholder || '');
+const displaySecondaryPlaceholder = computed(
+  () => props.secondaryPlaceholder || t('common.allMod'),
+);
+const displayTotalLabel = computed(() => props.totalLabel || t('common.totalCount'));
+const displayTotalSuffix = computed(() => props.totalSuffix || t('common.totalSuffix'));
 </script>
 
 <template>
   <div class="browser-toolbar">
-    <el-input
-      v-model="q"
-      :placeholder="placeholder"
-      clearable
-      class="search-input"
-    />
+    <el-input v-model="q" :placeholder="displayPlaceholder" clearable class="search-input" />
     <el-select
       v-if="showSecondary"
       v-model="secondary"
-      :placeholder="secondaryPlaceholder"
+      :placeholder="displaySecondaryPlaceholder"
       clearable
       filterable
       class="secondary-select"
     >
-      <el-option
-        v-for="o in secondaryOptions"
-        :key="o"
-        :label="o"
-        :value="o"
-      />
+      <el-option v-for="o in secondaryOptions" :key="o.modId" :label="o.name" :value="o.modId">
+        <span class="mod-option-name">{{ o.name }}</span>
+        <code class="mod-option-id">{{ o.modId }}</code>
+      </el-option>
     </el-select>
     <slot name="extra" />
     <div class="spacer" />
     <div v-if="typeof total === 'number'" class="total">
-      {{ totalLabel }} <strong>{{ total.toLocaleString() }}</strong> {{ totalSuffix }}
+      {{ displayTotalLabel }} <strong>{{ total.toLocaleString() }}</strong> {{ displayTotalSuffix }}
     </div>
   </div>
 </template>
@@ -67,8 +73,25 @@ withDefaults(
   flex-shrink: 0;
 }
 .secondary-select {
-  width: 200px;
+  width: 240px;
   flex-shrink: 0;
+}
+.mod-option-name {
+  display: inline-block;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+.mod-option-id {
+  float: right;
+  max-width: 70px;
+  overflow: hidden;
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .spacer {
   flex: 1;

@@ -6,8 +6,6 @@ public record RecipeDto(
         String recipeId,
         String categoryId,
         String categoryDisplayName,
-        String uiKind,
-        String uiTemplateId,
         String sourcePlugin,
         String sourceRef,
         String description,

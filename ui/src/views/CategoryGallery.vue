@@ -2,12 +2,15 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
+import { useI18n } from 'vue-i18n'
 import { useDatasetStore } from '@/stores/dataset'
-import { listRecipeCategoriesPage, listRecipeCategoryPlugins } from '@/api/recipes'
+import { listRecipeCategoriesPage, listRecipeCategoryMods } from '@/api/recipes'
 import type { RecipeCategory } from '@/api/recipes.types'
 import { usePagedBrowser } from '@/composables/usePagedBrowser'
 import BrowserToolbar from '@/components/BrowserToolbar.vue'
 import CategoryCard from '@/components/CategoryCard.vue'
+
+const { t } = useI18n()
 
 const HIDE_EMPTY_KEY = 'webnei.categoryGallery.hideEmpty'
 const PAGE_SIZE_KEY = 'webnei.categoryGallery.pageSize'
@@ -31,12 +34,12 @@ const browser = usePagedBrowser<RecipeCategory, { hideEmpty: boolean }>({
   fetcher: (id, params) =>
     listRecipeCategoriesPage(id, {
       q: params.q,
-      plugin: params.secondary,
+      modId: params.secondary,
       hideEmpty: params.hideEmpty,
       page: params.page,
       size: params.size,
     }),
-  optionsFetcher: listRecipeCategoryPlugins,
+  optionsFetcher: listRecipeCategoryMods,
   extras,
   storageKey: PAGE_SIZE_KEY,
   defaultSize: 24,
@@ -54,30 +57,30 @@ function openCategory(c: RecipeCategory) {
 <template>
   <div class="gallery">
     <header class="header">
-      <h1>配方分类</h1>
-      <p class="lead">浏览 NEI 注册的所有配方处理器</p>
+      <h1>{{ t('category.pageTitle') }}</h1>
+      <p class="lead">{{ t('category.leadText') }}</p>
     </header>
 
     <BrowserToolbar
       v-model:q="q"
       v-model:secondary="secondary"
       :secondary-options="secondaryOptions"
-      placeholder="搜索分类名 / id / handler"
-      secondary-placeholder="全部 Plugin"
+      :placeholder="t('category.searchPlaceholder')"
+      :secondary-placeholder="t('common.allMod')"
       :total="items.length"
-      total-label="显示"
+      :total-label="t('common.showing')"
       :total-suffix="`/ ${total}`"
     >
       <template #extra>
         <el-checkbox v-model="hideEmpty" border size="default">
-          隐藏 0 配方
+          {{ t('category.hideZeroRecipes') }}
         </el-checkbox>
       </template>
     </BrowserToolbar>
 
     <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
     <el-skeleton v-if="loading && items.length === 0" :rows="6" animated />
-    <el-empty v-else-if="!loading && items.length === 0" description="没有匹配的分类" />
+    <el-empty v-else-if="!loading && items.length === 0" :description="t('category.noMatch')" />
 
     <div v-else v-loading="loading" class="grid">
       <CategoryCard

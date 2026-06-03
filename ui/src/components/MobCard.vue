@@ -1,5 +1,8 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import type { MobSummary } from '@/api/mobs.types'
+
+const { t } = useI18n()
 
 defineProps<{
   mob: MobSummary
@@ -30,10 +33,10 @@ defineEmits<{
         </el-tag>
       </div>
       <div class="row attr-row">
-        <span class="stat" title="最大生命">♥ {{ mob.maxHealth }}</span>
-        <span v-if="mob.armor > 0" class="stat" title="护甲">⛨ {{ mob.armor }}</span>
-        <span v-if="mob.immuneToFire" class="badge fire" title="火免疫">火免</span>
-        <span v-if="mob.leashable" class="badge leash" title="可栓绳">栓</span>
+        <span class="stat" :title="$t('mob.maxHealth')">♥ {{ mob.maxHealth }}</span>
+        <span v-if="mob.armor > 0" class="stat" :title="$t('mob.armor')">⛨ {{ mob.armor }}</span>
+        <span v-if="mob.immuneToFire" class="badge fire" :title="$t('mob.fireImmune')">{{ $t('mob.fireImmuneBadge') }}</span>
+        <span v-if="mob.leashable" class="badge leash" :title="$t('mob.leashable')">{{ $t('mob.leashableBadge') }}</span>
       </div>
     </div>
   </div>

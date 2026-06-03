@@ -1,45 +1,45 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { storeToRefs } from 'pinia'
-import { useDatasetStore } from '@/stores/dataset'
-import { listQuestLines } from '@/api/quests'
-import QuestText from '@/components/QuestText.vue'
-import type { QuestLineSummary } from '@/api/quests.types'
+import { computed, onMounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useRoute, useRouter } from 'vue-router';
+import { storeToRefs } from 'pinia';
+import { useDatasetStore } from '@/stores/dataset';
+import { listQuestLines } from '@/api/quests';
+import QuestText from '@/components/QuestText.vue';
+import type { QuestLineSummary } from '@/api/quests.types';
 
-const route = useRoute()
-const router = useRouter()
-const datasetStore = useDatasetStore()
-const { activeDatasetId } = storeToRefs(datasetStore)
+const route = useRoute();
+const router = useRouter();
+const datasetStore = useDatasetStore();
+const { activeDatasetId } = storeToRefs(datasetStore);
 
-const datasetId = computed(() =>
-  String(route.params.datasetId ?? activeDatasetId.value ?? ''),
-)
+const { t } = useI18n();
 
-const lines = ref<QuestLineSummary[]>([])
-const loading = ref(false)
-const error = ref<string | null>(null)
-const q = ref('')
+const datasetId = computed(() => String(route.params.datasetId ?? activeDatasetId.value ?? ''));
+
+const lines = ref<QuestLineSummary[]>([]);
+const loading = ref(false);
+const error = ref<string | null>(null);
+const q = ref('');
 
 const filtered = computed(() => {
-  const needle = q.value.trim().toLowerCase()
-  if (!needle) return lines.value
-  return lines.value.filter((l) =>
-    l.name.toLowerCase().includes(needle)
-    || l.description.toLowerCase().includes(needle),
-  )
-})
+  const needle = q.value.trim().toLowerCase();
+  if (!needle) return lines.value;
+  return lines.value.filter(
+    (l) => l.name.toLowerCase().includes(needle) || l.description.toLowerCase().includes(needle),
+  );
+});
 
 async function load() {
-  if (!datasetId.value) return
-  loading.value = true
-  error.value = null
+  if (!datasetId.value) return;
+  loading.value = true;
+  error.value = null;
   try {
-    lines.value = await listQuestLines(datasetId.value)
+    lines.value = await listQuestLines(datasetId.value);
   } catch (e) {
-    error.value = e instanceof Error ? e.message : String(e)
+    error.value = e instanceof Error ? e.message : String(e);
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
@@ -48,31 +48,38 @@ function openLine(line: QuestLineSummary) {
     name: 'quest-line',
     params: { datasetId: datasetId.value },
     query: { id: line.questLineId },
-  })
+  });
 }
 
-watch(datasetId, load)
-onMounted(load)
+watch(datasetId, load);
+onMounted(load);
 </script>
 
 <template>
   <div class="quest-lines">
     <header class="header">
-      <h1>任务浏览</h1>
+      <h1>{{ $t('quest.pageTitle') }}</h1>
       <p class="lead">
-        共 {{ lines.length }} 条任务线 · 浏览 BetterQuesting 任务图谱
+        {{ $t('common.totalCount') }} {{ lines.length }}{{ $t('quest.questLineSummary') }}
       </p>
     </header>
 
     <div class="toolbar">
-      <el-input v-model="q" placeholder="搜索任务线名称 / 描述" clearable class="search-input" />
+      <el-input
+        v-model="q"
+        :placeholder="$t('quest.searchPlaceholder')"
+        clearable
+        class="search-input"
+      />
       <div class="spacer" />
-      <div class="total">显示 <strong>{{ filtered.length }}</strong> / {{ lines.length }}</div>
+      <div class="total">
+        {{ $t('common.showing') }}<strong>{{ filtered.length }}</strong> / {{ lines.length }}
+      </div>
     </div>
 
     <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
     <el-skeleton v-if="loading && lines.length === 0" :rows="6" animated />
-    <el-empty v-else-if="filtered.length === 0" description="没有任务线" />
+    <el-empty v-else-if="filtered.length === 0" :description="$t('quest.noQuestLines')" />
 
     <div v-else class="grid">
       <div
@@ -91,7 +98,9 @@ onMounted(load)
         <div class="meta">
           <div class="name">{{ line.name }}</div>
           <div class="sub">
-            <el-tag size="small" type="info" effect="plain" round>{{ line.questCount }} 个任务</el-tag>
+            <el-tag size="small" type="info" effect="plain" round>{{
+              $t('quest.taskCount', { count: line.questCount })
+            }}</el-tag>
           </div>
           <QuestText v-if="line.description" :text="line.description" class="desc" />
         </div>
@@ -153,7 +162,10 @@ onMounted(load)
   font: inherit;
   color: inherit;
   text-align: left;
-  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    box-shadow 0.15s;
 }
 .line-card:hover {
   border-color: var(--el-color-primary);

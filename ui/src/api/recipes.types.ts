@@ -6,6 +6,7 @@ export interface SlotLayout {
   width: number
   height: number
   slotStyle: string
+  placement: string | null
 }
 
 export interface RecipeSlotCandidate {
@@ -29,6 +30,7 @@ export interface RecipeSlot {
   modId: string | null
   assetUrl: string | null
   candidates: RecipeSlotCandidate[]
+  placement?: string | null
 }
 
 export interface GregTechSpecialItem {
@@ -38,22 +40,56 @@ export interface GregTechSpecialItem {
   assetUrl: string | null
 }
 
+export type GregTechRecipeKind = 'PROCESSING' | 'FUEL'
+
+export interface MaterialRef {
+  $ref: 'Materials'
+  name: string
+}
+
+export interface SolarFactoryWaferData {
+  tierRequired: number
+  minimumWaferTier: number
+  minimumWaferCount: number
+}
+
+export interface QuantumComputerData {
+  maxHeat: number
+  subZero: boolean
+  computation: number
+  coolConstant: number
+  heatConstant: number
+}
+
+export type MetadataJsonValue =
+  | MaterialRef
+  | SolarFactoryWaferData
+  | QuantumComputerData
+  | Record<string, unknown>
+  | unknown[]
+
+export interface MetadataValue {
+  valueType: 'int' | 'long' | 'float' | 'double' | 'bool' | 'str' | 'enum' | 'json' | string
+  valueText: string | null
+  valueJson: MetadataJsonValue | null
+}
+
 export interface GregTechRecipeInfo {
-  voltageTier: string
-  voltage: number
-  amperage: number
+  recipeKind: GregTechRecipeKind
+  visibleInNei: boolean
+  voltageTier: string | null
+  voltage: number | null
+  amperage: number | null
   durationTicks: number
-  requiresCleanroom: boolean
-  additionalInfo: string
+  specialValue: number | null
   specialItems: GregTechSpecialItem[]
+  metadata: Record<string, MetadataValue>
 }
 
 export interface Recipe {
   recipeId: string
   categoryId: string
   categoryDisplayName: string
-  uiKind: string
-  uiTemplateId: string
   sourcePlugin: string
   sourceRef: string
   description: string
@@ -70,8 +106,6 @@ export interface RecipeCategory {
   plugin: string
   handlerId: string
   displayName: string
-  uiKind: string
-  uiTemplateId: string
   shapeless: boolean
   iconItemVariantId: string
   iconDisplayName: string | null
@@ -93,6 +127,21 @@ export interface RecipeCategory {
   backgroundAssetUrl: string | null
   recipeCount: number
   machineCount: number
+  // NEI HandlerInfo
+  modId: string
+  modName: string
+  handlerClass: string
+  handlerCanvasWidth: number
+  handlerCanvasHeight: number
+  handlerYShift: number
+  handlerMultipleWidgetsAllowed: boolean
+  iconImageResource: string
+  iconImageX: number
+  iconImageY: number
+  iconImageWidth: number
+  iconImageHeight: number
+  iconImageTextureWidth: number
+  iconImageTextureHeight: number
 }
 
 export type LookupKind = 'recipe' | 'usage'
@@ -110,4 +159,17 @@ export interface HandlerBreakdown {
   iconAssetUrl: string | null
   count: number
   categories: CategoryBreakdown[]
+}
+
+export interface CategoryMachine {
+  itemVariantId: string
+  displayName: string | null
+  assetUrl: string | null
+  role: string
+  displayOrder: number
+}
+
+export interface CategoryVoltageTier {
+  tier: string
+  recipeCount: number
 }

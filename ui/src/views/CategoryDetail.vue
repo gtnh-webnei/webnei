@@ -3,11 +3,14 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useDebounceFn } from '@vueuse/core'
+import { useI18n } from 'vue-i18n'
 import { useDatasetStore } from '@/stores/dataset'
 import { listRecipeCategories, listRecipesByCategory } from '@/api/recipes'
 import type { Recipe, RecipeCategory } from '@/api/recipes.types'
 import RecipePanel from '@/components/RecipePanel.vue'
+import CategoryHeaderRows from '@/components/recipe/CategoryHeaderRows.vue'
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const datasetStore = useDatasetStore()
@@ -26,6 +29,7 @@ const pageSize = ref(24)
 const loading = ref(false)
 const error = ref<string | null>(null)
 const q = ref('')
+const activeTier = ref<string | null>(null)
 
 async function fetchCategoryMeta() {
   if (!datasetId.value || !categoryId.value) return
@@ -48,6 +52,7 @@ async function fetchRecipes() {
       q.value,
       page.value - 1,
       pageSize.value,
+      { voltageTier: activeTier.value ?? undefined },
     )
     recipes.value = data.items
     total.value = data.total
@@ -65,10 +70,15 @@ const debouncedReset = useDebounceFn(() => {
 
 watch([datasetId, categoryId], () => {
   page.value = 1
+  activeTier.value = null
   fetchCategoryMeta()
   fetchRecipes()
 })
 watch(q, () => debouncedReset())
+watch(activeTier, () => {
+  page.value = 1
+  fetchRecipes()
+})
 watch(page, () => fetchRecipes())
 watch(pageSize, () => {
   page.value = 1
@@ -111,7 +121,7 @@ onMounted(() => {
 <template>
   <div class="category-detail">
     <header class="header">
-      <el-button text @click="back">← 返回</el-button>
+      <el-button text @click="back">{{ t('common.back') }}</el-button>
     </header>
 
     <section class="hero">
@@ -129,23 +139,30 @@ onMounted(() => {
       </div>
     </section>
 
+    <CategoryHeaderRows
+      :dataset-id="datasetId"
+      :category-id="categoryId"
+      :active-tier="activeTier"
+      @update:active-tier="activeTier = $event"
+    />
+
     <div class="toolbar">
       <el-input
         v-model="q"
-        placeholder="搜索配方中的物品 / 流体名或 id"
+        :placeholder="t('category.categorySearchPlaceholder')"
         clearable
         class="search-input"
       />
       <div class="spacer" />
       <div class="total">
-        共 <strong>{{ total.toLocaleString() }}</strong> 条
+        {{ t('common.totalCount') }} <strong>{{ total.toLocaleString() }}</strong> {{ t('common.items') }}
       </div>
     </div>
 
     <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
 
     <el-skeleton v-if="loading && recipes.length === 0" :rows="6" animated />
-    <el-empty v-else-if="!loading && recipes.length === 0" description="该分类下没有配方" />
+    <el-empty v-else-if="!loading && recipes.length === 0" :description="t('category.noRecipes')" />
 
     <div v-else v-loading="loading" class="recipes">
       <RecipePanel
@@ -153,7 +170,7 @@ onMounted(() => {
         :key="r.recipeId"
         :recipe="r"
         :category="category"
-        pick-hint="左键 · 物品详情 / 右键 · 合成来源 / 中键 · 用途去向"
+        :pick-hint="t('common.pickHintCategory')"
         @pick="onSlotPick"
         @lookup="onSlotLookup"
       />
