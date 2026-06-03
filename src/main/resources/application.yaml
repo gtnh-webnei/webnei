@@ -9,6 +9,11 @@ spring:
   jdbc:
     template:
       fetch-size: 200
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+    show-sql: false
   mvc:
     problemdetails:
       enabled: true

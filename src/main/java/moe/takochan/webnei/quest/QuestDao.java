@@ -273,45 +273,29 @@ public class QuestDao {
 
     private Map<String, List<QuestTaskItemEntry.Group>> loadTaskItemGroups(
             DatasetSummary dataset, List<String> taskIds) {
-        return loadGroupedItems(dataset, taskIds, "quest_task_item", "task_id");
-    }
+        if (taskIds.isEmpty()) return Map.of();
 
-    private Map<String, List<QuestTaskItemEntry.Group>> loadRewardItemGroups(
-            DatasetSummary dataset, List<String> rewardIds) {
-        return loadGroupedItems(dataset, rewardIds, "quest_reward_item", "reward_id");
-    }
-
-    private Map<String, List<QuestTaskItemEntry.Group>> loadGroupedItems(
-            DatasetSummary dataset, List<String> ownerIds, String table, String ownerColumn) {
-        if (ownerIds.isEmpty()) return Map.of();
-
-        record Row(String ownerId, int listIndex, String groupId,
-                   String itemVariantId, String fluidVariantId, int amount,
-                   String displayName, String modId, String assetPath, String assetSha) {}
-
-        String sql = String.format("""
-                SELECT qi.%s AS owner_id, qi.list_index, qi.group_id,
-                       ie.item_variant_id, ie.fluid_variant_id, ie.amount,
-                       COALESCE(iv.display_name, fv.display_name) AS display_name,
-                       COALESCE(iv.mod_id, fv.mod_id) AS mod_id,
-                       COALESCE(iv.asset_path, fv.asset_path) AS asset_path,
-                       COALESCE(iv.asset_sha256, NULL) AS asset_sha
-                FROM %s qi
-                LEFT JOIN ingredient_entry ie
-                  ON ie.dataset_id = qi.dataset_id AND ie.group_id = qi.group_id
-                LEFT JOIN v_item_variant_browser iv
-                  ON iv.dataset_id = ie.dataset_id AND iv.item_variant_id = ie.item_variant_id
-                LEFT JOIN v_fluid_variant_browser fv
-                  ON fv.dataset_id = ie.dataset_id AND fv.fluid_variant_id = ie.fluid_variant_id
-                WHERE qi.dataset_id = :datasetId
-                  AND qi.%s IN (:ids)
-                ORDER BY qi.%s, qi.list_index
-                """, ownerColumn, table, ownerColumn, ownerColumn);
-
-        List<Row> rows = jdbc.sql(sql)
+        List<GroupRow> rows = jdbc.sql("""
+                        SELECT qi.task_id AS owner_id, qi.list_index, qi.group_id,
+                               ie.item_variant_id, ie.fluid_variant_id, ie.amount,
+                               COALESCE(iv.display_name, fv.display_name) AS display_name,
+                               COALESCE(iv.mod_id, fv.mod_id) AS mod_id,
+                               COALESCE(iv.asset_path, fv.asset_path) AS asset_path,
+                               COALESCE(iv.asset_sha256, NULL) AS asset_sha
+                        FROM quest_task_item qi
+                        LEFT JOIN ingredient_entry ie
+                          ON ie.dataset_id = qi.dataset_id AND ie.group_id = qi.group_id
+                        LEFT JOIN v_item_variant_browser iv
+                          ON iv.dataset_id = ie.dataset_id AND iv.item_variant_id = ie.item_variant_id
+                        LEFT JOIN v_fluid_variant_browser fv
+                          ON fv.dataset_id = ie.dataset_id AND fv.fluid_variant_id = ie.fluid_variant_id
+                        WHERE qi.dataset_id = :datasetId
+                          AND qi.task_id IN (:ids)
+                        ORDER BY qi.task_id, qi.list_index
+                        """)
                 .param("datasetId", dataset.datasetId())
-                .param("ids", ownerIds)
-                .query((rs, n) -> new Row(
+                .param("ids", taskIds)
+                .query((rs, n) -> new GroupRow(
                         rs.getString("owner_id"),
                         rs.getInt("list_index"),
                         rs.getString("group_id"),
@@ -324,9 +308,55 @@ public class QuestDao {
                         rs.getString("asset_sha")))
                 .list();
 
-        // Group by ownerId then by listIndex/groupId
+        return groupAndMapRows(rows, dataset);
+    }
+
+    private Map<String, List<QuestTaskItemEntry.Group>> loadRewardItemGroups(
+            DatasetSummary dataset, List<String> rewardIds) {
+        if (rewardIds.isEmpty()) return Map.of();
+
+        List<GroupRow> rows = jdbc.sql("""
+                        SELECT qi.reward_id AS owner_id, qi.list_index, qi.group_id,
+                               ie.item_variant_id, ie.fluid_variant_id, ie.amount,
+                               COALESCE(iv.display_name, fv.display_name) AS display_name,
+                               COALESCE(iv.mod_id, fv.mod_id) AS mod_id,
+                               COALESCE(iv.asset_path, fv.asset_path) AS asset_path,
+                               COALESCE(iv.asset_sha256, NULL) AS asset_sha
+                        FROM quest_reward_item qi
+                        LEFT JOIN ingredient_entry ie
+                          ON ie.dataset_id = qi.dataset_id AND ie.group_id = qi.group_id
+                        LEFT JOIN v_item_variant_browser iv
+                          ON iv.dataset_id = ie.dataset_id AND iv.item_variant_id = ie.item_variant_id
+                        LEFT JOIN v_fluid_variant_browser fv
+                          ON fv.dataset_id = ie.dataset_id AND fv.fluid_variant_id = ie.fluid_variant_id
+                        WHERE qi.dataset_id = :datasetId
+                          AND qi.reward_id IN (:ids)
+                        ORDER BY qi.reward_id, qi.list_index
+                        """)
+                .param("datasetId", dataset.datasetId())
+                .param("ids", rewardIds)
+                .query((rs, n) -> new GroupRow(
+                        rs.getString("owner_id"),
+                        rs.getInt("list_index"),
+                        rs.getString("group_id"),
+                        rs.getString("item_variant_id"),
+                        rs.getString("fluid_variant_id"),
+                        rs.getInt("amount"),
+                        rs.getString("display_name"),
+                        rs.getString("mod_id"),
+                        rs.getString("asset_path"),
+                        rs.getString("asset_sha")))
+                .list();
+
+        return groupAndMapRows(rows, dataset);
+    }
+
+    private Map<String, List<QuestTaskItemEntry.Group>> groupAndMapRows(
+            List<GroupRow> rows, DatasetSummary dataset) {
+        if (rows.isEmpty()) return Map.of();
+
         Map<String, Map<Integer, QuestTaskItemEntry.Group>> nested = new LinkedHashMap<>();
-        for (Row r : rows) {
+        for (GroupRow r : rows) {
             Map<Integer, QuestTaskItemEntry.Group> byIndex =
                     nested.computeIfAbsent(r.ownerId(), k -> new LinkedHashMap<>());
             QuestTaskItemEntry.Group group = byIndex.get(r.listIndex());
@@ -348,6 +378,11 @@ public class QuestDao {
         }
         return out;
     }
+
+    private record GroupRow(String ownerId, int listIndex, String groupId,
+                            String itemVariantId, String fluidVariantId, int amount,
+                            String displayName, String modId, String assetPath, String assetSha) {}
+
 
     private String buildAsset(DatasetSummary dataset, ResultSet rs, String pathCol, String shaCol) {
         try {
