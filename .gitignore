@@ -36,8 +36,27 @@ out/
 ### VS Code ###
 .vscode/
 
+### Env / local secrets ###
+.env
+.env.*
+!.env.example
+ui/.env
+ui/.env.*
+!ui/.env.example
+
+### Frontend generated/cache ###
+ui/package-lock.json
+ui/components.d.ts
+ui/auto-imports.d.ts
+ui/coverage/
+ui/.pnpm-store/
+ui/.turbo/
+ui/.cache/
+
 ### macOS ###
 .DS_Store
+Thumbs.db
+Desktop.ini
 
 ### Assets bundle (deployment-side) ###
 /assets/
