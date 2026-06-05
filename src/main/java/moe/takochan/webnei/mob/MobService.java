@@ -12,6 +12,7 @@ import moe.takochan.webnei.common.PageResponse;
 import moe.takochan.webnei.dataset.DatasetService;
 import moe.takochan.webnei.dataset.DatasetSummary;
 import moe.takochan.webnei.mob.dto.MobDetail;
+import moe.takochan.webnei.mob.dto.MobDropRow;
 import moe.takochan.webnei.mob.dto.MobSummary;
 
 import org.springframework.data.domain.Page;
@@ -24,15 +25,23 @@ import org.springframework.stereotype.Service;
 public class MobService {
 
     private final DatasetService datasetService;
-    private final MobDao mobDao;
     private final MobVariantRepository mobRepo;
+    private final MobModOptionRepository modOptionRepo;
+    private final MobInfoRepository mobInfoRepo;
+    private final MobDropBrowserRepository mobDropRepo;
     private final AssetUrlBuilder assetUrlBuilder;
 
-    public MobService(DatasetService datasetService, MobDao mobDao,
-                      MobVariantRepository mobRepo, AssetUrlBuilder assetUrlBuilder) {
+    public MobService(DatasetService datasetService,
+                      MobVariantRepository mobRepo,
+                      MobModOptionRepository modOptionRepo,
+                      MobInfoRepository mobInfoRepo,
+                      MobDropBrowserRepository mobDropRepo,
+                      AssetUrlBuilder assetUrlBuilder) {
         this.datasetService = datasetService;
-        this.mobDao = mobDao;
         this.mobRepo = mobRepo;
+        this.modOptionRepo = modOptionRepo;
+        this.mobInfoRepo = mobInfoRepo;
+        this.mobDropRepo = mobDropRepo;
         this.assetUrlBuilder = assetUrlBuilder;
     }
 
@@ -63,14 +72,27 @@ public class MobService {
     }
 
     public List<ModOptionDto> listMods(String datasetId) {
-        DatasetSummary dataset = datasetService.requireById(datasetId);
-        return mobDao.listMods(dataset);
+        datasetService.requireById(datasetId);
+        return modOptionRepo.findByDatasetIdOrderByNameAscModIdAsc(datasetId)
+                .stream()
+                .map(e -> new ModOptionDto(e.getModId(), e.getName()))
+                .toList();
     }
 
     public MobDetail mobDetail(String datasetId, String mobVariantId) {
         DatasetSummary dataset = datasetService.requireById(datasetId);
-        return mobDao.findMob(dataset, mobVariantId)
+        MobVariantBrowserEntity mob = mobRepo.findById(new MobVariantBrowserEntity.MobVariantId(datasetId, mobVariantId))
                 .orElseThrow(() -> new NotFoundException("Mob not found: " + mobVariantId));
+        MobDetail.MobInfo info = mobInfoRepo.findById(new MobInfoEntity.MobInfoId(datasetId, mobVariantId))
+                .map(this::toInfo)
+                .orElse(new MobDetail.MobInfo(false, false, false, false));
+        List<MobDropRow> drops = mobDropRepo.findByDatasetIdAndMobVariantId(
+                        datasetId, mobVariantId,
+                        Sort.by("probability").descending().and(Sort.by("listIndex").ascending()))
+                .stream()
+                .map(e -> toDropRow(e, dataset))
+                .toList();
+        return new MobDetail(toSummary(mob, dataset), info, drops);
     }
 
     private MobSummary toSummary(MobVariantBrowserEntity e, DatasetSummary dataset) {
@@ -80,6 +102,19 @@ public class MobService {
                 e.getWidth(), e.getHeight(), e.getMaxHealth(), e.getArmor(),
                 e.isImmuneToFire(), e.isLeashable(),
                 assetUrlBuilder.build(dataset, e.getAssetPath(), null));
+    }
+
+    private MobDetail.MobInfo toInfo(MobInfoEntity e) {
+        return new MobDetail.MobInfo(
+                e.isAllowedInPeaceful(), e.isSoulVialUsable(),
+                e.isAllowedInfernal(), e.isAlwaysInfernal());
+    }
+
+    private MobDropRow toDropRow(MobDropBrowserEntity e, DatasetSummary dataset) {
+        return new MobDropRow(
+                e.getDropType(), e.getListIndex(), e.getItemVariantId(),
+                e.getDisplayName(), assetUrlBuilder.build(dataset, e.getAssetPath(), e.getAssetSha256()),
+                e.getStackSize(), e.getProbability(), e.isLootable(), e.isPlayerOnly());
     }
 
     private static Specification<MobVariantBrowserEntity> hasDatasetId(String datasetId) {

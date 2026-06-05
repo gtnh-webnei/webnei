@@ -23,15 +23,15 @@ import org.springframework.stereotype.Service;
 public class FluidService {
 
     private final DatasetService datasetService;
-    private final FluidDao fluidDao;
     private final FluidVariantRepository fluidRepo;
+    private final FluidModOptionRepository modOptionRepo;
     private final AssetUrlBuilder assetUrlBuilder;
 
-    public FluidService(DatasetService datasetService, FluidDao fluidDao,
-                        FluidVariantRepository fluidRepo, AssetUrlBuilder assetUrlBuilder) {
+    public FluidService(DatasetService datasetService, FluidVariantRepository fluidRepo,
+                        FluidModOptionRepository modOptionRepo, AssetUrlBuilder assetUrlBuilder) {
         this.datasetService = datasetService;
-        this.fluidDao = fluidDao;
         this.fluidRepo = fluidRepo;
+        this.modOptionRepo = modOptionRepo;
         this.assetUrlBuilder = assetUrlBuilder;
     }
 
@@ -63,13 +63,33 @@ public class FluidService {
 
     public FluidDetail detail(String datasetId, String fluidVariantId) {
         DatasetSummary dataset = datasetService.requireById(datasetId);
-        return fluidDao.findVariant(dataset, fluidVariantId)
+        FluidVariantBrowserEntity e = fluidRepo.findById(new FluidVariantBrowserEntity.FluidVariantId(datasetId, fluidVariantId))
                 .orElseThrow(() -> new NotFoundException("Fluid variant not found: " + fluidVariantId));
+        return new FluidDetail(
+                e.getFluidVariantId(),
+                e.getFluidId(),
+                e.getModId(),
+                e.getRegistryName(),
+                e.getUnlocalizedName(),
+                e.getDisplayName(),
+                e.isGaseous(),
+                e.getDensity(),
+                e.getTemperature(),
+                e.getViscosity(),
+                e.getLuminosity(),
+                e.getRuntimeFluidId(),
+                e.getNbtHash(),
+                e.getNbtText(),
+                e.getChemicalExpression(),
+                assetUrlBuilder.build(dataset, e.getAssetPath(), null));
     }
 
     public List<ModOptionDto> listMods(String datasetId) {
-        DatasetSummary dataset = datasetService.requireById(datasetId);
-        return fluidDao.listMods(dataset);
+        datasetService.requireById(datasetId);
+        return modOptionRepo.findByDatasetIdOrderByNameAscModIdAsc(datasetId)
+                .stream()
+                .map(e -> new ModOptionDto(e.getModId(), e.getName()))
+                .toList();
     }
 
     private FluidSummary toSummary(FluidVariantBrowserEntity e, DatasetSummary dataset) {

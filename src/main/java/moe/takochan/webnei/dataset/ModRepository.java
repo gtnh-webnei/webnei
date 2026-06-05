@@ -8,4 +8,6 @@ import org.springframework.stereotype.Repository;
 public interface ModRepository
         extends JpaRepository<ModEntity, ModEntity.ModId>,
                 JpaSpecificationExecutor<ModEntity> {
+
+    java.util.List<ModEntity> findByDatasetIdOrderByNameAsc(String datasetId);
 }

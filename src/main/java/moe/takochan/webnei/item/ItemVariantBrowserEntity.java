@@ -58,6 +58,9 @@ public class ItemVariantBrowserEntity {
     @Column(name = "tooltip_text", nullable = false)
     private String tooltipText;
 
+    @Column(name = "chemical_expression")
+    private String chemicalExpression;
+
     @Column(name = "asset_id", nullable = false)
     private String assetId;
 
@@ -89,6 +92,7 @@ public class ItemVariantBrowserEntity {
     public String getNbtText() { return nbtText; }
     public String getDisplayName() { return displayName; }
     public String getTooltipText() { return tooltipText; }
+    public String getChemicalExpression() { return chemicalExpression; }
     public String getAssetId() { return assetId; }
     public String getAssetPath() { return assetPath; }
     public String getAssetSha256() { return assetSha256; }

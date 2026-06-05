@@ -33,16 +33,14 @@ public class DatasetService {
 
     private final DatasetRepository datasetRepo;
     private final ModRepository modRepo;
-    private final DatasetDao datasetDao;
     private final AssetUrlBuilder assetUrlBuilder;
     private final ObjectMapper objectMapper;
 
     public DatasetService(DatasetRepository datasetRepo, ModRepository modRepo,
-                          DatasetDao datasetDao, AssetUrlBuilder assetUrlBuilder,
+                          AssetUrlBuilder assetUrlBuilder,
                           ObjectMapper objectMapper) {
         this.datasetRepo = datasetRepo;
         this.modRepo = modRepo;
-        this.datasetDao = datasetDao;
         this.assetUrlBuilder = assetUrlBuilder;
         this.objectMapper = objectMapper;
     }
@@ -62,7 +60,10 @@ public class DatasetService {
 
     public DatasetDetail detail(String datasetId) {
         DatasetSummary dataset = requireById(datasetId);
-        List<ModSummary> mods = datasetDao.listMods(datasetId);
+        List<ModSummary> mods = modRepo.findByDatasetIdOrderByNameAsc(datasetId)
+                .stream()
+                .map(this::toModSummary)
+                .toList();
         return new DatasetDetail(dataset, mods);
     }
 

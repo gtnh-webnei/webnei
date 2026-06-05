@@ -24,14 +24,17 @@ import org.springframework.stereotype.Service;
 public class ItemService {
 
     private final DatasetService datasetService;
-    private final ItemDao itemDao;
+    private final ItemVariantRepository itemRepo;
+    private final ItemModOptionRepository modOptionRepo;
     private final NeiPanelEntryRepository panelRepo;
     private final AssetUrlBuilder assetUrlBuilder;
 
-    public ItemService(DatasetService datasetService, ItemDao itemDao,
+    public ItemService(DatasetService datasetService, ItemVariantRepository itemRepo,
+                       ItemModOptionRepository modOptionRepo,
                        NeiPanelEntryRepository panelRepo, AssetUrlBuilder assetUrlBuilder) {
         this.datasetService = datasetService;
-        this.itemDao = itemDao;
+        this.itemRepo = itemRepo;
+        this.modOptionRepo = modOptionRepo;
         this.panelRepo = panelRepo;
         this.assetUrlBuilder = assetUrlBuilder;
     }
@@ -54,13 +57,33 @@ public class ItemService {
 
     public ItemDetailDto detail(String datasetId, String itemVariantId) {
         DatasetSummary dataset = datasetService.requireById(datasetId);
-        return itemDao.findVariant(dataset, itemVariantId)
+        ItemVariantBrowserEntity e = itemRepo.findById(new ItemVariantBrowserEntity.ItemVariantId(datasetId, itemVariantId))
                 .orElseThrow(() -> new NotFoundException("Item variant not found: " + itemVariantId));
+        return new ItemDetailDto(
+                e.getItemVariantId(),
+                e.getItemId(),
+                e.getModId(),
+                e.getRegistryName(),
+                e.getUnlocalizedName(),
+                e.getMaxStackSize(),
+                e.getMaxDamage(),
+                e.getDamage(),
+                e.getNbtHash(),
+                e.getNbtText(),
+                e.getChemicalExpression(),
+                e.getDisplayName(),
+                e.getTooltipText(),
+                assetUrlBuilder.build(dataset, e.getAssetPath(), e.getAssetSha256()),
+                e.getAssetWidth(),
+                e.getAssetHeight());
     }
 
     public List<ModOptionDto> listMods(String datasetId) {
-        DatasetSummary dataset = datasetService.requireById(datasetId);
-        return itemDao.listMods(dataset);
+        datasetService.requireById(datasetId);
+        return modOptionRepo.findByDatasetIdOrderByNameAscModIdAsc(datasetId)
+                .stream()
+                .map(e -> new ModOptionDto(e.getModId(), e.getName()))
+                .toList();
     }
 
     private static Specification<NeiPanelEntryEntity> panelSpec(String datasetId, ItemQuery query) {

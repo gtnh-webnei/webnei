@@ -61,6 +61,9 @@ public class FluidVariantBrowserEntity {
     @Column(name = "nbt_text", nullable = false)
     private String nbtText;
 
+    @Column(name = "chemical_expression")
+    private String chemicalExpression;
+
     @Column(name = "asset_id", nullable = false)
     private String assetId;
 
@@ -84,6 +87,7 @@ public class FluidVariantBrowserEntity {
     public boolean isGaseous() { return gaseous; }
     public String getNbtHash() { return nbtHash; }
     public String getNbtText() { return nbtText; }
+    public String getChemicalExpression() { return chemicalExpression; }
     public String getAssetId() { return assetId; }
     public String getAssetPath() { return assetPath; }
 

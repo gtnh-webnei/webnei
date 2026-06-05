@@ -43,6 +43,7 @@ public class GtOreService {
     private final GtOreSmallDropRepository oreSmallDropRepository;
     private final GtOreSmallDimensionRepository oreSmallDimensionRepository;
     private final GtUndergroundFluidRepository undergroundFluidRepository;
+    private final GtUndergroundFluidBrowserRepository undergroundFluidBrowserRepository;
     private final GtBartWorksOreRepository bartWorksOreRepository;
     private final GtBartWorksOreLayerRepository bartWorksOreLayerRepository;
 
@@ -61,6 +62,7 @@ public class GtOreService {
             GtOreSmallDropRepository oreSmallDropRepository,
             GtOreSmallDimensionRepository oreSmallDimensionRepository,
             GtUndergroundFluidRepository undergroundFluidRepository,
+            GtUndergroundFluidBrowserRepository undergroundFluidBrowserRepository,
             GtBartWorksOreRepository bartWorksOreRepository,
             GtBartWorksOreLayerRepository bartWorksOreLayerRepository) {
         this.datasetService = datasetService;
@@ -77,6 +79,7 @@ public class GtOreService {
         this.oreSmallDropRepository = oreSmallDropRepository;
         this.oreSmallDimensionRepository = oreSmallDimensionRepository;
         this.undergroundFluidRepository = undergroundFluidRepository;
+        this.undergroundFluidBrowserRepository = undergroundFluidBrowserRepository;
         this.bartWorksOreRepository = bartWorksOreRepository;
         this.bartWorksOreLayerRepository = bartWorksOreLayerRepository;
     }
@@ -150,19 +153,20 @@ public class GtOreService {
     public PageResponse<GtUndergroundFluidSummary> listUndergroundFluids(
             String datasetId, String q, String dimension, PageRequest page) {
         DatasetSummary dataset = datasetService.requireById(datasetId);
-        Specification<GtUndergroundFluidEntity> spec = hasDatasetId(datasetId);
-        if (dimension != null && !dimension.isBlank()) spec = spec.and((root, cq, cb) -> cb.equal(root.get("dimension"), dimension));
-        if (q != null && !q.isBlank()) spec = spec.and(fluidSearch(datasetId, q));
+        Specification<GtUndergroundFluidBrowserEntity> spec = undergroundFluidHasDatasetId(datasetId);
+        if (dimension != null && !dimension.isBlank()) {
+            spec = spec.and((root, cq, cb) -> cb.equal(root.get("dimension"), dimension));
+        }
+        if (q != null && !q.isBlank()) {
+            spec = spec.and(undergroundFluidSearch(q));
+        }
 
-        Page<GtUndergroundFluidEntity> result = undergroundFluidRepository.findAll(
+        Page<GtUndergroundFluidBrowserEntity> result = undergroundFluidBrowserRepository.findAll(
                 spec,
-                pageable(page, 50, Sort.by("dimension").ascending().and(Sort.by("fluidId").ascending())));
+                pageable(page, 50, Sort.by("dimensionSortOrder").ascending()
+                        .and(Sort.by("fluidDisplayName").ascending())
+                        .and(Sort.by("fluidId").ascending())));
         List<GtUndergroundFluidSummary> items = result.stream().map(f -> undergroundFluidSummary(dataset, f)).toList();
-        items = items.stream()
-                .sorted(Comparator.comparingInt((GtUndergroundFluidSummary f) -> f.dimensionDisplay().sortOrder())
-                        .thenComparing(f -> f.fluid().displayName())
-                        .thenComparing(GtUndergroundFluidSummary::fluidId))
-                .toList();
         return new PageResponse<>(items, pageIndex(page), pageSize(page, 50), result.getTotalElements());
     }
 
@@ -243,10 +247,26 @@ public class GtOreService {
                 itemRef(dataset, ore.getSmallOreItemVariantId()), smallOreDimensions(dataset, ore.getOreGenName()));
     }
 
-    private GtUndergroundFluidSummary undergroundFluidSummary(DatasetSummary dataset, GtUndergroundFluidEntity fluid) {
+    private GtUndergroundFluidSummary undergroundFluidSummary(DatasetSummary dataset, GtUndergroundFluidBrowserEntity fluid) {
         return new GtUndergroundFluidSummary(
-                fluid.getFluidId(), fluid.getDimension(), fluidRef(dataset, fluid.getFluidVariantId()),
-                dimensionRef(dataset, fluid.getDimension()), fluid.getChance(), fluid.getMinAmount(), fluid.getMaxAmount());
+                fluid.getFluidId(),
+                fluid.getDimension(),
+                new GtFluidRef(
+                        fluid.getFluidVariantId(),
+                        fluid.getFluidId(),
+                        fluid.getFluidDisplayName(),
+                        assetUrlBuilder.build(dataset, fluid.getFluidAssetPath(), null)),
+                new GtDimensionRef(
+                        fluid.getDimension(),
+                        fluid.getDimensionFullName(),
+                        fluid.getDimensionDisplayName(),
+                        fluid.getDimensionDisplayAbbr(),
+                        fluid.getDimensionIconItemVariantId(),
+                        itemRef(dataset, fluid.getDimensionIconItemVariantId()).assetUrl(),
+                        fluid.getDimensionSortOrder() == null ? Integer.MAX_VALUE : fluid.getDimensionSortOrder()),
+                fluid.getChance(),
+                fluid.getMinAmount(),
+                fluid.getMaxAmount());
     }
 
     private GtBartWorksOreSummary bartWorksSummary(DatasetSummary dataset, GtBartWorksOreEntity ore) {
@@ -363,21 +383,16 @@ public class GtOreService {
         };
     }
 
-    private static Specification<GtUndergroundFluidEntity> fluidSearch(String datasetId, String q) {
+    private static Specification<GtUndergroundFluidBrowserEntity> undergroundFluidHasDatasetId(String datasetId) {
+        return (root, query, cb) -> cb.equal(root.get("datasetId"), datasetId);
+    }
+
+    private static Specification<GtUndergroundFluidBrowserEntity> undergroundFluidSearch(String q) {
         String pattern = "%" + q.toLowerCase() + "%";
-        return (root, cq, cb) -> {
-            var sub = cq.subquery(String.class);
-            var fluid = sub.from(FluidVariantBrowserEntity.class);
-            sub.select(fluid.get("fluidVariantId"));
-            Predicate sameDataset = cb.equal(fluid.get("datasetId"), datasetId);
-            Predicate sameVariant = cb.equal(fluid.get("fluidVariantId"), root.get("fluidVariantId"));
-            Predicate matches = cb.or(
-                    cb.like(cb.lower(fluid.get("displayName")), pattern),
-                    cb.like(cb.lower(fluid.get("fluidId")), pattern),
-                    cb.like(cb.lower(fluid.get("registryName")), pattern));
-            sub.where(sameDataset, sameVariant, matches);
-            return cb.exists(sub);
-        };
+        return (root, cq, cb) -> cb.or(
+                cb.like(cb.lower(root.get("fluidDisplayName")), pattern),
+                cb.like(cb.lower(root.get("fluidId")), pattern),
+                cb.like(cb.lower(root.get("dimensionDisplayName")), pattern));
     }
 
     private static Specification<GtBartWorksOreEntity> bartWorksSearch(String q) {
