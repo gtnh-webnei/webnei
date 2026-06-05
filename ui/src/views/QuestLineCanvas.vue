@@ -59,6 +59,14 @@ const questError = ref<string | null>(null);
 
 const containerRef = ref<HTMLElement | null>(null);
 const graph = shallowRef<Graph | null>(null);
+const questHoverEnabled = ref(true);
+const hoverCapable = ref(true);
+const effectiveQuestHoverEnabled = computed(() => questHoverEnabled.value && hoverCapable.value);
+let hoverMediaQuery: MediaQueryList | null = null;
+
+function updateHoverCapable() {
+  hoverCapable.value = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+}
 
 const nodeMap = computed(() => {
   const m = new Map<string, QuestNode>();
@@ -154,6 +162,35 @@ async function renderGraph() {
       },
     }));
 
+  const plugins: any[] = effectiveQuestHoverEnabled.value
+    ? [
+        {
+          type: 'tooltip',
+          key: 'quest-tooltip',
+          trigger: 'hover',
+          enable: (e: { targetType?: string }) => e?.targetType === 'node',
+          // 用 style 把 G6 默认 tooltip 外壳改成主题色,自定义内容只放纯文本
+          style: {
+            '.tooltip': {
+              background: palette.value.tooltipBg,
+              color: palette.value.tooltipText,
+              border: `1px solid ${palette.value.nodeStroke}`,
+              'box-shadow':
+                themeMode.value === 'dark'
+                  ? '0 6px 16px rgba(0,0,0,0.4)'
+                  : '0 6px 12px rgba(0,0,0,0.12)',
+            },
+          },
+          getContent: (_evt: unknown, items: Array<{ data: { name?: string } }>) => {
+            if (!items?.length) return '';
+            const it = items[0];
+            const name = it.data?.name ?? '';
+            return `<div style="font-weight:600;font-size:13px;line-height:1.45;max-width:240px">${escapeHtml(name)}</div>`;
+          },
+        },
+      ]
+    : [];
+
   const g = new Graph({
     container: containerRef.value,
     autoFit: 'view',
@@ -177,32 +214,7 @@ async function renderGraph() {
         },
       },
     },
-    plugins: [
-      {
-        type: 'tooltip',
-        key: 'quest-tooltip',
-        trigger: 'hover',
-        enable: (e: { targetType?: string }) => e?.targetType === 'node',
-        // 用 style 把 G6 默认 tooltip 外壳改成主题色,自定义内容只放纯文本
-        style: {
-          '.tooltip': {
-            background: palette.value.tooltipBg,
-            color: palette.value.tooltipText,
-            border: `1px solid ${palette.value.nodeStroke}`,
-            'box-shadow':
-              themeMode.value === 'dark'
-                ? '0 6px 16px rgba(0,0,0,0.4)'
-                : '0 6px 12px rgba(0,0,0,0.12)',
-          },
-        },
-        getContent: (_evt: unknown, items: Array<{ data: { name?: string } }>) => {
-          if (!items?.length) return '';
-          const it = items[0];
-          const name = it.data?.name ?? '';
-          return `<div style="font-weight:600;font-size:13px;line-height:1.45;max-width:240px">${escapeHtml(name)}</div>`;
-        },
-      },
-    ],
+    plugins,
     data: { nodes, edges },
   });
 
@@ -303,7 +315,15 @@ watch([datasetId, lineId], loadLine);
 watch(themeMode, () => {
   if (lineDetail.value) renderGraph();
 });
-onMounted(loadLine);
+watch(effectiveQuestHoverEnabled, () => {
+  if (lineDetail.value) renderGraph();
+});
+onMounted(() => {
+  hoverMediaQuery = window.matchMedia('(hover: hover) and (pointer: fine)');
+  hoverCapable.value = hoverMediaQuery.matches;
+  hoverMediaQuery.addEventListener('change', updateHoverCapable);
+  loadLine();
+});
 
 // 画布工具栏:适应 / 1:1 / + / - / 居中。
 // G6 v5 自带 fitView / fitCenter / zoomTo / zoomBy 全部异步 + 可选动画。
@@ -326,6 +346,7 @@ function canvasZoomOut() {
   graph.value?.zoomBy(1 / ZOOM_STEP, ZOOM_ANIM);
 }
 onBeforeUnmount(() => {
+  hoverMediaQuery?.removeEventListener('change', updateHoverCapable);
   if (graph.value) {
     graph.value.destroy();
     graph.value = null;
@@ -376,6 +397,12 @@ const rewardTypeLabels = computed<Record<string, string>>(() => ({
         role="toolbar"
         :aria-label="$t('quest.canvasToolbar')"
       >
+        <el-tooltip :content="$t('quest.hoverTooltip')" placement="left">
+          <div class="ct-switch">
+            <el-switch v-model="questHoverEnabled" size="small" :disabled="!hoverCapable" />
+          </div>
+        </el-tooltip>
+        <div class="ct-divider" />
         <el-tooltip :content="$t('quest.fitWindow')" placement="left">
           <button type="button" class="ct-btn" @click="canvasFit">
             <svg
@@ -631,6 +658,13 @@ const rewardTypeLabels = computed<Record<string, string>>(() => ({
   border: 1px solid var(--el-border-color-lighter);
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+.ct-switch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
 }
 .ct-btn {
   display: inline-flex;

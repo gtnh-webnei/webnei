@@ -55,11 +55,13 @@ export function usePagedBrowser<T, E extends Record<string, unknown> = Record<st
   const loading = ref(false);
   const error = ref<string | null>(null);
   const secondaryOptions = ref<ModOption[]>([]);
+  let requestId = 0;
 
   watch(pageSize, (v) => localStorage.setItem(storageKey, String(v)));
 
   async function refresh() {
     if (!datasetId.value) return;
+    const currentRequest = ++requestId;
     loading.value = true;
     error.value = null;
     try {
@@ -71,12 +73,14 @@ export function usePagedBrowser<T, E extends Record<string, unknown> = Record<st
         page: page.value - 1,
         size: pageSize.value,
       });
+      if (currentRequest !== requestId) return;
       items.value = data.items;
       total.value = data.total;
     } catch (e) {
+      if (currentRequest !== requestId) return;
       error.value = e instanceof Error ? e.message : String(e);
     } finally {
-      loading.value = false;
+      if (currentRequest === requestId) loading.value = false;
     }
   }
 
@@ -90,8 +94,11 @@ export function usePagedBrowser<T, E extends Record<string, unknown> = Record<st
   }
 
   const debouncedReset = useDebounceFn(() => {
-    page.value = 1;
-    refresh();
+    if (page.value !== 1) {
+      page.value = 1;
+    } else {
+      refresh();
+    }
   }, debounceMs);
 
   watch([q, secondary], () => debouncedReset());
@@ -99,15 +106,21 @@ export function usePagedBrowser<T, E extends Record<string, unknown> = Record<st
     watch(
       extras,
       () => {
-        page.value = 1;
-        refresh();
+        if (page.value !== 1) {
+          page.value = 1;
+        } else {
+          refresh();
+        }
       },
       { deep: true },
     );
   }
   watch(pageSize, () => {
-    page.value = 1;
-    refresh();
+    if (page.value !== 1) {
+      page.value = 1;
+    } else {
+      refresh();
+    }
   });
   watch(page, () => refresh());
   watch(datasetId, (id, prev) => {

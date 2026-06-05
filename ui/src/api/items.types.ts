@@ -2,6 +2,7 @@ export interface NeiPanelEntry {
   itemVariantId: string;
   itemId: string;
   modId: string;
+  modName: string;
   registryName: string;
   damage: number;
   nbtHash: string;
@@ -14,6 +15,7 @@ export interface ItemDetail {
   itemVariantId: string;
   itemId: string;
   modId: string;
+  modName: string;
   registryName: string;
   unlocalizedName: string;
   maxStackSize: number;

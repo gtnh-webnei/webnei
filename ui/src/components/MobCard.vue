@@ -1,16 +1,13 @@
 <script setup lang="ts">
-import { useI18n } from 'vue-i18n'
-import type { MobSummary } from '@/api/mobs.types'
-
-const { t } = useI18n()
+import type { MobSummary } from '@/api/mobs.types';
 
 defineProps<{
-  mob: MobSummary
-}>()
+  mob: MobSummary;
+}>();
 
 defineEmits<{
-  (e: 'select', mob: MobSummary): void
-}>()
+  (e: 'select', mob: MobSummary): void;
+}>();
 </script>
 
 <template>
@@ -26,17 +23,17 @@ defineEmits<{
       <img v-if="mob.assetUrl" :src="mob.assetUrl" :alt="mob.displayName" loading="lazy" />
     </div>
     <div class="meta">
-      <div class="name" :title="mob.displayName">{{ mob.displayName }}</div>
+      <div class="name">{{ mob.displayName }}</div>
       <div class="row mod-row">
         <el-tag size="small" type="info" effect="plain" round class="mod-tag">
           {{ mob.modId }}
         </el-tag>
       </div>
       <div class="row attr-row">
-        <span class="stat" :title="$t('mob.maxHealth')">♥ {{ mob.maxHealth }}</span>
-        <span v-if="mob.armor > 0" class="stat" :title="$t('mob.armor')">⛨ {{ mob.armor }}</span>
-        <span v-if="mob.immuneToFire" class="badge fire" :title="$t('mob.fireImmune')">{{ $t('mob.fireImmuneBadge') }}</span>
-        <span v-if="mob.leashable" class="badge leash" :title="$t('mob.leashable')">{{ $t('mob.leashableBadge') }}</span>
+        <span class="stat">♥ {{ mob.maxHealth }}</span>
+        <span v-if="mob.armor > 0" class="stat">⛨ {{ mob.armor }}</span>
+        <span v-if="mob.immuneToFire" class="badge fire">{{ $t('mob.fireImmuneBadge') }}</span>
+        <span v-if="mob.leashable" class="badge leash">{{ $t('mob.leashableBadge') }}</span>
       </div>
     </div>
   </div>
@@ -55,12 +52,10 @@ defineEmits<{
   font: inherit;
   color: inherit;
   text-align: left;
-  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
-}
-.mob-card:hover {
-  border-color: var(--el-color-primary);
-  background: var(--el-color-primary-light-9);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    box-shadow 0.15s;
 }
 .mob-card:focus-visible {
   outline: 2px solid var(--el-color-primary);

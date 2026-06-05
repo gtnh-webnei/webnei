@@ -1,50 +1,51 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { storeToRefs } from 'pinia'
-import { useDebounceFn } from '@vueuse/core'
-import { useI18n } from 'vue-i18n'
-import { useDatasetStore } from '@/stores/dataset'
-import { listRecipeCategories, listRecipesByCategory } from '@/api/recipes'
-import type { Recipe, RecipeCategory } from '@/api/recipes.types'
-import RecipePanel from '@/components/RecipePanel.vue'
-import CategoryHeaderRows from '@/components/recipe/CategoryHeaderRows.vue'
+import { computed, onMounted, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { storeToRefs } from 'pinia';
+import { useDebounceFn } from '@vueuse/core';
+import { useI18n } from 'vue-i18n';
+import { useDatasetStore } from '@/stores/dataset';
+import { listRecipeCategories, listRecipesByCategory } from '@/api/recipes';
+import type { Recipe, RecipeCategory } from '@/api/recipes.types';
+import RecipePanel from '@/components/RecipePanel.vue';
+import CategoryHeaderRows from '@/components/recipe/CategoryHeaderRows.vue';
 
-const { t } = useI18n()
-const route = useRoute()
-const router = useRouter()
-const datasetStore = useDatasetStore()
-const { activeDatasetId } = storeToRefs(datasetStore)
+const { t } = useI18n();
+const route = useRoute();
+const router = useRouter();
+const datasetStore = useDatasetStore();
+const { activeDatasetId } = storeToRefs(datasetStore);
 
-const datasetId = computed(() =>
-  String(route.params.datasetId ?? activeDatasetId.value ?? ''),
-)
-const categoryId = computed(() => String(route.params.categoryId ?? ''))
+const datasetId = computed(() => String(route.params.datasetId ?? activeDatasetId.value ?? ''));
+const categoryId = computed(() => String(route.params.categoryId ?? ''));
 
-const category = ref<RecipeCategory | null>(null)
-const recipes = ref<Recipe[]>([])
-const total = ref(0)
-const page = ref(1)
-const pageSize = ref(24)
-const loading = ref(false)
-const error = ref<string | null>(null)
-const q = ref('')
-const activeTier = ref<string | null>(null)
+const category = ref<RecipeCategory | null>(null);
+const recipes = ref<Recipe[]>([]);
+const total = ref(0);
+const page = ref(1);
+const pageSize = ref(12);
+const loading = ref(false);
+const error = ref<string | null>(null);
+const q = ref('');
+const tierQuery = ref('');
+const activeTier = ref<string | null>(null);
+let requestId = 0;
 
 async function fetchCategoryMeta() {
-  if (!datasetId.value || !categoryId.value) return
+  if (!datasetId.value || !categoryId.value) return;
   try {
-    const list = await listRecipeCategories(datasetId.value)
-    category.value = list.find((c) => c.categoryId === categoryId.value) ?? null
+    const list = await listRecipeCategories(datasetId.value);
+    category.value = list.find((c) => c.categoryId === categoryId.value) ?? null;
   } catch {
-    category.value = null
+    category.value = null;
   }
 }
 
 async function fetchRecipes() {
-  if (!datasetId.value || !categoryId.value) return
-  loading.value = true
-  error.value = null
+  if (!datasetId.value || !categoryId.value) return;
+  const currentRequest = ++requestId;
+  loading.value = true;
+  error.value = null;
   try {
     const data = await listRecipesByCategory(
       datasetId.value,
@@ -53,69 +54,82 @@ async function fetchRecipes() {
       page.value - 1,
       pageSize.value,
       { voltageTier: activeTier.value ?? undefined },
-    )
-    recipes.value = data.items
-    total.value = data.total
+    );
+    if (currentRequest !== requestId) return;
+    recipes.value = data.items;
+    total.value = data.total;
   } catch (e) {
-    error.value = e instanceof Error ? e.message : String(e)
+    if (currentRequest !== requestId) return;
+    error.value = e instanceof Error ? e.message : String(e);
   } finally {
-    loading.value = false
+    if (currentRequest === requestId) loading.value = false;
   }
 }
 
 const debouncedReset = useDebounceFn(() => {
-  page.value = 1
-  fetchRecipes()
-}, 250)
+  tierQuery.value = q.value;
+  if (page.value !== 1) {
+    page.value = 1;
+  } else {
+    fetchRecipes();
+  }
+}, 250);
 
 watch([datasetId, categoryId], () => {
-  page.value = 1
-  activeTier.value = null
-  fetchCategoryMeta()
-  fetchRecipes()
-})
-watch(q, () => debouncedReset())
+  page.value = 1;
+  activeTier.value = null;
+  tierQuery.value = q.value;
+  fetchCategoryMeta();
+  fetchRecipes();
+});
+watch(q, () => debouncedReset());
 watch(activeTier, () => {
-  page.value = 1
-  fetchRecipes()
-})
-watch(page, () => fetchRecipes())
+  if (page.value !== 1) {
+    page.value = 1;
+  } else {
+    fetchRecipes();
+  }
+});
+watch(page, () => fetchRecipes());
 watch(pageSize, () => {
-  page.value = 1
-  fetchRecipes()
-})
+  if (page.value !== 1) {
+    page.value = 1;
+  } else {
+    fetchRecipes();
+  }
+});
 
 function onSlotPick(payload: { itemVariantId: string | null; fluidVariantId: string | null }) {
-  const tgt = payload.itemVariantId ?? payload.fluidVariantId
-  if (!tgt) return
+  const tgt = payload.itemVariantId ?? payload.fluidVariantId;
+  if (!tgt) return;
   router.push({
     name: 'lookup',
     params: { datasetId: datasetId.value },
     query: { target: tgt, kind: 'detail' },
-  })
+  });
 }
 
 function onSlotLookup(
   next: 'recipe' | 'usage',
   payload: { itemVariantId: string | null; fluidVariantId: string | null },
 ) {
-  const tgt = payload.itemVariantId ?? payload.fluidVariantId
-  if (!tgt) return
+  const tgt = payload.itemVariantId ?? payload.fluidVariantId;
+  if (!tgt) return;
   router.push({
     name: 'lookup',
     params: { datasetId: datasetId.value },
     query: { target: tgt, kind: next },
-  })
+  });
 }
 
 function back() {
-  router.back()
+  router.back();
 }
 
 onMounted(() => {
-  fetchCategoryMeta()
-  fetchRecipes()
-})
+  fetchCategoryMeta();
+  fetchRecipes();
+});
 </script>
 
 <template>
@@ -126,7 +140,11 @@ onMounted(() => {
 
     <section class="hero">
       <div class="icon-wrap">
-        <img v-if="category?.iconAssetUrl" :src="category.iconAssetUrl" :alt="category.displayName" />
+        <img
+          v-if="category?.iconAssetUrl"
+          :src="category.iconAssetUrl"
+          :alt="category.displayName"
+        />
       </div>
       <div class="title-info">
         <h1>{{ category?.displayName ?? categoryId }}</h1>
@@ -143,6 +161,7 @@ onMounted(() => {
       :dataset-id="datasetId"
       :category-id="categoryId"
       :active-tier="activeTier"
+      :query="tierQuery"
       @update:active-tier="activeTier = $event"
     />
 
@@ -155,7 +174,8 @@ onMounted(() => {
       />
       <div class="spacer" />
       <div class="total">
-        {{ t('common.totalCount') }} <strong>{{ total.toLocaleString() }}</strong> {{ t('common.items') }}
+        {{ t('common.totalCount') }} <strong>{{ total.toLocaleString() }}</strong>
+        {{ t('common.items') }}
       </div>
     </div>
 

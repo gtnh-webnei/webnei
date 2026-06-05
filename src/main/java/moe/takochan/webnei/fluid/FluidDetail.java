@@ -4,6 +4,7 @@ public record FluidDetail(
         String fluidVariantId,
         String fluidId,
         String modId,
+        String modName,
         String registryName,
         String unlocalizedName,
         String displayName,

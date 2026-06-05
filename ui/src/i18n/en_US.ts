@@ -44,7 +44,7 @@ const en_US: MessageSchema = {
   },
 
   fluid: {
-    searchPlaceholder: 'Search name / registry / id / chemical expression',
+    searchPlaceholder: 'Search name / registry / id / chemical expression / NBT',
     noMatch: 'No matching fluids',
     cardPickHint: 'Left \u00b7 Details \u00b7 Right \u00b7 Recipe \u00b7 Middle \u00b7 Usage',
     fluidId: 'Fluid ID',
@@ -61,7 +61,7 @@ const en_US: MessageSchema = {
   },
 
   item: {
-    searchPlaceholder: 'Search name / registry / id / chemical expression',
+    searchPlaceholder: 'Search name / registry / id / tooltip / chemical expression',
     viewCard: 'Cards',
     viewCompact: 'Compact',
     noMatch: 'No matching items',
@@ -135,6 +135,7 @@ const en_US: MessageSchema = {
     centerGraph: 'Center',
     zoomIn: 'Zoom In',
     zoomOut: 'Zoom Out',
+    hoverTooltip: 'Hover Tooltip',
     repeatable: 'Repeatable',
     taskConditions: 'Task Conditions \u00b7 {count}',
     huntTarget: 'Hunt Target:',

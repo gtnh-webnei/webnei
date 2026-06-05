@@ -4,6 +4,7 @@ public record ItemDetailDto(
         String itemVariantId,
         String itemId,
         String modId,
+        String modName,
         String registryName,
         String unlocalizedName,
         int maxStackSize,

@@ -101,7 +101,8 @@ public class RecipeController {
             @PathVariable String datasetId,
             @PathVariable String categoryId,
             @RequestParam(required = false) String target,
-            @RequestParam(required = false) String kind) {
-        return recipeService.listCategoryVoltageTiers(datasetId, categoryId, target, kind);
+            @RequestParam(required = false) String kind,
+            @RequestParam(required = false) String q) {
+        return recipeService.listCategoryVoltageTiers(datasetId, categoryId, target, kind, q);
     }
 }

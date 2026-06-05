@@ -2,6 +2,7 @@ package moe.takochan.webnei.fluid;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import jakarta.persistence.criteria.Predicate;
 
@@ -55,8 +56,11 @@ public class FluidService {
                         .and(Sort.by("fluidVariantId").ascending()));
 
         Page<FluidVariantBrowserEntity> result = fluidRepo.findAll(spec, pageable);
+        Map<String, String> modNames = modOptionRepo.findByDatasetIdOrderByNameAscModIdAsc(datasetId)
+                .stream()
+                .collect(java.util.stream.Collectors.toMap(FluidModOptionEntity::getModId, FluidModOptionEntity::getName));
         List<FluidSummary> items = result.stream()
-                .map(e -> toSummary(e, dataset))
+                .map(e -> toSummary(e, dataset, modNames))
                 .toList();
         return new PageResponse<>(items, pageIndex, pageSize, result.getTotalElements());
     }
@@ -69,6 +73,7 @@ public class FluidService {
                 e.getFluidVariantId(),
                 e.getFluidId(),
                 e.getModId(),
+                modName(datasetId, e.getModId()),
                 e.getRegistryName(),
                 e.getUnlocalizedName(),
                 e.getDisplayName(),
@@ -92,13 +97,19 @@ public class FluidService {
                 .toList();
     }
 
-    private FluidSummary toSummary(FluidVariantBrowserEntity e, DatasetSummary dataset) {
+    private FluidSummary toSummary(FluidVariantBrowserEntity e, DatasetSummary dataset, Map<String, String> modNames) {
         return new FluidSummary(
-                e.getFluidVariantId(), e.getFluidId(), e.getModId(),
+                e.getFluidVariantId(), e.getFluidId(), e.getModId(), modNames.getOrDefault(e.getModId(), e.getModId()),
                 e.getRegistryName(), e.getDisplayName(), e.isGaseous(),
                 e.getDensity(), e.getTemperature(), e.getViscosity(), e.getLuminosity(),
                 e.getNbtHash(),
                 assetUrlBuilder.build(dataset, e.getAssetPath(), null));
+    }
+
+    private String modName(String datasetId, String modId) {
+        return modOptionRepo.findByDatasetIdAndModId(datasetId, modId)
+                .map(FluidModOptionEntity::getName)
+                .orElse(modId);
     }
 
     private static Specification<FluidVariantBrowserEntity> hasDatasetId(String datasetId) {
@@ -110,13 +121,11 @@ public class FluidService {
     }
 
     private static Specification<FluidVariantBrowserEntity> textSearch(String q) {
-        String pattern = "%" + q.toLowerCase() + "%";
+        String pattern = "%" + q.trim().toLowerCase() + "%";
         return (root, cq, cb) -> {
             Predicate[] conditions = {
-                    cb.like(cb.lower(root.get("displayName")), pattern),
-                    cb.like(cb.lower(root.get("registryName")), pattern),
-                    cb.like(cb.lower(root.get("fluidId")), pattern),
-                    cb.like(cb.lower(root.get("chemicalExpression")), pattern)
+                    cb.like(root.get("fluidSearchText"), pattern),
+                    cb.like(root.get("variantSearchText"), pattern)
             };
             return cb.or(conditions);
         };

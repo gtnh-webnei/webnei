@@ -137,6 +137,7 @@ export interface MessageSchema {
     centerGraph: string;
     zoomIn: string;
     zoomOut: string;
+    hoverTooltip: string;
     repeatable: string;
     taskConditions: string;
     huntTarget: string;

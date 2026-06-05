@@ -130,7 +130,7 @@ onMounted(() => {
         <div class="title-block">
           <h1 class="title">{{ detail.displayName || detail.registryName }}</h1>
           <div class="subtitle">
-            <el-tag size="default" type="info" effect="plain" round>{{ detail.modId }}</el-tag>
+            <el-tag size="default" type="info" effect="plain" round>{{ detail.modName }}</el-tag>
             <el-tag size="small" type="primary" effect="plain" round>{{ $t('fluid.tag') }}</el-tag>
             <el-tag v-if="detail.gaseous" size="small" type="warning" effect="plain" round>{{
               $t('fluid.gaseous')
@@ -165,7 +165,7 @@ onMounted(() => {
                 {{ detail.unlocalizedName }}
               </el-descriptions-item>
               <el-descriptions-item :label="$t('common.mod')">
-                {{ detail.modId }}
+                {{ detail.modName }}
               </el-descriptions-item>
               <el-descriptions-item :label="$t('fluid.state')">
                 {{ gaseousLabel }}

@@ -1,21 +1,14 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import { useI18n } from 'vue-i18n';
 import type { NeiPanelEntry } from '@/api/items.types';
 import ItemIcon from './ItemIcon.vue';
-
-const { t } = useI18n();
 
 const props = defineProps<{
   item: NeiPanelEntry;
   selected?: boolean;
 }>();
 
-const title = computed(() => `${t('item.cardPickHint')}\n${props.item.itemId}`);
-
 defineEmits<{
   (e: 'select', item: NeiPanelEntry): void;
-  (e: 'lookup', kind: 'recipe' | 'usage', item: NeiPanelEntry): void;
 }>();
 </script>
 
@@ -25,20 +18,17 @@ defineEmits<{
     :class="{ selected }"
     tabindex="0"
     role="button"
-    :title="title"
     @click="$emit('select', item)"
-    @contextmenu.prevent="$emit('lookup', 'recipe', item)"
-    @auxclick="(e) => e.button === 1 && (e.preventDefault(), $emit('lookup', 'usage', item))"
     @keydown.enter="$emit('select', item)"
   >
-    <ItemIcon :item="item" :size="40" :interactive="false" :show-tooltip="false" />
+    <ItemIcon :item="item" :size="40" :interactive="false" />
     <div class="meta">
-      <div class="name" :title="item.displayName || item.registryName">
+      <div class="name">
         {{ item.displayName || item.registryName }}
       </div>
       <div class="sub">
         <el-tag size="small" type="info" effect="plain" round class="mod-tag">
-          {{ item.modId }}
+          {{ item.modName }}
         </el-tag>
       </div>
     </div>

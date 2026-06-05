@@ -12,6 +12,7 @@ public record RecipeSlotDto(
         String groupId,
         String displayName,
         String modId,
+        String tooltipText,
         String assetUrl,
         List<RecipeSlotCandidateDto> candidates,
         String placement) {

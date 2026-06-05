@@ -9,15 +9,12 @@ const props = defineProps<{
   fluid: FluidSummary;
 }>();
 
-const title = computed(() => `${t('fluid.cardPickHint')}\n${props.fluid.fluidId}`);
-
 const fallbackInitial = computed(() =>
   props.fluid.gaseous ? t('fluid.gaseous') : t('fluid.liquid'),
 );
 
 defineEmits<{
   (e: 'select', fluid: FluidSummary): void;
-  (e: 'lookup', kind: 'recipe' | 'usage', fluid: FluidSummary): void;
 }>();
 
 const imgFailed = ref(false);
@@ -28,10 +25,7 @@ const imgFailed = ref(false);
     class="fluid-card"
     tabindex="0"
     role="button"
-    :title="title"
     @click="$emit('select', fluid)"
-    @contextmenu.prevent="$emit('lookup', 'recipe', fluid)"
-    @auxclick="(e) => e.button === 1 && (e.preventDefault(), $emit('lookup', 'usage', fluid))"
     @keydown.enter="$emit('select', fluid)"
   >
     <div class="icon-wrap" :class="{ gaseous: fluid.gaseous }">
@@ -48,10 +42,10 @@ const imgFailed = ref(false);
       </div>
     </div>
     <div class="meta">
-      <div class="name" :title="fluid.displayName">{{ fluid.displayName }}</div>
+      <div class="name">{{ fluid.displayName }}</div>
       <div class="tags">
         <el-tag size="small" type="info" effect="plain" round class="mod-tag">
-          {{ fluid.modId }}
+          {{ fluid.modName }}
         </el-tag>
         <el-tag v-if="fluid.gaseous" size="small" type="warning" effect="plain" round>
           {{ t('fluid.gaseous') }}

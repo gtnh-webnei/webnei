@@ -47,10 +47,7 @@ const displayTotalSuffix = computed(() => props.totalSuffix || t('common.totalSu
       filterable
       class="secondary-select"
     >
-      <el-option v-for="o in secondaryOptions" :key="o.modId" :label="o.name" :value="o.modId">
-        <span class="mod-option-name">{{ o.name }}</span>
-        <code class="mod-option-id">{{ o.modId }}</code>
-      </el-option>
+      <el-option v-for="o in secondaryOptions" :key="o.modId" :label="o.name" :value="o.modId" />
     </el-select>
     <slot name="extra" />
     <div class="spacer" />
@@ -75,23 +72,6 @@ const displayTotalSuffix = computed(() => props.totalSuffix || t('common.totalSu
 .secondary-select {
   width: 240px;
   flex-shrink: 0;
-}
-.mod-option-name {
-  display: inline-block;
-  max-width: 150px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  vertical-align: bottom;
-}
-.mod-option-id {
-  float: right;
-  max-width: 70px;
-  overflow: hidden;
-  color: var(--el-text-color-secondary);
-  font-size: 12px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 .spacer {
   flex: 1;

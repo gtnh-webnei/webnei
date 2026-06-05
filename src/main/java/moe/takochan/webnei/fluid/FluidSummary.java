@@ -4,6 +4,7 @@ public record FluidSummary(
         String fluidVariantId,
         String fluidId,
         String modId,
+        String modName,
         String registryName,
         String displayName,
         boolean gaseous,

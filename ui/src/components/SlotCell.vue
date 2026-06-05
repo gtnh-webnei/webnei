@@ -3,6 +3,8 @@ import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import type { RecipeSlot, RecipeSlotCandidate } from '@/api/recipes.types';
 import { formatCompact, formatFluidCompact, formatFluidFull, formatFull } from '@/utils/format';
+import AppTooltip from './AppTooltip.vue';
+import MinecraftTooltipText from './MinecraftTooltipText.vue';
 
 const { t } = useI18n();
 
@@ -45,6 +47,7 @@ const direct = computed<RecipeSlotCandidate | null>(() => {
     amount: s.amount,
     displayName: s.displayName,
     modId: s.modId,
+    tooltipText: s.tooltipText,
     assetUrl: s.assetUrl,
   };
 });
@@ -198,20 +201,14 @@ function lookupCandidate(kind: 'recipe' | 'usage', c: RecipeSlotCandidate, e?: M
   </el-popover>
 
   <!-- Single candidate / placeholder: tooltip only -->
-  <el-tooltip
-    v-else
-    placement="top"
-    :show-after="120"
-    :hide-after="80"
-    :disabled="!primary"
-    effect="light"
-  >
+  <AppTooltip v-else :disabled="!primary">
     <template #content>
       <div v-if="primary" class="hover-card">
-        <div class="hover-name">
+        <MinecraftTooltipText v-if="primary.tooltipText" :text="primary.tooltipText" />
+        <div v-else class="hover-name">
           {{ primary.displayName ?? primary.itemVariantId ?? primary.fluidVariantId }}
         </div>
-        <div class="hover-meta">
+        <div v-if="!primary.tooltipText" class="hover-meta">
           <el-tag v-if="primary.modId" size="small" type="info" effect="plain" round>
             {{ primary.modId }}
           </el-tag>
@@ -221,9 +218,6 @@ function lookupCandidate(kind: 'recipe' | 'usage', c: RecipeSlotCandidate, e?: M
           <span v-if="amount >= 1" class="hover-amount">×{{ amountFull }}</span>
           <span v-if="hasNonTrivialProb" class="hover-prob">{{ probPercentPrecise }}</span>
         </div>
-        <code class="hover-id">
-          {{ primary.itemVariantId ?? primary.fluidVariantId }}
-        </code>
         <div class="hover-keys">{{ displayPickHint }}</div>
       </div>
     </template>
@@ -248,7 +242,7 @@ function lookupCandidate(kind: 'recipe' | 'usage', c: RecipeSlotCandidate, e?: M
       <span v-if="showAmount" class="amount">{{ amountCompact }}</span>
       <span v-if="showProb" class="prob">{{ probPercent }}%</span>
     </div>
-  </el-tooltip>
+  </AppTooltip>
 </template>
 
 <style scoped>
@@ -435,15 +429,6 @@ function lookupCandidate(kind: 'recipe' | 'usage', c: RecipeSlotCandidate, e?: M
 .hover-prob {
   color: var(--el-color-danger);
   font-weight: 600;
-}
-.hover-id {
-  font-size: 11px;
-  color: var(--el-text-color-secondary);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  word-break: break-all;
-  background: var(--el-fill-color-light);
-  padding: 2px 4px;
-  border-radius: 3px;
 }
 .hover-candidates {
   font-size: 12px;

@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { listCategoryMachines, listCategoryVoltageTiers } from '@/api/recipes';
 import type { CategoryMachine, CategoryVoltageTier, LookupKind } from '@/api/recipes.types';
+import AppTooltip from '@/components/AppTooltip.vue';
 
 const props = withDefaults(
   defineProps<{
@@ -13,8 +14,9 @@ const props = withDefaults(
     hideMachines?: boolean;
     target?: string | null;
     kind?: LookupKind | null;
+    query?: string;
   }>(),
-  { hideMachines: false, target: null, kind: null },
+  { hideMachines: false, target: null, kind: null, query: '' },
 );
 
 const { t } = useI18n();
@@ -72,6 +74,7 @@ async function fetchTiers() {
     tiers.value = await listCategoryVoltageTiers(props.datasetId, props.categoryId, {
       target: props.target ?? undefined,
       kind: props.kind ?? undefined,
+      q: props.query,
     });
   } catch {
     tiers.value = [];
@@ -92,11 +95,14 @@ function openMachine(m: CategoryMachine) {
 }
 
 watch(
-  () => [props.datasetId, props.categoryId, props.hideMachines, props.target, props.kind],
-  () => {
-    fetchMachines();
-    fetchTiers();
-  },
+  () => [props.datasetId, props.categoryId, props.hideMachines],
+  () => fetchMachines(),
+  { immediate: true },
+);
+
+watch(
+  () => [props.datasetId, props.categoryId, props.target, props.kind, props.query],
+  () => fetchTiers(),
   { immediate: true },
 );
 </script>
@@ -109,12 +115,10 @@ watch(
         <span class="row-count">{{ machines.length }}</span>
       </div>
       <div class="machines">
-        <el-tooltip
+        <AppTooltip
           v-for="m in machines"
           :key="m.itemVariantId"
           :content="m.displayName ?? m.itemVariantId"
-          placement="top"
-          :show-after="100"
         >
           <button type="button" class="machine-cell" @click="openMachine(m)">
             <img
@@ -125,7 +129,7 @@ watch(
             />
             <span v-else class="machine-icon placeholder" />
           </button>
-        </el-tooltip>
+        </AppTooltip>
       </div>
     </section>
 

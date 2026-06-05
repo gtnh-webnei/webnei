@@ -42,7 +42,7 @@ const zh_CN: MessageSchema = {
   },
 
   fluid: {
-    searchPlaceholder: '搜索名称 / registry / id / 化学表达式',
+    searchPlaceholder: '搜索名称 / registry / id / 化学表达式 / NBT',
     noMatch: '没有匹配的流体',
     cardPickHint: '左键 · 详情 · 右键 · 合成 · 中键 · 用途',
     fluidId: '流体 ID',
@@ -59,7 +59,7 @@ const zh_CN: MessageSchema = {
   },
 
   item: {
-    searchPlaceholder: '搜索名称 / registry / id / 化学表达式',
+    searchPlaceholder: '搜索名称 / registry / id / tooltip / 化学表达式',
     viewCard: '卡片',
     viewCompact: '紧凑',
     noMatch: '没有匹配的物品',
@@ -133,6 +133,7 @@ const zh_CN: MessageSchema = {
     centerGraph: '居中',
     zoomIn: '放大',
     zoomOut: '缩小',
+    hoverTooltip: '悬浮提示',
     repeatable: '可重复',
     taskConditions: '任务条件 · {count}',
     huntTarget: '猎杀目标:',

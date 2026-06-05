@@ -2,6 +2,7 @@ export interface FluidSummary {
   fluidVariantId: string;
   fluidId: string;
   modId: string;
+  modName: string;
   registryName: string;
   displayName: string;
   gaseous: boolean;

@@ -1,48 +1,46 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import type { NeiPanelEntry } from '@/api/items.types'
+import { computed } from 'vue';
+import type { NeiPanelEntry } from '@/api/items.types';
 
 const props = withDefaults(
   defineProps<{
-    item: NeiPanelEntry | null
-    size?: number
-    showTooltip?: boolean
-    interactive?: boolean
+    item: NeiPanelEntry | null;
+    size?: number;
+    interactive?: boolean;
   }>(),
   {
     size: 32,
-    showTooltip: true,
     interactive: true,
   },
-)
+);
 
 const emit = defineEmits<{
-  (e: 'click', item: NeiPanelEntry): void
-  (e: 'lookup', kind: 'recipe' | 'usage', item: NeiPanelEntry): void
-}>()
+  (e: 'click', item: NeiPanelEntry): void;
+  (e: 'lookup', kind: 'recipe' | 'usage', item: NeiPanelEntry): void;
+}>();
 
 const sizeStyle = computed(() => ({
   width: `${props.size}px`,
   height: `${props.size}px`,
-}))
+}));
 
 function onClick() {
-  if (!props.interactive || !props.item) return
-  emit('click', props.item)
+  if (!props.interactive || !props.item) return;
+  emit('click', props.item);
 }
 
 function onContextMenu(e: MouseEvent) {
-  if (!props.interactive || !props.item) return
-  e.preventDefault()
-  emit('lookup', 'recipe', props.item)
+  if (!props.interactive || !props.item) return;
+  e.preventDefault();
+  emit('lookup', 'recipe', props.item);
 }
 
 function onAuxClick(e: MouseEvent) {
-  if (!props.interactive || !props.item) return
+  if (!props.interactive || !props.item) return;
   // middle click = usage
   if (e.button === 1) {
-    e.preventDefault()
-    emit('lookup', 'usage', props.item)
+    e.preventDefault();
+    emit('lookup', 'usage', props.item);
   }
 }
 </script>
@@ -55,7 +53,6 @@ function onAuxClick(e: MouseEvent) {
     :style="sizeStyle"
     role="button"
     :tabindex="interactive ? 0 : -1"
-    :title="showTooltip ? `${item.displayName} (${item.modId})` : ''"
     @click="onClick"
     @contextmenu="onContextMenu"
     @auxclick="onAuxClick"

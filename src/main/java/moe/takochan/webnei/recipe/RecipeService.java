@@ -275,7 +275,7 @@ public class RecipeService {
     }
 
     public List<CategoryVoltageTierDto> listCategoryVoltageTiers(
-            String datasetId, String categoryId, String target, String kind) {
+            String datasetId, String categoryId, String target, String kind, String query) {
         datasetService.requireById(datasetId);
         boolean hasLookup = target != null && !target.isBlank() && kind != null && !kind.isBlank();
         if (hasLookup) {
@@ -283,6 +283,13 @@ public class RecipeService {
                             datasetId, categoryId, target, kind)
                     .stream()
                     .map(e -> new CategoryVoltageTierDto(e.getVoltageTier(), e.getRecipeCount()))
+                    .toList();
+        }
+        if (query != null && !query.isBlank()) {
+            return gregTechRecipeRepo.findVoltageTiersByCategoryAndSearch(
+                            datasetId, categoryId, "%" + query.trim().toLowerCase() + "%")
+                    .stream()
+                    .map(row -> new CategoryVoltageTierDto((String) row[0], (Long) row[1]))
                     .toList();
         }
         return voltageTierRepo.findByDatasetIdAndCategoryIdOrderByMinVoltageAsc(datasetId, categoryId)
@@ -348,6 +355,12 @@ public class RecipeService {
         List<RecipeSlotBrowserEntity> rows = slotRepo.findByDatasetIdAndRecipeIdIn(
                 datasetId, recipeIds, Sort.by("recipeId").ascending().and(Sort.by("role").ascending()).and(Sort.by("slotIndex").ascending()));
         Map<String, List<RecipeSlotCandidateDto>> candidatesByGroup = loadCandidates(dataset, rows);
+        Map<String, ItemVariantBrowserEntity> directItemRefs = loadItemRefs(datasetId, rows.stream()
+                .map(RecipeSlotBrowserEntity::getItemVariantId)
+                .filter(Objects::nonNull)
+                .filter(s -> !s.isBlank())
+                .distinct()
+                .toList());
         Map<String, String> placementByCategoryRoleSlot = new HashMap<>();
         for (Map.Entry<String, List<SlotLayoutDto>> e : layoutMap.entrySet()) {
             for (SlotLayoutDto layout : e.getValue()) {
@@ -363,6 +376,7 @@ public class RecipeService {
             String fluid = nullIfEmpty(r.getFluidVariantId());
             String displayName = item != null ? r.getItemDisplayName() : r.getFluidDisplayName();
             String modId = item != null ? r.getItemModId() : r.getFluidModId();
+            String tooltipText = item != null && directItemRefs.get(item) != null ? directItemRefs.get(item).getTooltipText() : null;
             String assetPath = item != null ? r.getItemAssetPath() : r.getFluidAssetPath();
             byRecipe.computeIfAbsent(r.getRecipeId(), ignored -> new ArrayList<>())
                     .add(new RecipeSlotDto(
@@ -375,6 +389,7 @@ public class RecipeService {
                             nullIfEmpty(r.getGroupId()),
                             displayName,
                             modId,
+                            tooltipText,
                             assetUrlBuilder.build(dataset, assetPath, null),
                             nullIfEmpty(r.getGroupId()) == null ? List.of() : candidatesByGroup.getOrDefault(r.getGroupId(), List.of()),
                             placementByCategoryRoleSlot.get(r.getCategoryId() + ":" + r.getRole() + ":" + r.getSlotIndex())));
@@ -398,6 +413,7 @@ public class RecipeService {
                             null,
                             item == null ? null : item.getDisplayName(),
                             item == null ? null : item.getModId(),
+                            item == null ? null : item.getTooltipText(),
                             assetUrlBuilder.build(dataset, item == null ? null : item.getAssetPath(), item == null ? null : item.getAssetSha256()),
                             List.of(),
                             null));
@@ -444,6 +460,7 @@ public class RecipeService {
                             e.getAmount(),
                             item == null ? (fluid == null ? null : fluid.getDisplayName()) : item.getDisplayName(),
                             item == null ? (fluid == null ? null : fluid.getModId()) : item.getModId(),
+                            item == null ? null : item.getTooltipText(),
                             assetUrlBuilder.build(dataset,
                                     item == null ? (fluid == null ? null : fluid.getAssetPath()) : item.getAssetPath(),
                                     item == null ? null : item.getAssetSha256())));
@@ -696,16 +713,17 @@ public class RecipeService {
     }
 
     private static Specification<RecipeBrowserEntity> recipeTextSearch(String q) {
-        String pattern = "%" + q.toLowerCase() + "%";
+        String pattern = "%" + q.trim().toLowerCase() + "%";
         return (root, query, cb) -> {
-            Subquery<String> subquery = query.subquery(String.class);
-            var entry = subquery.from(RecipeSearchEntryEntity.class);
-            subquery.select(entry.get("recipeId"));
-            subquery.where(
-                    cb.equal(entry.get("datasetId"), root.get("datasetId")),
-                    cb.equal(entry.get("recipeId"), root.get("recipeId")),
-                    cb.like(entry.get("searchText"), pattern));
-            return cb.exists(subquery);
+            Subquery<Integer> documentMatch = query.subquery(Integer.class);
+            var document = documentMatch.from(RecipeSearchDocumentEntity.class);
+            documentMatch.select(cb.literal(1));
+            documentMatch.where(
+                    cb.equal(document.get("datasetId"), root.get("datasetId")),
+                    cb.equal(document.get("recipeId"), root.get("recipeId")),
+                    cb.equal(document.get("categoryId"), root.get("categoryId")),
+                    cb.like(document.get("searchText"), pattern));
+            return cb.exists(documentMatch);
         };
     }
 

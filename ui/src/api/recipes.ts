@@ -117,11 +117,13 @@ export async function listCategoryMachines(
 export async function listCategoryVoltageTiers(
   datasetId: string,
   categoryId: string,
-  scope: { target?: string; kind?: LookupKind } = {},
+  scope: { target?: string; kind?: LookupKind; q?: string } = {},
 ): Promise<CategoryVoltageTier[]> {
   const params: Record<string, string> = {};
   if (scope.target) params.target = scope.target;
   if (scope.kind) params.kind = scope.kind;
+  const trimmed = scope.q?.trim();
+  if (trimmed) params.q = trimmed;
   const { data } = await http.get<CategoryVoltageTier[]>(
     `/datasets/${encodeURIComponent(datasetId)}/categories/${encodeURIComponent(categoryId)}/voltage-tiers`,
     { params },

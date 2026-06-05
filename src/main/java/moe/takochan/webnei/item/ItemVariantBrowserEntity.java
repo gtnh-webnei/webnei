@@ -61,6 +61,12 @@ public class ItemVariantBrowserEntity {
     @Column(name = "chemical_expression")
     private String chemicalExpression;
 
+    @Column(name = "item_search_text")
+    private String itemSearchText;
+
+    @Column(name = "variant_search_text")
+    private String variantSearchText;
+
     @Column(name = "asset_id", nullable = false)
     private String assetId;
 
@@ -93,6 +99,8 @@ public class ItemVariantBrowserEntity {
     public String getDisplayName() { return displayName; }
     public String getTooltipText() { return tooltipText; }
     public String getChemicalExpression() { return chemicalExpression; }
+    public String getItemSearchText() { return itemSearchText; }
+    public String getVariantSearchText() { return variantSearchText; }
     public String getAssetId() { return assetId; }
     public String getAssetPath() { return assetPath; }
     public String getAssetSha256() { return assetSha256; }
