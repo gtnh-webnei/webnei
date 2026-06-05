@@ -47,6 +47,7 @@ const direct = computed<RecipeSlotCandidate | null>(() => {
     amount: s.amount,
     displayName: s.displayName,
     modId: s.modId,
+    modName: s.modName,
     tooltipText: s.tooltipText,
     assetUrl: s.assetUrl,
   };
@@ -175,27 +176,35 @@ function lookupCandidate(kind: 'recipe' | 'usage', c: RecipeSlotCandidate, e?: M
         <div class="popover-hint">{{ displayPickHint }}</div>
       </div>
       <div class="popover-items">
-        <div
+        <AppTooltip
           v-for="(c, idx) in candidates"
           :key="`${c.itemVariantId ?? ''}|${c.fluidVariantId ?? ''}|${idx}`"
-          class="popover-item"
-          @click="pickCandidate(c)"
-          @contextmenu="lookupCandidate('recipe', c, $event)"
-          @auxclick="(e: MouseEvent) => e.button === 1 && lookupCandidate('usage', c, e)"
+          :disabled="!c.tooltipText"
+          placement="right"
         >
-          <img v-if="c.assetUrl" :src="c.assetUrl" :alt="c.displayName ?? ''" loading="lazy" />
-          <div class="popover-text">
-            <div class="popover-name">
-              {{ c.displayName ?? c.itemVariantId ?? c.fluidVariantId }}
-            </div>
-            <div class="popover-sub">
-              <span v-if="c.modId" class="mod">{{ c.modId }}</span>
-              <span v-if="c.amount >= 1" class="qty"
-                >×{{ isFluid ? formatFluidFull(c.amount) : formatFull(c.amount) }}</span
-              >
+          <template #content>
+            <MinecraftTooltipText v-if="c.tooltipText" :text="c.tooltipText" />
+          </template>
+          <div
+            class="popover-item"
+            @click="pickCandidate(c)"
+            @contextmenu="lookupCandidate('recipe', c, $event)"
+            @auxclick="(e: MouseEvent) => e.button === 1 && lookupCandidate('usage', c, e)"
+          >
+            <img v-if="c.assetUrl" :src="c.assetUrl" :alt="c.displayName ?? ''" loading="lazy" />
+            <div class="popover-text">
+              <div class="popover-name">
+                {{ c.displayName ?? c.itemVariantId ?? c.fluidVariantId }}
+              </div>
+              <div class="popover-sub">
+                <span v-if="c.modName" class="mod">{{ c.modName }}</span>
+                <span v-if="c.amount >= 1" class="qty"
+                  >×{{ isFluid ? formatFluidFull(c.amount) : formatFull(c.amount) }}</span
+                >
+              </div>
             </div>
           </div>
-        </div>
+        </AppTooltip>
       </div>
     </div>
   </el-popover>
@@ -209,8 +218,15 @@ function lookupCandidate(kind: 'recipe' | 'usage', c: RecipeSlotCandidate, e?: M
           {{ primary.displayName ?? primary.itemVariantId ?? primary.fluidVariantId }}
         </div>
         <div v-if="!primary.tooltipText" class="hover-meta">
-          <el-tag v-if="primary.modId" size="small" type="info" effect="plain" round>
-            {{ primary.modId }}
+          <el-tag
+            v-if="primary.modName"
+            size="small"
+            type="info"
+            effect="plain"
+            round
+            class="mod-tag"
+          >
+            {{ primary.modName }}
           </el-tag>
           <el-tag v-if="isFluid" size="small" type="primary" effect="plain" round>{{
             t('fluid.tag')
@@ -408,7 +424,8 @@ function lookupCandidate(kind: 'recipe' | 'usage', c: RecipeSlotCandidate, e?: M
   display: flex;
   flex-direction: column;
   gap: 6px;
-  max-width: 280px;
+  width: max-content;
+  max-width: min(520px, calc(100vw - 32px));
 }
 .hover-name {
   font-size: 14px;
@@ -420,6 +437,16 @@ function lookupCandidate(kind: 'recipe' | 'usage', c: RecipeSlotCandidate, e?: M
   flex-wrap: wrap;
   gap: 6px;
   align-items: center;
+  min-width: 0;
+}
+.mod-tag {
+  max-width: 100%;
+  min-width: 0;
+}
+.mod-tag :deep(.el-tag__content) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .hover-amount {
   color: var(--el-color-primary);

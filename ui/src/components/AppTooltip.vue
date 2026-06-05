@@ -1,4 +1,23 @@
 <script setup lang="ts">
+const popperOptions = {
+  modifiers: [
+    {
+      name: 'preventOverflow',
+      options: {
+        boundary: 'viewport',
+        padding: 12,
+      },
+    },
+    {
+      name: 'flip',
+      options: {
+        fallbackPlacements: ['bottom', 'top', 'right', 'left'],
+        padding: 12,
+      },
+    },
+  ],
+};
+
 withDefaults(
   defineProps<{
     content?: string | null;
@@ -33,6 +52,7 @@ withDefaults(
     :disabled="disabled || (!content && !$slots.content)"
     effect="light"
     popper-class="webnei-tooltip"
+    :popper-options="popperOptions"
   >
     <template #content>
       <div class="webnei-tooltip-content">
@@ -45,14 +65,32 @@ withDefaults(
 
 <style scoped>
 :global(.webnei-tooltip) {
-  max-width: min(320px, calc(100vw - 32px));
+  width: max-content;
+  max-width: min(720px, calc(100vw - 24px));
 }
 
 :global(.webnei-tooltip .webnei-tooltip-content) {
-  max-width: min(320px, calc(100vw - 32px));
-  max-height: 220px;
-  overflow: hidden;
+  width: max-content;
+  max-width: min(720px, calc(100vw - 24px));
+  max-height: calc(100vh - 96px);
+  overflow: visible;
   overflow-wrap: anywhere;
   white-space: pre-line;
+}
+
+:global(.webnei-tooltip .minecraft-tooltip-text) {
+  max-height: calc(100vh - 160px);
+}
+
+:global(.webnei-tooltip .minecraft-tooltip-text .mc-title) {
+  flex-shrink: 0;
+}
+
+:global(.webnei-tooltip .minecraft-tooltip-text .mc-body) {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  padding-right: 8px;
 }
 </style>

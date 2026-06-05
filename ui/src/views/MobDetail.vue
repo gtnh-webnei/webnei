@@ -103,7 +103,7 @@ onMounted(load);
           <h1>{{ detail.summary.displayName }}</h1>
           <div class="entity-name">{{ detail.summary.entityName }}</div>
           <div class="tag-row">
-            <el-tag size="small" effect="plain" round>{{ detail.summary.modId }}</el-tag>
+            <el-tag size="small" effect="plain" round>{{ detail.summary.modName }}</el-tag>
             <el-tag size="small" type="danger" effect="plain" round
               >♥ {{ detail.summary.maxHealth }}</el-tag
             >

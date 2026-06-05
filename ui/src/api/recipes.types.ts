@@ -15,6 +15,7 @@ export interface RecipeSlotCandidate {
   amount: number;
   displayName: string | null;
   modId: string | null;
+  modName: string | null;
   tooltipText: string | null;
   assetUrl: string | null;
 }
@@ -29,6 +30,7 @@ export interface RecipeSlot {
   groupId: string | null;
   displayName: string | null;
   modId: string | null;
+  modName: string | null;
   tooltipText: string | null;
   assetUrl: string | null;
   candidates: RecipeSlotCandidate[];
@@ -39,6 +41,7 @@ export interface GregTechSpecialItem {
   itemVariantId: string;
   displayName: string | null;
   modId: string | null;
+  modName: string | null;
   assetUrl: string | null;
 }
 
@@ -93,6 +96,7 @@ export interface Recipe {
   categoryId: string;
   categoryDisplayName: string;
   sourcePlugin: string;
+  sourceModName: string;
   sourceRef: string;
   description: string;
   slots: RecipeSlot[];

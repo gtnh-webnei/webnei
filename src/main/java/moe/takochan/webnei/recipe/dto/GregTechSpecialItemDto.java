@@ -4,5 +4,6 @@ public record GregTechSpecialItemDto(
         String itemVariantId,
         String displayName,
         String modId,
+        String modName,
         String assetUrl) {
 }

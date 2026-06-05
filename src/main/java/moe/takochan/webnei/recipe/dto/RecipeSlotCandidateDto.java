@@ -6,6 +6,7 @@ public record RecipeSlotCandidateDto(
         int amount,
         String displayName,
         String modId,
+        String modName,
         String tooltipText,
         String assetUrl) {
 }

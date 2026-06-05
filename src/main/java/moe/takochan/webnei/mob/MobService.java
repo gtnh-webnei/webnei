@@ -1,6 +1,7 @@
 package moe.takochan.webnei.mob;
 
 import java.util.List;
+import java.util.Map;
 
 import jakarta.persistence.criteria.Predicate;
 
@@ -65,8 +66,9 @@ public class MobService {
                         .and(Sort.by("mobVariantId").ascending()));
 
         Page<MobVariantBrowserEntity> result = mobRepo.findAll(spec, pageable);
+        Map<String, String> modNames = loadModNames(datasetId);
         List<MobSummary> items = result.stream()
-                .map(e -> toSummary(e, dataset))
+                .map(e -> toSummary(e, dataset, modNames))
                 .toList();
         return new PageResponse<>(items, pageIndex, pageSize, result.getTotalElements());
     }
@@ -92,16 +94,23 @@ public class MobService {
                 .stream()
                 .map(e -> toDropRow(e, dataset))
                 .toList();
-        return new MobDetail(toSummary(mob, dataset), info, drops);
+        return new MobDetail(toSummary(mob, dataset, loadModNames(datasetId)), info, drops);
     }
 
-    private MobSummary toSummary(MobVariantBrowserEntity e, DatasetSummary dataset) {
+    private MobSummary toSummary(MobVariantBrowserEntity e, DatasetSummary dataset, Map<String, String> modNames) {
         return new MobSummary(
-                e.getMobVariantId(), e.getMobId(), e.getModId(),
+                e.getMobVariantId(), e.getMobId(), e.getModId(), modNames.getOrDefault(e.getModId(), e.getModId()),
                 e.getEntityName(), e.getDisplayName(),
                 e.getWidth(), e.getHeight(), e.getMaxHealth(), e.getArmor(),
                 e.isImmuneToFire(), e.isLeashable(),
                 assetUrlBuilder.build(dataset, e.getAssetPath(), null));
+    }
+
+    private Map<String, String> loadModNames(String datasetId) {
+        Map<String, String> names = new java.util.HashMap<>();
+        modOptionRepo.findByDatasetIdOrderByNameAscModIdAsc(datasetId)
+                .forEach(e -> names.put(e.getModId(), e.getName()));
+        return names;
     }
 
     private MobDetail.MobInfo toInfo(MobInfoEntity e) {

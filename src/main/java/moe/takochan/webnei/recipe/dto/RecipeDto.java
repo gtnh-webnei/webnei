@@ -7,6 +7,7 @@ public record RecipeDto(
         String categoryId,
         String categoryDisplayName,
         String sourcePlugin,
+        String sourceModName,
         String sourceRef,
         String description,
         List<RecipeSlotDto> slots,

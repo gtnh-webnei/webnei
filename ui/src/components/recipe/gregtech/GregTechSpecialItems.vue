@@ -32,7 +32,6 @@ function onClick(item: GregTechSpecialItem) {
         :key="item.itemVariantId"
         type="button"
         class="cell"
-        :title="item.displayName ?? item.itemVariantId"
         @click="onClick(item)"
       >
         <img

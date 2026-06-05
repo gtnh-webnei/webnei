@@ -23,8 +23,10 @@ import moe.takochan.webnei.common.PageRequest;
 import moe.takochan.webnei.common.PageResponse;
 import moe.takochan.webnei.dataset.DatasetService;
 import moe.takochan.webnei.dataset.DatasetSummary;
+import moe.takochan.webnei.fluid.FluidModOptionRepository;
 import moe.takochan.webnei.fluid.FluidVariantBrowserEntity;
 import moe.takochan.webnei.fluid.FluidVariantRepository;
+import moe.takochan.webnei.item.ItemModOptionRepository;
 import moe.takochan.webnei.item.ItemVariantBrowserEntity;
 import moe.takochan.webnei.item.ItemVariantRepository;
 import moe.takochan.webnei.recipe.dto.CategoryBreakdownDto;
@@ -66,6 +68,8 @@ public class RecipeService {
     private final GregTechSpecialItemRepository specialItemRepo;
     private final ItemVariantRepository itemVariantRepo;
     private final FluidVariantRepository fluidVariantRepo;
+    private final ItemModOptionRepository itemModOptionRepo;
+    private final FluidModOptionRepository fluidModOptionRepo;
     private final NeiTextureExportRepository textureRepo;
     private final AssetUrlBuilder assetUrlBuilder;
     private final ObjectMapper objectMapper;
@@ -87,6 +91,8 @@ public class RecipeService {
                         GregTechSpecialItemRepository specialItemRepo,
                         ItemVariantRepository itemVariantRepo,
                         FluidVariantRepository fluidVariantRepo,
+                        ItemModOptionRepository itemModOptionRepo,
+                        FluidModOptionRepository fluidModOptionRepo,
                         NeiTextureExportRepository textureRepo,
                         AssetUrlBuilder assetUrlBuilder,
                         ObjectMapper objectMapper) {
@@ -107,6 +113,8 @@ public class RecipeService {
         this.specialItemRepo = specialItemRepo;
         this.itemVariantRepo = itemVariantRepo;
         this.fluidVariantRepo = fluidVariantRepo;
+        this.itemModOptionRepo = itemModOptionRepo;
+        this.fluidModOptionRepo = fluidModOptionRepo;
         this.textureRepo = textureRepo;
         this.assetUrlBuilder = assetUrlBuilder;
         this.objectMapper = objectMapper;
@@ -336,6 +344,7 @@ public class RecipeService {
                     h.getCategoryId(),
                     h.getCategoryDisplayName(),
                     h.getSourcePlugin(),
+                    h.getModName(),
                     h.getSourceRef(),
                     h.getDescription(),
                     slotMap.getOrDefault(id, List.of()),
@@ -354,7 +363,8 @@ public class RecipeService {
         String datasetId = dataset.datasetId();
         List<RecipeSlotBrowserEntity> rows = slotRepo.findByDatasetIdAndRecipeIdIn(
                 datasetId, recipeIds, Sort.by("recipeId").ascending().and(Sort.by("role").ascending()).and(Sort.by("slotIndex").ascending()));
-        Map<String, List<RecipeSlotCandidateDto>> candidatesByGroup = loadCandidates(dataset, rows);
+        Map<String, String> modNames = loadModNames(datasetId);
+        Map<String, List<RecipeSlotCandidateDto>> candidatesByGroup = loadCandidates(dataset, rows, modNames);
         Map<String, ItemVariantBrowserEntity> directItemRefs = loadItemRefs(datasetId, rows.stream()
                 .map(RecipeSlotBrowserEntity::getItemVariantId)
                 .filter(Objects::nonNull)
@@ -368,6 +378,10 @@ public class RecipeService {
                     placementByCategoryRoleSlot.put(e.getKey() + ":" + layout.role() + ":" + layout.slotIndex(), layout.placement());
                 }
             }
+        }
+        Map<String, String> categoryByRecipe = new HashMap<>();
+        for (RecipeSlotBrowserEntity r : rows) {
+            categoryByRecipe.putIfAbsent(r.getRecipeId(), r.getCategoryId());
         }
 
         Map<String, List<RecipeSlotDto>> byRecipe = new LinkedHashMap<>();
@@ -389,6 +403,7 @@ public class RecipeService {
                             nullIfEmpty(r.getGroupId()),
                             displayName,
                             modId,
+                            modName(modNames, modId),
                             tooltipText,
                             assetUrlBuilder.build(dataset, assetPath, null),
                             nullIfEmpty(r.getGroupId()) == null ? List.of() : candidatesByGroup.getOrDefault(r.getGroupId(), List.of()),
@@ -402,6 +417,10 @@ public class RecipeService {
                 .toList());
         for (GregTechSpecialItemEntity si : specialRows) {
             ItemVariantBrowserEntity item = itemRefs.get(si.getItemVariantId());
+            String categoryId = categoryByRecipe.get(si.getRecipeId());
+            String placement = categoryId == null
+                    ? null
+                    : placementByCategoryRoleSlot.get(categoryId + ":special_item:" + si.getListIndex());
             byRecipe.computeIfAbsent(si.getRecipeId(), ignored -> new ArrayList<>())
                     .add(new RecipeSlotDto(
                             "special_item",
@@ -413,10 +432,11 @@ public class RecipeService {
                             null,
                             item == null ? null : item.getDisplayName(),
                             item == null ? null : item.getModId(),
+                            item == null ? null : modName(modNames, item.getModId()),
                             item == null ? null : item.getTooltipText(),
                             assetUrlBuilder.build(dataset, item == null ? null : item.getAssetPath(), item == null ? null : item.getAssetSha256()),
                             List.of(),
-                            null));
+                            placement));
         }
         byRecipe.values().forEach(list -> list.sort(Comparator
                 .comparing(RecipeSlotDto::role)
@@ -424,7 +444,8 @@ public class RecipeService {
         return byRecipe;
     }
 
-    private Map<String, List<RecipeSlotCandidateDto>> loadCandidates(DatasetSummary dataset, List<RecipeSlotBrowserEntity> slots) {
+    private Map<String, List<RecipeSlotCandidateDto>> loadCandidates(
+            DatasetSummary dataset, List<RecipeSlotBrowserEntity> slots, Map<String, String> modNames) {
         String datasetId = dataset.datasetId();
         List<String> groupIds = slots.stream()
                 .filter(s -> nullIfEmpty(s.getItemVariantId()) == null && nullIfEmpty(s.getFluidVariantId()) == null)
@@ -453,19 +474,35 @@ public class RecipeService {
             if (itemId == null && fluidId == null) continue;
             ItemVariantBrowserEntity item = itemId == null ? null : items.get(itemId);
             FluidVariantBrowserEntity fluid = fluidId == null ? null : fluids.get(fluidId);
+            String modId = item == null ? (fluid == null ? null : fluid.getModId()) : item.getModId();
             out.computeIfAbsent(e.getGroupId(), ignored -> new ArrayList<>())
                     .add(new RecipeSlotCandidateDto(
                             itemId,
                             fluidId,
                             e.getAmount(),
                             item == null ? (fluid == null ? null : fluid.getDisplayName()) : item.getDisplayName(),
-                            item == null ? (fluid == null ? null : fluid.getModId()) : item.getModId(),
+                            modId,
+                            modName(modNames, modId),
                             item == null ? null : item.getTooltipText(),
                             assetUrlBuilder.build(dataset,
                                     item == null ? (fluid == null ? null : fluid.getAssetPath()) : item.getAssetPath(),
                                     item == null ? null : item.getAssetSha256())));
         }
         return out;
+    }
+
+    private Map<String, String> loadModNames(String datasetId) {
+        Map<String, String> names = new HashMap<>();
+        itemModOptionRepo.findByDatasetIdOrderByNameAscModIdAsc(datasetId)
+                .forEach(e -> names.put(e.getModId(), e.getName()));
+        fluidModOptionRepo.findByDatasetIdOrderByNameAscModIdAsc(datasetId)
+                .forEach(e -> names.putIfAbsent(e.getModId(), e.getName()));
+        return names;
+    }
+
+    private static String modName(Map<String, String> modNames, String modId) {
+        if (modId == null || modId.isBlank()) return null;
+        return modNames.getOrDefault(modId, modId);
     }
 
     private Map<String, List<SlotLayoutDto>> loadLayouts(String datasetId, List<String> categoryIds) {
@@ -516,6 +553,7 @@ public class RecipeService {
                 .filter(s -> !s.isBlank())
                 .distinct()
                 .toList());
+        Map<String, String> modNames = loadModNames(dataset.datasetId());
         Map<String, List<GregTechSpecialItemDto>> out = new LinkedHashMap<>();
         for (GregTechSpecialItemEntity e : specialRows) {
             ItemVariantBrowserEntity item = itemRefs.get(e.getItemVariantId());
@@ -524,6 +562,7 @@ public class RecipeService {
                             e.getItemVariantId(),
                             item == null ? null : item.getDisplayName(),
                             item == null ? null : item.getModId(),
+                            item == null ? null : modName(modNames, item.getModId()),
                             assetUrlBuilder.build(dataset, item == null ? null : item.getAssetPath(), item == null ? null : item.getAssetSha256())));
         }
         return out;

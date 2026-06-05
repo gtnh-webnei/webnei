@@ -85,6 +85,9 @@ defineEmits<{
 }
 .mod-tag {
   max-width: 100%;
+  min-width: 0;
+}
+.mod-tag :deep(.el-tag__content) {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

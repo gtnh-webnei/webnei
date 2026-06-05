@@ -16,9 +16,6 @@ const shapeless = computed(() => !!props.category?.shapeless);
 const declaredOrdered = computed(
   () => !shapeless.value && (props.declaredCols ?? 0) > 0 && (props.declaredRows ?? 0) > 0,
 );
-const itemInputCount = computed(
-  () => props.recipe.slots.filter((s) => s.role === 'item_input').length,
-);
 const descriptionLines = computed(() =>
   props.recipe.description
     ? props.recipe.description
@@ -36,14 +33,11 @@ const descriptionLines = computed(() =>
         <div class="title-block">
           <div class="title">{{ recipe.categoryDisplayName }}</div>
           <div class="sub">
-            <el-tag size="small" type="info" effect="plain" round>
-              {{ recipe.sourcePlugin }}
+            <el-tag size="small" type="info" effect="plain" round class="mod-tag">
+              {{ recipe.sourceModName }}
             </el-tag>
             <el-tag v-if="shapeless" size="small" type="warning" effect="dark" round>
-              {{ t('recipe.shapeless')
-              }}<span v-if="itemInputCount">
-                · {{ itemInputCount }}{{ t('recipe.gridSlots') }}</span
-              >
+              {{ t('recipe.shapeless') }}
             </el-tag>
             <el-tag v-else-if="declaredOrdered" size="small" type="success" effect="plain" round>
               {{ t('recipe.shapedPrefix', { w: declaredCols, h: declaredRows }) }}
@@ -102,6 +96,16 @@ const descriptionLines = computed(() =>
   margin-top: 4px;
   white-space: nowrap;
   overflow: hidden;
+  min-width: 0;
+}
+.mod-tag {
+  max-width: 100%;
+  min-width: 0;
+}
+.mod-tag :deep(.el-tag__content) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .recipe-id {
   display: block;

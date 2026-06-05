@@ -34,7 +34,9 @@ defineEmits<{
       <div class="meta">
         <div class="name" :title="category.displayName">{{ category.displayName }}</div>
         <div class="tags">
-          <el-tag size="small" type="info" effect="plain" round>{{ category.modId }}</el-tag>
+          <el-tag size="small" type="info" effect="plain" round class="mod-tag">
+            {{ category.modName }}
+          </el-tag>
           <el-tag size="small" effect="plain" round>
             {{ t('category.recipeCount', { count: category.recipeCount.toLocaleString() }) }}
           </el-tag>
@@ -111,5 +113,15 @@ defineEmits<{
   gap: 4px;
   flex-wrap: wrap;
   margin-top: 4px;
+  min-width: 0;
+}
+.mod-tag {
+  max-width: 100%;
+  min-width: 0;
+}
+.mod-tag :deep(.el-tag__content) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>

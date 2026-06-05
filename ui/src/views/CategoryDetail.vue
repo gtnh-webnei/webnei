@@ -149,9 +149,8 @@ onMounted(() => {
       <div class="title-info">
         <h1>{{ category?.displayName ?? categoryId }}</h1>
         <div class="meta-row">
-          <code class="cat-id">{{ categoryId }}</code>
           <el-tag v-if="category" size="small" type="info" effect="plain" round>
-            {{ category.plugin }}
+            {{ category.modName }}
           </el-tag>
         </div>
       </div>
@@ -259,11 +258,6 @@ onMounted(() => {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-}
-.cat-id {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 11px;
-  color: var(--el-text-color-secondary);
 }
 .toolbar {
   display: flex;

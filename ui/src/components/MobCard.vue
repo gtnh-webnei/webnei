@@ -26,7 +26,7 @@ defineEmits<{
       <div class="name">{{ mob.displayName }}</div>
       <div class="row mod-row">
         <el-tag size="small" type="info" effect="plain" round class="mod-tag">
-          {{ mob.modId }}
+          {{ mob.modName }}
         </el-tag>
       </div>
       <div class="row attr-row">
@@ -103,8 +103,14 @@ defineEmits<{
   flex-wrap: nowrap;
   overflow: hidden;
 }
+.mod-row {
+  min-width: 0;
+}
 .mod-tag {
   max-width: 100%;
+  min-width: 0;
+}
+.mod-tag :deep(.el-tag__content) {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
