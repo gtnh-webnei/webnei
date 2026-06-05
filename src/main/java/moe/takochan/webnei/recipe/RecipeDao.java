@@ -77,7 +77,7 @@ public class RecipeDao {
                             SELECT recipe_id FROM recipe
                             WHERE dataset_id = :datasetId
                               AND category_id = :categoryId
-                            ORDER BY recipe_id
+                            ORDER BY display_order, recipe_id
                             """)
                     .param("datasetId", dataset.datasetId())
                     .param("categoryId", categoryId)
@@ -86,20 +86,27 @@ public class RecipeDao {
         } else {
             String pattern = "%" + q.toLowerCase() + "%";
             ids = jdbc.sql("""
-                            SELECT DISTINCT m.recipe_id FROM (
-                              SELECT recipe_id FROM v_recipe_item_slot
-                              WHERE dataset_id = :datasetId
-                                AND category_id = :categoryId
-                                AND (LOWER(COALESCE(display_name, '')) LIKE :pattern
-                                     OR LOWER(item_variant_id) LIKE :pattern)
-                              UNION ALL
-                              SELECT recipe_id FROM v_recipe_fluid_slot
-                              WHERE dataset_id = :datasetId
-                                AND category_id = :categoryId
-                                AND (LOWER(COALESCE(display_name, '')) LIKE :pattern
-                                     OR LOWER(fluid_variant_id) LIKE :pattern)
-                            ) m
-                            ORDER BY recipe_id
+                            SELECT r.recipe_id FROM recipe r
+                            WHERE r.dataset_id = :datasetId
+                              AND r.category_id = :categoryId
+                              AND (
+                                EXISTS (
+                                  SELECT 1 FROM v_recipe_item_slot s
+                                  WHERE s.dataset_id = r.dataset_id
+                                    AND s.category_id = r.category_id
+                                    AND s.recipe_id = r.recipe_id
+                                    AND (LOWER(COALESCE(s.display_name, '')) LIKE :pattern
+                                         OR LOWER(s.item_variant_id) LIKE :pattern)
+                                ) OR EXISTS (
+                                  SELECT 1 FROM v_recipe_fluid_slot s
+                                  WHERE s.dataset_id = r.dataset_id
+                                    AND s.category_id = r.category_id
+                                    AND s.recipe_id = r.recipe_id
+                                    AND (LOWER(COALESCE(s.display_name, '')) LIKE :pattern
+                                         OR LOWER(s.fluid_variant_id) LIKE :pattern)
+                                )
+                              )
+                            ORDER BY r.display_order, r.recipe_id
                             """)
                     .param("datasetId", dataset.datasetId())
                     .param("categoryId", categoryId)
@@ -112,11 +119,13 @@ public class RecipeDao {
         // Step 2: optional voltage filter
         if (hasVoltage) {
             ids = jdbc.sql("""
-                            SELECT recipe_id FROM gregtech_recipe
-                            WHERE dataset_id = :datasetId
-                              AND recipe_id IN (:ids)
-                              AND voltage_tier = :voltageTier
-                            ORDER BY recipe_id
+                            SELECT gt.recipe_id FROM gregtech_recipe gt
+                            JOIN recipe r
+                              ON r.dataset_id = gt.dataset_id AND r.recipe_id = gt.recipe_id
+                            WHERE gt.dataset_id = :datasetId
+                              AND gt.recipe_id IN (:ids)
+                              AND gt.voltage_tier = :voltageTier
+                            ORDER BY r.display_order, gt.recipe_id
                             """)
                     .param("datasetId", dataset.datasetId())
                     .param("ids", ids)

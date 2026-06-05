@@ -11,6 +11,7 @@ public record ItemDetailDto(
         int damage,
         String nbtHash,
         String nbtText,
+        String chemicalExpression,
         String displayName,
         String tooltipText,
         String assetUrl,

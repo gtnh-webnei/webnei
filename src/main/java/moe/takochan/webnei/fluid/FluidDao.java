@@ -30,8 +30,11 @@ public class FluidDao {
                         SELECT fv.fluid_variant_id, fv.fluid_id, fv.mod_id, fv.registry_name,
                                fv.unlocalized_name, fv.display_name, fv.gaseous, fv.density,
                                fv.temperature, fv.viscosity, fv.luminosity, fv.runtime_fluid_id,
-                               fv.nbt_hash, fv.nbt_text, fv.asset_path
+                               fv.nbt_hash, fv.nbt_text, raw.chemical_expression, fv.asset_path
                         FROM v_fluid_variant_browser fv
+                        JOIN fluid_variant raw
+                          ON raw.dataset_id = fv.dataset_id
+                         AND raw.fluid_variant_id = fv.fluid_variant_id
                         WHERE fv.dataset_id = :datasetId
                           AND fv.fluid_variant_id = :fluidVariantId
                         """)
@@ -81,6 +84,7 @@ public class FluidDao {
                 rs.getInt("runtime_fluid_id"),
                 rs.getString("nbt_hash"),
                 rs.getString("nbt_text"),
+                rs.getString("chemical_expression"),
                 assetUrl.apply(rs));
     }
 }

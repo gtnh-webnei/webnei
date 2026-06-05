@@ -15,5 +15,6 @@ public record FluidDetail(
         int runtimeFluidId,
         String nbtHash,
         String nbtText,
+        String chemicalExpression,
         String assetUrl) {
 }

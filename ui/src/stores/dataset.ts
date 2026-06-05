@@ -1,61 +1,65 @@
-import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
-import { listDatasets } from '@/api/datasets'
-import type { DatasetSummary } from '@/api/types'
-import { useExtrasStore } from '@/stores/extras'
-import { setLocale } from '@/i18n'
+import { defineStore } from 'pinia';
+import { ref, computed } from 'vue';
+import { listDatasets } from '@/api/datasets';
+import type { DatasetSummary } from '@/api/types';
+import { useExtrasStore } from '@/stores/extras';
+import { DEFAULT_LOCALE, setLocale } from '@/i18n';
+import { loadDisplaySpec, loadDisplaySpecMessages } from '@/components/recipe/gregtech/displaySpec';
 
-const STORAGE_KEY = 'webnei.activeDatasetId'
+const STORAGE_KEY = 'webnei.activeDatasetId';
 
 export const useDatasetStore = defineStore('dataset', () => {
-  const datasets = ref<DatasetSummary[]>([])
-  const activeDatasetId = ref<string | null>(localStorage.getItem(STORAGE_KEY))
-  const loading = ref(false)
-  const error = ref<string | null>(null)
+  const datasets = ref<DatasetSummary[]>([]);
+  const activeDatasetId = ref<string | null>(localStorage.getItem(STORAGE_KEY));
+  const loading = ref(false);
+  const error = ref<string | null>(null);
 
   const active = computed<DatasetSummary | null>(() => {
-    if (!activeDatasetId.value) return null
-    return datasets.value.find((d) => d.datasetId === activeDatasetId.value) ?? null
-  })
+    if (!activeDatasetId.value) return null;
+    return datasets.value.find((d) => d.datasetId === activeDatasetId.value) ?? null;
+  });
 
   async function load() {
-    loading.value = true
-    error.value = null
+    loading.value = true;
+    error.value = null;
     try {
-      datasets.value = await listDatasets()
+      datasets.value = await listDatasets();
       if (datasets.value.length === 0) {
-        activeDatasetId.value = null
-        localStorage.removeItem(STORAGE_KEY)
-        return
+        activeDatasetId.value = null;
+        localStorage.removeItem(STORAGE_KEY);
+        return;
       }
-      const stored = activeDatasetId.value
-      const exists = stored && datasets.value.some((d) => d.datasetId === stored)
+      const stored = activeDatasetId.value;
+      const exists = stored && datasets.value.some((d) => d.datasetId === stored);
       if (!exists) {
-        setActive(datasets.value[0].datasetId)
+        setActive(datasets.value[0].datasetId);
       } else {
-        applyActiveLocale(activeDatasetId.value)
+        applyActiveDataset(activeDatasetId.value);
       }
     } catch (e) {
-      error.value = e instanceof Error ? e.message : String(e)
+      error.value = e instanceof Error ? e.message : String(e);
     } finally {
-      loading.value = false
+      loading.value = false;
     }
   }
 
   function setActive(datasetId: string) {
-    const prev = activeDatasetId.value
-    activeDatasetId.value = datasetId
-    localStorage.setItem(STORAGE_KEY, datasetId)
-    applyActiveLocale(datasetId)
+    const prev = activeDatasetId.value;
+    activeDatasetId.value = datasetId;
+    localStorage.setItem(STORAGE_KEY, datasetId);
+    applyActiveDataset(datasetId);
     if (prev && prev !== datasetId) {
-      useExtrasStore().clearDataset(prev)
+      useExtrasStore().clearDataset(prev);
     }
   }
 
-  function applyActiveLocale(datasetId: string | null) {
-    const dataset = datasetId ? datasets.value.find((d) => d.datasetId === datasetId) : null
-    setLocale(dataset?.language ?? null)
+  function applyActiveDataset(datasetId: string | null) {
+    const dataset = datasetId ? datasets.value.find((d) => d.datasetId === datasetId) : null;
+    const locale = dataset?.language ?? DEFAULT_LOCALE;
+    setLocale(locale);
+    void loadDisplaySpec(dataset?.displaySpecUrl);
+    void loadDisplaySpecMessages(dataset?.displaySpecMessagesUrl, locale);
   }
 
-  return { datasets, activeDatasetId, active, loading, error, load, setActive }
-})
+  return { datasets, activeDatasetId, active, loading, error, load, setActive };
+});

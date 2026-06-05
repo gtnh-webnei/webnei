@@ -38,6 +38,7 @@ public class ItemDao {
                           iv.damage,
                           iv.nbt_hash,
                           iv.nbt_text,
+                          raw.chemical_expression,
                           iv.display_name,
                           iv.tooltip_text,
                           iv.asset_path,
@@ -45,6 +46,9 @@ public class ItemDao {
                           iv.asset_width,
                           iv.asset_height
                         FROM v_item_variant_browser iv
+                        JOIN item_variant raw
+                          ON raw.dataset_id = iv.dataset_id
+                         AND raw.item_variant_id = iv.item_variant_id
                         WHERE iv.dataset_id = :datasetId
                           AND iv.item_variant_id = :itemVariantId
                         """)
@@ -84,6 +88,7 @@ public class ItemDao {
                 rs.getInt("damage"),
                 rs.getString("nbt_hash"),
                 rs.getString("nbt_text"),
+                rs.getString("chemical_expression"),
                 rs.getString("display_name"),
                 rs.getString("tooltip_text"),
                 assetUrl.apply(rs),
