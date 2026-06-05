@@ -252,22 +252,11 @@ onMounted(() => {
         </el-col>
 
         <el-col :xs="24" :md="10">
-          <el-card shadow="never" class="section">
+          <el-card v-if="detail.chemicalExpression" shadow="never" class="section">
             <template #header>
-              <span class="section-title">{{ $t('common.renderPreview') }}</span>
+              <span class="section-title">{{ $t('common.chemicalExpression') }}</span>
             </template>
-            <div class="preview-box">
-              <img
-                v-if="detail.assetUrl"
-                :src="detail.assetUrl"
-                :alt="detail.displayName"
-                class="preview-img"
-              />
-              <el-empty v-else :description="$t('item.noIcon')" :image-size="60" />
-            </div>
-            <div v-if="detail.assetWidth && detail.assetHeight" class="preview-meta">
-              {{ detail.assetWidth }} × {{ detail.assetHeight }} px
-            </div>
+            <code class="chemical-expression">{{ detail.chemicalExpression }}</code>
           </el-card>
 
           <el-card shadow="never" class="section">
@@ -516,7 +505,7 @@ onMounted(() => {
 }
 .tooltip-line {
   color: var(--el-text-color-primary);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-family: 'WebNEI GTNH Glyphs', Consolas, 'Courier New', monospace;
   font-size: 13px;
   line-height: 1.6;
   white-space: pre-wrap;
@@ -866,5 +855,13 @@ code {
 }
 code.small {
   color: var(--el-text-color-secondary);
+}
+.chemical-expression {
+  display: block;
+  font-family: 'WebNEI GTNH Glyphs', Consolas, 'Courier New', monospace;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--el-color-primary);
 }
 </style>

@@ -115,7 +115,8 @@ public class FluidService {
             Predicate[] conditions = {
                     cb.like(cb.lower(root.get("displayName")), pattern),
                     cb.like(cb.lower(root.get("registryName")), pattern),
-                    cb.like(cb.lower(root.get("fluidId")), pattern)
+                    cb.like(cb.lower(root.get("fluidId")), pattern),
+                    cb.like(cb.lower(root.get("chemicalExpression")), pattern)
             };
             return cb.or(conditions);
         };

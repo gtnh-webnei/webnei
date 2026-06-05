@@ -20,7 +20,6 @@ const detail = ref<FluidDetail | null>(null);
 const loading = ref(false);
 const error = ref<string | null>(null);
 const heroImgFailed = ref(false);
-const previewImgFailed = ref(false);
 
 const extras = ref<FluidExtras | null>(null);
 const extrasLoading = ref(false);
@@ -52,7 +51,6 @@ async function load() {
   error.value = null;
   detail.value = null;
   heroImgFailed.value = false;
-  previewImgFailed.value = false;
   try {
     detail.value = await getFluidDetail(props.datasetId, props.fluidVariantId);
   } catch (e) {
@@ -199,22 +197,11 @@ onMounted(() => {
         </el-col>
 
         <el-col :xs="24" :md="10">
-          <el-card shadow="never" class="section">
+          <el-card v-if="detail.chemicalExpression" shadow="never" class="section">
             <template #header>
-              <span class="section-title">{{ $t('common.renderPreview') }}</span>
+              <span class="section-title">{{ $t('common.chemicalExpression') }}</span>
             </template>
-            <div class="preview-box" :class="{ gaseous: detail.gaseous }">
-              <img
-                v-if="detail.assetUrl && !previewImgFailed"
-                :src="detail.assetUrl"
-                :alt="detail.displayName"
-                class="preview-img"
-                @error="previewImgFailed = true"
-              />
-              <div v-else class="preview-fallback" :class="{ gaseous: detail.gaseous }">
-                {{ gaseousShortLabel }}
-              </div>
-            </div>
+            <code class="chemical-expression">{{ detail.chemicalExpression }}</code>
           </el-card>
 
           <el-card shadow="never" class="section">
@@ -613,5 +600,13 @@ code {
 }
 code.small {
   color: var(--el-text-color-secondary);
+}
+.chemical-expression {
+  display: block;
+  font-family: 'WebNEI GTNH Glyphs', Consolas, 'Courier New', monospace;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--el-color-primary);
 }
 </style>

@@ -100,7 +100,8 @@ public class ItemService {
                 predicates.add(cb.or(
                         cb.like(cb.lower(iv.get("displayName")), pattern),
                         cb.like(cb.lower(iv.get("registryName")), pattern),
-                        cb.like(cb.lower(iv.get("itemId")), pattern)));
+                        cb.like(cb.lower(iv.get("itemId")), pattern),
+                        cb.like(cb.lower(iv.get("chemicalExpression")), pattern)));
             }
 
             return cb.and(predicates.toArray(Predicate[]::new));

@@ -1,9 +1,19 @@
+@font-face {
+  font-family: 'WebNEI GTNH Glyphs';
+  src: url('../assets/fonts/webnei-gtnh-glyphs.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+2070, U+207A-207B, U+2080-2089, U+E000-E020;
+}
+
 html,
 body,
 #app {
   height: 100%;
   margin: 0;
   font-family:
+    'WebNEI GTNH Glyphs',
     'Inter',
     -apple-system,
     BlinkMacSystemFont,

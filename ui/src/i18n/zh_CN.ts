@@ -8,6 +8,7 @@ const zh_CN: MessageSchema = {
     basicAttributes: '基本属性',
     registryName: '注册名',
     unlocalizedName: '非本地化名',
+    chemicalExpression: '化学表达式',
     mod: 'Mod',
     variantId: '变体 ID',
     renderPreview: '渲染预览',
@@ -41,7 +42,7 @@ const zh_CN: MessageSchema = {
   },
 
   fluid: {
-    searchPlaceholder: '搜索名称 / registry / id',
+    searchPlaceholder: '搜索名称 / registry / id / 化学表达式',
     noMatch: '没有匹配的流体',
     cardPickHint: '左键 · 详情 · 右键 · 合成 · 中键 · 用途',
     fluidId: '流体 ID',
@@ -58,7 +59,7 @@ const zh_CN: MessageSchema = {
   },
 
   item: {
-    searchPlaceholder: '搜索名称 / registry / id',
+    searchPlaceholder: '搜索名称 / registry / id / 化学表达式',
     viewCard: '卡片',
     viewCompact: '紧凑',
     noMatch: '没有匹配的物品',

@@ -8,6 +8,7 @@ const en_US: MessageSchema = {
     basicAttributes: 'Basic Attributes',
     registryName: 'Registry Name',
     unlocalizedName: 'Unlocalized Name',
+    chemicalExpression: 'Chemical Expression',
     mod: 'Mod',
     variantId: 'Variant ID',
     renderPreview: 'Render Preview',
@@ -43,7 +44,7 @@ const en_US: MessageSchema = {
   },
 
   fluid: {
-    searchPlaceholder: 'Search name / registry / id',
+    searchPlaceholder: 'Search name / registry / id / chemical expression',
     noMatch: 'No matching fluids',
     cardPickHint: 'Left \u00b7 Details \u00b7 Right \u00b7 Recipe \u00b7 Middle \u00b7 Usage',
     fluidId: 'Fluid ID',
@@ -60,7 +61,7 @@ const en_US: MessageSchema = {
   },
 
   item: {
-    searchPlaceholder: 'Search name / registry / id',
+    searchPlaceholder: 'Search name / registry / id / chemical expression',
     viewCard: 'Cards',
     viewCompact: 'Compact',
     noMatch: 'No matching items',

@@ -7,6 +7,7 @@ export interface MessageSchema {
     basicAttributes: string;
     registryName: string;
     unlocalizedName: string;
+    chemicalExpression: string;
     mod: string;
     variantId: string;
     renderPreview: string;
