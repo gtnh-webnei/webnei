@@ -503,7 +503,8 @@ function candidateAmountLabel(c: RecipeSlotCandidate) {
   min-width: 0;
 }
 .hover-stats {
-  padding-top: 2px;
+  border-top: 1px solid var(--el-border-color-lighter);
+  padding-top: 6px;
 }
 .hover-line {
   color: var(--el-text-color-secondary);
@@ -514,6 +515,10 @@ function candidateAmountLabel(c: RecipeSlotCandidate) {
   font-family: 'WebNEI GTNH Glyphs', Consolas, 'Courier New', monospace;
   font-size: 13px;
   line-height: 1.45;
+}
+.fluid-tooltip .hover-name {
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  padding-bottom: 6px;
 }
 .fluid-line {
   white-space: nowrap;
