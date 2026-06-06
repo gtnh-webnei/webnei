@@ -12,4 +12,6 @@ public interface GtOreVeinDimensionRepository
 
     List<GtOreVeinDimensionEntity> findByDatasetIdAndVeinNameAndEnabled(
             String datasetId, String veinName, boolean enabled, Sort sort);
+
+    List<GtOreVeinDimensionEntity> findByDatasetIdAndEnabled(String datasetId, boolean enabled);
 }

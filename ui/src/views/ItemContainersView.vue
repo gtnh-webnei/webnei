@@ -6,6 +6,9 @@ import { getItemContainers } from '@/api/extras';
 import { getItemDetail } from '@/api/items';
 import type { FluidContainerEntry } from '@/api/extras.types';
 import type { ItemDetail } from '@/api/items.types';
+import InteractiveFluidRef, {
+  type InteractiveFluidRefFluid,
+} from '@/components/InteractiveFluidRef.vue';
 
 const { t } = useI18n();
 const route = useRoute();
@@ -60,11 +63,33 @@ function goToItem(variantId: string) {
   });
 }
 
-function goToFluid(fluidVariantId: string) {
+function fluidRefFromContainer(container: FluidContainerEntry): InteractiveFluidRefFluid {
+  return {
+    fluidVariantId: container.fluidVariantId,
+    fluidId: container.fluidId,
+    displayName: container.fluidDisplayName,
+    assetUrl: container.fluidAssetUrl,
+    gaseous: container.fluidGaseous,
+    temperature: container.fluidTemperature,
+    modName: container.fluidModName,
+  };
+}
+
+function pickFluid(fluid: InteractiveFluidRefFluid) {
+  if (!fluid.fluidVariantId) return;
   router.push({
     name: 'lookup',
     params: { datasetId: datasetId.value },
-    query: { target: fluidVariantId, kind: 'detail' },
+    query: { target: fluid.fluidVariantId, kind: 'detail' },
+  });
+}
+
+function lookupFluid(kind: 'recipe' | 'usage', fluid: InteractiveFluidRefFluid) {
+  if (!fluid.fluidVariantId) return;
+  router.push({
+    name: 'lookup',
+    params: { datasetId: datasetId.value },
+    query: { target: fluid.fluidVariantId, kind },
   });
 }
 
@@ -119,9 +144,12 @@ onMounted(load);
         :sort-by="(r: FluidContainerEntry) => r.fluidDisplayName ?? r.fluidVariantId"
       >
         <template #default="{ row }">
-          <a class="link" @click="goToFluid(row.fluidVariantId)">
-            {{ row.fluidDisplayName ?? row.fluidVariantId }}
-          </a>
+          <InteractiveFluidRef
+            :fluid="fluidRefFromContainer(row)"
+            variant="text"
+            @pick="pickFluid"
+            @lookup="lookupFluid"
+          />
           <div class="sub">{{ row.fluidVariantId }}</div>
         </template>
       </el-table-column>

@@ -1,3 +1,5 @@
+import type { GtDimensionRef } from './gt.types';
+
 export interface FluidSummary {
   fluidVariantId: string;
   fluidId: string;
@@ -14,11 +16,21 @@ export interface FluidSummary {
   assetUrl: string | null;
 }
 
+export interface FluidUndergroundResource {
+  fluidId: string;
+  dimension: string;
+  dimensionDisplay: GtDimensionRef;
+  chance: number;
+  minAmount: number;
+  maxAmount: number;
+}
+
 export interface FluidDetail extends FluidSummary {
   unlocalizedName: string;
   runtimeFluidId: number;
   chemicalExpression: string;
   nbtText: string;
+  undergroundResources: FluidUndergroundResource[];
 }
 
 export interface FluidListParams {

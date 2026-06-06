@@ -2,6 +2,7 @@ package moe.takochan.webnei.extras;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import jakarta.persistence.criteria.Predicate;
@@ -9,6 +10,10 @@ import jakarta.persistence.criteria.Predicate;
 import moe.takochan.webnei.asset.AssetUrlBuilder;
 import moe.takochan.webnei.dataset.DatasetService;
 import moe.takochan.webnei.dataset.DatasetSummary;
+import moe.takochan.webnei.fluid.FluidModOptionEntity;
+import moe.takochan.webnei.fluid.FluidModOptionRepository;
+import moe.takochan.webnei.fluid.FluidVariantBrowserEntity;
+import moe.takochan.webnei.fluid.FluidVariantRepository;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -23,6 +28,8 @@ public class ExtrasService {
     private final DatasetService datasetService;
     private final ItemOreDictionaryNameRepository oreDictRepo;
     private final FluidContainerBrowserRepository containerRepo;
+    private final FluidVariantRepository fluidVariantRepo;
+    private final FluidModOptionRepository fluidModOptionRepo;
     private final ItemAspectBrowserRepository aspectRepo;
     private final FluidBlockBrowserRepository blockRepo;
     private final RecipeLookupCountRepository recipeLookupCountRepo;
@@ -31,6 +38,8 @@ public class ExtrasService {
     public ExtrasService(DatasetService datasetService,
                          ItemOreDictionaryNameRepository oreDictRepo,
                          FluidContainerBrowserRepository containerRepo,
+                         FluidVariantRepository fluidVariantRepo,
+                         FluidModOptionRepository fluidModOptionRepo,
                          ItemAspectBrowserRepository aspectRepo,
                          FluidBlockBrowserRepository blockRepo,
                          RecipeLookupCountRepository recipeLookupCountRepo,
@@ -38,6 +47,8 @@ public class ExtrasService {
         this.datasetService = datasetService;
         this.oreDictRepo = oreDictRepo;
         this.containerRepo = containerRepo;
+        this.fluidVariantRepo = fluidVariantRepo;
+        this.fluidModOptionRepo = fluidModOptionRepo;
         this.aspectRepo = aspectRepo;
         this.blockRepo = blockRepo;
         this.recipeLookupCountRepo = recipeLookupCountRepo;
@@ -79,12 +90,10 @@ public class ExtrasService {
 
     public FluidExtras fluidExtras(String datasetId, String fluidVariantId) {
         DatasetSummary dataset = datasetService.requireById(datasetId);
-        List<FluidContainerEntry> containers = containerRepo.findByDatasetIdAndFluidVariantId(
-                        datasetId, fluidVariantId,
-                        Sort.by("amount").ascending().and(Sort.by("containerItemVariantId").ascending()))
-                .stream()
-                .map(e -> toContainer(e, dataset))
-                .toList();
+        List<FluidContainerBrowserEntity> containerRows = containerRepo.findByDatasetIdAndFluidVariantId(
+                datasetId, fluidVariantId,
+                Sort.by("amount").ascending().and(Sort.by("containerItemVariantId").ascending()));
+        List<FluidContainerEntry> containers = toContainers(containerRows, dataset);
         List<FluidBlockEntry> blocks = blockRepo.findByDatasetIdAndFluidVariantId(
                         datasetId, fluidVariantId, Sort.by("blockItemVariantId").ascending())
                 .stream()
@@ -106,14 +115,12 @@ public class ExtrasService {
                 .and(Sort.by("fluidVariantId").ascending())
                 .and(Sort.by("containerItemVariantId").ascending());
         if (limit == null) {
-            return containerRepo.findAll(spec, sort).stream()
-                    .map(e -> toContainer(e, dataset))
-                    .toList();
+            return toContainers(containerRepo.findAll(spec, sort), dataset);
         }
-        return containerRepo.findAll(spec, org.springframework.data.domain.PageRequest.of(0, limit, sort))
-                .stream()
-                .map(e -> toContainer(e, dataset))
-                .toList();
+        return toContainers(
+                containerRepo.findAll(spec, org.springframework.data.domain.PageRequest.of(0, limit, sort)).stream()
+                        .toList(),
+                dataset);
     }
 
     private long countContainersForItem(String datasetId, String itemVariantId) {
@@ -126,10 +133,35 @@ public class ExtrasService {
                 .collect(Collectors.toMap(RecipeLookupCountEntity::getLookupKind, RecipeLookupCountEntity::getRecipeCount));
     }
 
-    private FluidContainerEntry toContainer(FluidContainerBrowserEntity e, DatasetSummary dataset) {
+    private List<FluidContainerEntry> toContainers(List<FluidContainerBrowserEntity> rows, DatasetSummary dataset) {
+        List<FluidVariantBrowserEntity.FluidVariantId> fluidIds = rows.stream()
+                .map(e -> new FluidVariantBrowserEntity.FluidVariantId(dataset.datasetId(), e.getFluidVariantId()))
+                .distinct()
+                .toList();
+        Map<String, FluidVariantBrowserEntity> fluids = fluidVariantRepo.findAllById(fluidIds).stream()
+                .collect(Collectors.toMap(FluidVariantBrowserEntity::getFluidVariantId, Function.identity()));
+        Map<String, String> modNames = fluidModOptionRepo.findByDatasetIdOrderByNameAscModIdAsc(dataset.datasetId())
+                .stream()
+                .collect(Collectors.toMap(FluidModOptionEntity::getModId, FluidModOptionEntity::getName));
+        return rows.stream()
+                .map(e -> toContainer(e, dataset, fluids.get(e.getFluidVariantId()), modNames))
+                .toList();
+    }
+
+    private FluidContainerEntry toContainer(
+            FluidContainerBrowserEntity e,
+            DatasetSummary dataset,
+            FluidVariantBrowserEntity fluid,
+            Map<String, String> modNames) {
         return new FluidContainerEntry(
                 e.getFluidVariantId(),
+                fluid != null ? fluid.getFluidId() : "",
+                fluid != null ? fluid.getModId() : null,
+                fluid != null ? modNames.getOrDefault(fluid.getModId(), fluid.getModId()) : null,
                 e.getFluidDisplayName(),
+                fluid != null ? fluid.isGaseous() : null,
+                fluid != null ? fluid.getTemperature() : null,
+                fluid != null ? assetUrlBuilder.build(dataset, fluid.getAssetPath(), null) : null,
                 e.getContainerItemVariantId(),
                 e.getContainerDisplayName(),
                 assetUrlBuilder.build(dataset, e.getContainerAssetPath(), e.getContainerAssetSha256()),

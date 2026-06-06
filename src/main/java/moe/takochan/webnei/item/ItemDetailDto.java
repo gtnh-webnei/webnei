@@ -1,5 +1,7 @@
 package moe.takochan.webnei.item;
 
+import java.util.List;
+
 public record ItemDetailDto(
         String itemVariantId,
         String itemId,
@@ -17,5 +19,6 @@ public record ItemDetailDto(
         String tooltipText,
         String assetUrl,
         Integer assetWidth,
-        Integer assetHeight) {
+        Integer assetHeight,
+        List<ItemWorldGenerationRef> worldGeneration) {
 }

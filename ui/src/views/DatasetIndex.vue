@@ -36,7 +36,7 @@ const { datasets, loading, error } = storeToRefs(store);
 
           <div class="meta">
             <div class="meta-row">
-              <span class="k">Exporter</span>
+              <span class="k">{{ t('dataset.exporter') }}</span>
               <span>{{ d.exporterVersion }} · schema v{{ d.schemaVersion }}</span>
             </div>
             <div class="meta-row">
@@ -44,7 +44,7 @@ const { datasets, loading, error } = storeToRefs(store);
               <span>{{ new Date(d.createdAt).toLocaleString() }}</span>
             </div>
             <div class="meta-row plugins">
-              <span class="k">Plugins</span>
+              <span class="k">{{ t('dataset.plugins') }}</span>
               <span class="tags">
                 <el-tag v-for="p in d.activePlugins" :key="p" size="small" effect="light" round>
                   {{ p }}

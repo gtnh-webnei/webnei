@@ -1,34 +1,32 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
-import { storeToRefs } from 'pinia'
-import { useI18n } from 'vue-i18n'
-import { Check, Close } from '@element-plus/icons-vue'
-import { useDatasetStore } from '@/stores/dataset'
-import { listModsPage } from '@/api/datasets'
-import type { ModSummary } from '@/api/types'
-import { usePagedBrowser } from '@/composables/usePagedBrowser'
-import BrowserToolbar from '@/components/BrowserToolbar.vue'
+import { computed, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
+import { storeToRefs } from 'pinia';
+import { useI18n } from 'vue-i18n';
+import { Check, Close } from '@element-plus/icons-vue';
+import { useDatasetStore } from '@/stores/dataset';
+import { listModsPage } from '@/api/datasets';
+import type { ModSummary } from '@/api/types';
+import { usePagedBrowser } from '@/composables/usePagedBrowser';
+import BrowserToolbar from '@/components/BrowserToolbar.vue';
 
-const { t } = useI18n()
+const { t } = useI18n();
 
-const PAGE_SIZE_KEY = 'webnei.modBrowser.pageSize'
+const PAGE_SIZE_KEY = 'webnei.modBrowser.pageSize';
 
-const route = useRoute()
-const datasetStore = useDatasetStore()
-const { activeDatasetId, datasets } = storeToRefs(datasetStore)
+const route = useRoute();
+const datasetStore = useDatasetStore();
+const { activeDatasetId, datasets } = storeToRefs(datasetStore);
 
-const datasetId = computed(() =>
-  String(route.params.datasetId ?? activeDatasetId.value ?? ''),
-)
+const datasetId = computed(() => String(route.params.datasetId ?? activeDatasetId.value ?? ''));
 
 const datasetName = computed(
   () => datasets.value.find((d) => d.datasetId === datasetId.value)?.displayName ?? '',
-)
+);
 
-const sortField = ref<string>('modId')
-const sortDesc = ref<boolean>(false)
-const sortExtras = computed(() => ({ sort: sortField.value, desc: sortDesc.value }))
+const sortField = ref<string>('modId');
+const sortDesc = ref<boolean>(false);
+const sortExtras = computed(() => ({ sort: sortField.value, desc: sortDesc.value }));
 
 const browser = usePagedBrowser<ModSummary, { sort: string; desc: boolean }>({
   datasetId,
@@ -43,17 +41,23 @@ const browser = usePagedBrowser<ModSummary, { sort: string; desc: boolean }>({
   extras: sortExtras,
   storageKey: PAGE_SIZE_KEY,
   defaultSize: 50,
-})
-const { q, page, pageSize, items, total, loading, error } = browser
+});
+const { q, page, pageSize, items, total, loading, error } = browser;
 
-function onSortChange({ prop, order }: { prop: string | null; order: 'ascending' | 'descending' | null }) {
+function onSortChange({
+  prop,
+  order,
+}: {
+  prop: string | null;
+  order: 'ascending' | 'descending' | null;
+}) {
   if (!prop || !order) {
-    sortField.value = 'modId'
-    sortDesc.value = false
-    return
+    sortField.value = 'modId';
+    sortDesc.value = false;
+    return;
   }
-  sortField.value = prop
-  sortDesc.value = order === 'descending'
+  sortField.value = prop;
+  sortDesc.value = order === 'descending';
 }
 </script>
 
@@ -88,36 +92,63 @@ function onSortChange({ prop, order }: { prop: string | null; order: 'ascending'
       class="mod-table"
       @sort-change="onSortChange"
     >
-      <el-table-column prop="modId" label="Mod ID" min-width="170" sortable="custom">
+      <el-table-column prop="modId" :label="t('mod.colModId')" min-width="170" sortable="custom">
         <template #default="{ row }">
           <code class="mod-id">{{ row.modId }}</code>
         </template>
       </el-table-column>
-      <el-table-column prop="name" :label="t('mod.colName')" min-width="200" sortable="custom" show-overflow-tooltip />
-      <el-table-column prop="version" :label="t('mod.colVersion')" min-width="140" sortable="custom">
+      <el-table-column
+        prop="name"
+        :label="t('mod.colName')"
+        min-width="200"
+        sortable="custom"
+        show-overflow-tooltip
+      />
+      <el-table-column
+        prop="version"
+        :label="t('mod.colVersion')"
+        min-width="140"
+        sortable="custom"
+      >
         <template #default="{ row }">
           <el-tag size="small" type="info" effect="plain">{{ row.version }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="sourceFileName" :label="t('mod.colFile')" min-width="280" show-overflow-tooltip>
+      <el-table-column
+        prop="sourceFileName"
+        :label="t('mod.colFile')"
+        min-width="280"
+        show-overflow-tooltip
+      >
         <template #default="{ row }">
           <span class="file">{{ row.sourceFileName }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="sourceType" :label="t('mod.colSource')" min-width="100" sortable="custom">
+      <el-table-column
+        prop="sourceType"
+        :label="t('mod.colSource')"
+        min-width="100"
+        sortable="custom"
+      >
         <template #default="{ row }">
           <el-tag size="small" :type="row.sourceType === 'file' ? '' : 'warning'" effect="plain">
             {{ row.sourceType }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="enabled" :label="t('mod.colEnabled')" width="80" align="center" sortable="custom">
+      <el-table-column
+        prop="enabled"
+        :label="t('mod.colEnabled')"
+        width="80"
+        align="center"
+        sortable="custom"
+      >
         <template #default="{ row }">
           <el-icon v-if="row.enabled" color="var(--el-color-success)"><Check /></el-icon>
           <el-icon v-else color="var(--el-color-danger)"><Close /></el-icon>
         </template>
       </el-table-column>
-      <el-table-column prop="sourceSha256" label="SHA256" min-width="120">
+      <el-table-column prop="sourceSha256" :label="t('mod.colSha256')" min-width="120">
         <template #default="{ row }">
           <el-tooltip :content="row.sourceSha256" placement="top">
             <code class="sha">{{ row.sourceSha256.slice(0, 8) }}…</code>
@@ -140,7 +171,7 @@ function onSortChange({ prop, order }: { prop: string | null; order: 'ascending'
 </template>
 
 <script lang="ts">
-export default { name: 'ModBrowser' }
+export default { name: 'ModBrowser' };
 </script>
 
 <style scoped>

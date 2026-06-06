@@ -7,8 +7,9 @@ import { useDatasetStore } from '@/stores/dataset';
 import { useExtrasStore } from '@/stores/extras';
 import { getItemDetail } from '@/api/items';
 import type { ItemDetail } from '@/api/items.types';
-import type { ItemExtras } from '@/api/extras.types';
+import type { FluidContainerEntry, ItemExtras } from '@/api/extras.types';
 import MinecraftTooltipText from './MinecraftTooltipText.vue';
+import InteractiveFluidRef, { type InteractiveFluidRefFluid } from './InteractiveFluidRef.vue';
 
 const props = defineProps<{
   datasetId: string;
@@ -90,10 +91,48 @@ function goToItem(itemVariantId: string) {
   });
 }
 
+function fluidRefFromContainer(container: FluidContainerEntry): InteractiveFluidRefFluid {
+  return {
+    fluidVariantId: container.fluidVariantId,
+    fluidId: container.fluidId,
+    displayName: container.fluidDisplayName,
+    assetUrl: container.fluidAssetUrl,
+    gaseous: container.fluidGaseous,
+    temperature: container.fluidTemperature,
+    modName: container.fluidModName,
+  };
+}
+
+function pickFluid(fluid: InteractiveFluidRefFluid) {
+  if (!fluid.fluidVariantId) return;
+  router.replace({
+    name: 'lookup',
+    params: { datasetId: props.datasetId },
+    query: { target: fluid.fluidVariantId, kind: 'detail' },
+  });
+}
+
+function lookupFluid(kind: 'recipe' | 'usage', fluid: InteractiveFluidRefFluid) {
+  if (!fluid.fluidVariantId) return;
+  router.replace({
+    name: 'lookup',
+    params: { datasetId: props.datasetId },
+    query: { target: fluid.fluidVariantId, kind },
+  });
+}
+
 function goToContainers() {
   router.push({
     name: 'item-containers',
     params: { datasetId: props.datasetId, itemVariantId: props.itemVariantId },
+  });
+}
+
+function goToWorldGeneration(section: string, key: string) {
+  router.push({
+    name: 'gt',
+    params: { datasetId: props.datasetId, section },
+    query: { target: key },
   });
 }
 
@@ -159,16 +198,16 @@ onMounted(() => {
                 {{ detail.unlocalizedName }}
               </el-descriptions-item>
               <el-descriptions-item :label="$t('common.mod')">
-                <el-tag size="small" type="info" effect="plain" round>{{ detail.modName }}</el-tag>
+                {{ detail.modName }}
               </el-descriptions-item>
-              <el-descriptions-item label="Damage / Meta">
+              <el-descriptions-item :label="$t('common.damageMeta')">
                 {{ detail.damage
                 }}<span v-if="detail.maxDamage > 0"> / {{ detail.maxDamage }}</span>
               </el-descriptions-item>
               <el-descriptions-item :label="$t('item.maxStackSize')">
                 {{ detail.maxStackSize }}
               </el-descriptions-item>
-              <el-descriptions-item v-if="detail.nbtHash" label="NBT Hash">
+              <el-descriptions-item v-if="detail.nbtHash" :label="$t('common.nbtHash')">
                 <code class="small">{{ detail.nbtHash }}</code>
               </el-descriptions-item>
             </el-descriptions>
@@ -176,14 +215,14 @@ onMounted(() => {
 
           <el-card v-if="detail.tooltipText" shadow="never" class="section">
             <template #header>
-              <span class="section-title">Tooltip</span>
+              <span class="section-title">{{ $t('common.tooltip') }}</span>
             </template>
             <MinecraftTooltipText :text="detail.tooltipText" />
           </el-card>
 
           <el-card v-if="detail.nbtText" shadow="never" class="section">
             <template #header>
-              <span class="section-title">NBT</span>
+              <span class="section-title">{{ $t('common.nbt') }}</span>
             </template>
             <pre class="nbt-text">{{ detail.nbtText }}</pre>
           </el-card>
@@ -195,6 +234,39 @@ onMounted(() => {
               <span class="section-title">{{ $t('common.chemicalExpression') }}</span>
             </template>
             <code class="chemical-expression">{{ detail.chemicalExpression }}</code>
+          </el-card>
+
+          <el-card v-if="detail.worldGeneration.length" shadow="never" class="section">
+            <template #header>
+              <span class="section-title">{{ $t('item.worldGeneration') }}</span>
+            </template>
+            <div class="worldgen-list">
+              <button
+                v-for="resource in detail.worldGeneration"
+                :key="`${resource.section}|${resource.key}`"
+                type="button"
+                class="worldgen-row"
+                @click="goToWorldGeneration(resource.section, resource.key)"
+              >
+                <span class="worldgen-title">{{ resource.title }}</span>
+                <span class="worldgen-type">{{ resource.type }}</span>
+                <span v-if="resource.dimensions.length" class="worldgen-dimensions">
+                  <span
+                    v-for="dim in resource.dimensions.slice(0, 6)"
+                    :key="dim.dimension"
+                    class="worldgen-dimension-icon"
+                  >
+                    <img
+                      v-if="dim.iconAssetUrl && resource.section !== 'bartworks-ores'"
+                      :src="dim.iconAssetUrl"
+                      :alt="dim.displayName"
+                    />
+                    <span v-else class="worldgen-dimension-text">{{ dim.displayName }}</span>
+                  </span>
+                </span>
+                <span class="worldgen-stat">{{ resource.statText }}</span>
+              </button>
+            </div>
           </el-card>
 
           <el-card shadow="never" class="section">
@@ -279,9 +351,12 @@ onMounted(() => {
                       }}</span>
                     </div>
                     <div class="container-arrow">
-                      <span class="container-fluid">{{
-                        c.fluidDisplayName ?? c.fluidVariantId
-                      }}</span>
+                      <InteractiveFluidRef
+                        :fluid="fluidRefFromContainer(c)"
+                        variant="text"
+                        @pick="pickFluid"
+                        @lookup="lookupFluid"
+                      />
                       <span v-if="c.amount > 0" class="container-amount">{{ c.amount }} mB</span>
                       <span class="container-arrow-line">→</span>
                     </div>
@@ -468,6 +543,80 @@ onMounted(() => {
 .ext-hint {
   font-size: 13px;
   color: var(--el-text-color-secondary);
+}
+
+.worldgen-list {
+  display: grid;
+  gap: 8px;
+}
+.worldgen-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  gap: 4px 8px;
+  align-items: center;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 8px;
+  background: var(--el-fill-color-light);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.worldgen-row:hover {
+  border-color: var(--el-color-primary-light-5);
+  background: var(--el-color-primary-light-9);
+}
+.worldgen-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+.worldgen-type,
+.worldgen-dimensions,
+.worldgen-stat {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+  white-space: nowrap;
+}
+.worldgen-type,
+.worldgen-stat {
+  text-align: right;
+}
+.worldgen-dimensions {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: max-content;
+  gap: 5px;
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+}
+.worldgen-dimension-icon {
+  min-width: 26px;
+  width: auto;
+  height: 26px;
+  display: inline-grid;
+  place-items: center;
+}
+.worldgen-dimension-icon img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+.worldgen-dimension-text {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.worldgen-stat {
+  color: var(--el-color-primary);
 }
 
 .counts {

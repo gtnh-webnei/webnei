@@ -13,6 +13,11 @@ import moe.takochan.webnei.common.PageRequest;
 import moe.takochan.webnei.common.PageResponse;
 import moe.takochan.webnei.dataset.DatasetService;
 import moe.takochan.webnei.dataset.DatasetSummary;
+import moe.takochan.webnei.gtore.GtDimensionRef;
+import moe.takochan.webnei.gtore.GtUndergroundFluidBrowserEntity;
+import moe.takochan.webnei.gtore.GtUndergroundFluidBrowserRepository;
+import moe.takochan.webnei.item.ItemVariantBrowserEntity;
+import moe.takochan.webnei.item.ItemVariantRepository;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,13 +31,20 @@ public class FluidService {
     private final DatasetService datasetService;
     private final FluidVariantRepository fluidRepo;
     private final FluidModOptionRepository modOptionRepo;
+    private final GtUndergroundFluidBrowserRepository undergroundFluidRepo;
+    private final ItemVariantRepository itemVariantRepo;
     private final AssetUrlBuilder assetUrlBuilder;
 
     public FluidService(DatasetService datasetService, FluidVariantRepository fluidRepo,
-                        FluidModOptionRepository modOptionRepo, AssetUrlBuilder assetUrlBuilder) {
+                        FluidModOptionRepository modOptionRepo,
+                        GtUndergroundFluidBrowserRepository undergroundFluidRepo,
+                        ItemVariantRepository itemVariantRepo,
+                        AssetUrlBuilder assetUrlBuilder) {
         this.datasetService = datasetService;
         this.fluidRepo = fluidRepo;
         this.modOptionRepo = modOptionRepo;
+        this.undergroundFluidRepo = undergroundFluidRepo;
+        this.itemVariantRepo = itemVariantRepo;
         this.assetUrlBuilder = assetUrlBuilder;
     }
 
@@ -86,7 +98,8 @@ public class FluidService {
                 e.getNbtHash(),
                 e.getNbtText(),
                 e.getChemicalExpression(),
-                assetUrlBuilder.build(dataset, e.getAssetPath(), null));
+                assetUrlBuilder.build(dataset, e.getAssetPath(), null),
+                undergroundResources(datasetId, e.getFluidId(), e.getRegistryName()));
     }
 
     public List<ModOptionDto> listMods(String datasetId) {
@@ -110,6 +123,59 @@ public class FluidService {
         return modOptionRepo.findByDatasetIdAndModId(datasetId, modId)
                 .map(FluidModOptionEntity::getName)
                 .orElse(modId);
+    }
+
+    private List<FluidUndergroundResource> undergroundResources(
+            String datasetId, String fluidId, String registryName) {
+        Sort sort = Sort.by("dimensionSortOrder").ascending()
+                .and(Sort.by("dimensionDisplayName").ascending())
+                .and(Sort.by("dimension").ascending());
+        List<String> candidates = java.util.stream.Stream.of(fluidId, registryName, stripNamespace(fluidId), stripNamespace(registryName))
+                .filter(v -> v != null && !v.isBlank())
+                .distinct()
+                .toList();
+        DatasetSummary dataset = datasetService.requireById(datasetId);
+        return candidates.stream()
+                .flatMap(id -> undergroundFluidRepo.findByDatasetIdAndFluidId(datasetId, id, sort).stream())
+                .collect(java.util.stream.Collectors.toMap(
+                        f -> f.getFluidId() + "|" + f.getDimension(),
+                        f -> f,
+                        (a, b) -> a,
+                        java.util.LinkedHashMap::new))
+                .values()
+                .stream()
+                .map(f -> new FluidUndergroundResource(
+                        f.getFluidId(),
+                        f.getDimension(),
+                        dimensionRef(dataset, f),
+                        f.getChance(),
+                        f.getMinAmount(),
+                        f.getMaxAmount()))
+                .toList();
+    }
+
+    private GtDimensionRef dimensionRef(DatasetSummary dataset, GtUndergroundFluidBrowserEntity fluid) {
+        return new GtDimensionRef(
+                fluid.getDimension(),
+                fluid.getDimensionFullName() != null ? fluid.getDimensionFullName() : fluid.getDimension(),
+                fluid.getDimensionDisplayName() != null ? fluid.getDimensionDisplayName() : fluid.getDimension(),
+                fluid.getDimensionDisplayAbbr() != null ? fluid.getDimensionDisplayAbbr() : fluid.getDimension(),
+                fluid.getDimensionIconItemVariantId(),
+                itemAssetUrl(dataset, fluid.getDimensionIconItemVariantId()),
+                fluid.getDimensionSortOrder() == null ? Integer.MAX_VALUE : fluid.getDimensionSortOrder());
+    }
+
+    private String itemAssetUrl(DatasetSummary dataset, String itemVariantId) {
+        if (itemVariantId == null || itemVariantId.isBlank()) return null;
+        return itemVariantRepo.findById(new ItemVariantBrowserEntity.ItemVariantId(dataset.datasetId(), itemVariantId))
+                .map(i -> assetUrlBuilder.build(dataset, i.getAssetPath(), i.getAssetSha256()))
+                .orElse(null);
+    }
+
+    private static String stripNamespace(String value) {
+        if (value == null) return null;
+        int idx = value.indexOf(':');
+        return idx >= 0 ? value.substring(idx + 1) : value;
     }
 
     private static Specification<FluidVariantBrowserEntity> hasDatasetId(String datasetId) {

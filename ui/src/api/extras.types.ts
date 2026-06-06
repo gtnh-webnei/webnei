@@ -1,43 +1,49 @@
 export interface FluidContainerEntry {
-  fluidVariantId: string
-  fluidDisplayName: string | null
-  containerItemVariantId: string
-  containerDisplayName: string | null
-  containerAssetUrl: string | null
-  emptyContainerItemVariantId: string
-  emptyContainerDisplayName: string | null
-  emptyContainerAssetUrl: string | null
-  amount: number
+  fluidVariantId: string;
+  fluidId: string;
+  fluidModId: string | null;
+  fluidModName: string | null;
+  fluidDisplayName: string | null;
+  fluidGaseous: boolean | null;
+  fluidTemperature: number | null;
+  fluidAssetUrl: string | null;
+  containerItemVariantId: string;
+  containerDisplayName: string | null;
+  containerAssetUrl: string | null;
+  emptyContainerItemVariantId: string;
+  emptyContainerDisplayName: string | null;
+  emptyContainerAssetUrl: string | null;
+  amount: number;
 }
 
 export interface AspectEntry {
-  aspectId: string
-  name: string
-  description: string
-  primal: boolean
-  amount: number
-  iconItemVariantId: string
-  iconAssetUrl: string | null
+  aspectId: string;
+  name: string;
+  description: string;
+  primal: boolean;
+  amount: number;
+  iconItemVariantId: string;
+  iconAssetUrl: string | null;
 }
 
 export interface FluidBlockEntry {
-  blockItemVariantId: string
-  blockDisplayName: string | null
-  blockAssetUrl: string | null
+  blockItemVariantId: string;
+  blockDisplayName: string | null;
+  blockAssetUrl: string | null;
 }
 
 export interface ItemExtras {
-  oreDictNames: string[]
-  fluidContainers: FluidContainerEntry[]
-  fluidContainersTotal: number
-  aspects: AspectEntry[]
-  asInputRecipeCount: number
-  asOutputRecipeCount: number
+  oreDictNames: string[];
+  fluidContainers: FluidContainerEntry[];
+  fluidContainersTotal: number;
+  aspects: AspectEntry[];
+  asInputRecipeCount: number;
+  asOutputRecipeCount: number;
 }
 
 export interface FluidExtras {
-  containers: FluidContainerEntry[]
-  blocks: FluidBlockEntry[]
-  asInputRecipeCount: number
-  asOutputRecipeCount: number
+  containers: FluidContainerEntry[];
+  blocks: FluidBlockEntry[];
+  asInputRecipeCount: number;
+  asOutputRecipeCount: number;
 }

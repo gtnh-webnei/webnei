@@ -11,4 +11,8 @@ public interface GtOreVeinLayerRepository
         extends JpaRepository<GtOreVeinLayerEntity, GtOreVeinLayerEntity.OreVeinLayerId> {
 
     List<GtOreVeinLayerEntity> findByDatasetIdAndVeinName(String datasetId, String veinName, Sort sort);
+
+    List<GtOreVeinLayerEntity> findByDatasetIdAndBlockItemVariantId(String datasetId, String blockItemVariantId, Sort sort);
+
+    List<GtOreVeinLayerEntity> findByDatasetIdAndMaterialName(String datasetId, String materialName, Sort sort);
 }

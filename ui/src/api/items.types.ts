@@ -1,3 +1,5 @@
+import type { GtDimensionRef } from './gt.types';
+
 export interface NeiPanelEntry {
   itemVariantId: string;
   itemId: string;
@@ -9,6 +11,15 @@ export interface NeiPanelEntry {
   displayName: string;
   assetUrl: string | null;
   panelIndex: number;
+}
+
+export interface ItemWorldGenerationRef {
+  section: string;
+  key: string;
+  title: string;
+  type: string;
+  dimensions: GtDimensionRef[];
+  statText: string;
 }
 
 export interface ItemDetail {
@@ -29,6 +40,7 @@ export interface ItemDetail {
   assetUrl: string | null;
   assetWidth: number | null;
   assetHeight: number | null;
+  worldGeneration: ItemWorldGenerationRef[];
 }
 
 export interface ItemListParams {

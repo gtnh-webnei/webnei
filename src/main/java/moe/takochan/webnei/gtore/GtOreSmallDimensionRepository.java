@@ -12,4 +12,6 @@ public interface GtOreSmallDimensionRepository
 
     List<GtOreSmallDimensionEntity> findByDatasetIdAndOreGenNameAndEnabled(
             String datasetId, String oreGenName, boolean enabled, Sort sort);
+
+    List<GtOreSmallDimensionEntity> findByDatasetIdAndEnabled(String datasetId, boolean enabled);
 }

@@ -1,5 +1,7 @@
 package moe.takochan.webnei.fluid;
 
+import java.util.List;
+
 public record FluidDetail(
         String fluidVariantId,
         String fluidId,
@@ -17,5 +19,6 @@ public record FluidDetail(
         String nbtHash,
         String nbtText,
         String chemicalExpression,
-        String assetUrl) {
+        String assetUrl,
+        List<FluidUndergroundResource> undergroundResources) {
 }

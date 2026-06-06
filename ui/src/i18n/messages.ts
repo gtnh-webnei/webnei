@@ -25,6 +25,12 @@ export interface MessageSchema {
     showing: string;
     items: string;
     allMod: string;
+    tooltip: string;
+    nbt: string;
+    nbtHash: string;
+    damageMeta: string;
+    amount: string;
+    probability: string;
     pickHintSlot: string;
     pickHintCategory: string;
   };
@@ -35,6 +41,8 @@ export interface MessageSchema {
     leadText: string;
     emptyState: string;
     exportTime: string;
+    exporter: string;
+    plugins: string;
     startBrowsing: string;
     modList: string;
     selectDataset: string;
@@ -55,6 +63,8 @@ export interface MessageSchema {
     viscosity: string;
     luminosity: string;
     correspondingBlock: string;
+    undergroundResources: string;
+    viewWorldGen: string;
     notFound: string;
     tag: string;
   };
@@ -74,6 +84,7 @@ export interface MessageSchema {
     containersSuffix: string;
     thaumcraftAspects: string;
     primal: string;
+    worldGeneration: string;
     notFound: string;
   };
 
@@ -195,6 +206,7 @@ export interface MessageSchema {
     usageTab: string;
     pickHint: string;
     noMatch: string;
+    viewTabsLabel: string;
   };
 
   // ---- Mod ----
@@ -203,11 +215,13 @@ export interface MessageSchema {
     totalLabel: string;
     searchPlaceholder: string;
     noMatch: string;
+    colModId: string;
     colName: string;
     colVersion: string;
     colFile: string;
     colSource: string;
     colEnabled: string;
+    colSha256: string;
   };
 
   // ---- Container ----
@@ -219,6 +233,47 @@ export interface MessageSchema {
     colFilledContainer: string;
     colCapacity: string;
     colEmptyContainer: string;
+  };
+
+  // ---- GT Resource ----
+  gtResource: {
+    pageTitle: string;
+    oreVeins: string;
+    smallOres: string;
+    undergroundFluids: string;
+    bartWorksOres: string;
+    searchPlaceholder: string;
+    dimensionFilter: string;
+    typeFilter: string;
+    empty: string;
+    dimension: string;
+    undergroundFluidTag: string;
+    bartWorksTag: string;
+    statType: string;
+    statChance: string;
+    statMinAmount: string;
+    statMaxAmount: string;
+    statReserve: string;
+    statGenerationHeight: string;
+    statGenerationWeight: string;
+    statGenerationSize: string;
+    statGenerationDensity: string;
+    statAmountPerChunk: string;
+    statWeightShort: string;
+    statChanceShort: string;
+    statAmountPerChunkShort: string;
+    layerPrimary: string;
+    layerSecondary: string;
+    layerBetween: string;
+    layerSporadic: string;
+    relatedItem: string;
+    chanceDrops: string;
+    relatedFluid: string;
+    bartWorksVeinGeneration: string;
+    bartWorksSmallOreGeneration: string;
+    result: string;
+    sectionMenuLabel: string;
+    selectItemEmpty: string;
   };
 
   // ---- Theme ----
@@ -235,6 +290,7 @@ export interface MessageSchema {
     categories: string;
     quests: string;
     mobs: string;
+    gt: string;
     mods: string;
   };
 }

@@ -4,7 +4,8 @@ import { useI18n } from 'vue-i18n';
 import type { RecipeSlot, RecipeSlotCandidate } from '@/api/recipes.types';
 import { formatCompact, formatFluidCompact, formatFluidFull, formatFull } from '@/utils/format';
 import AppTooltip from './AppTooltip.vue';
-import MinecraftTooltipText from './MinecraftTooltipText.vue';
+import FluidTooltipContent from './FluidTooltipContent.vue';
+import ItemTooltipContent from './ItemTooltipContent.vue';
 
 const { t } = useI18n();
 
@@ -86,15 +87,12 @@ const amountCompact = computed(() =>
 const amountFull = computed(() =>
   props.isFluid ? formatFluidFull(amount.value) : formatFull(amount.value),
 );
-const fluidStateLabel = computed(() => {
-  if (!primary.value?.fluidVariantId) return null;
-  return primary.value.fluidGaseous ? t('fluid.gaseous') : t('fluid.liquid');
-});
-const fluidTemperatureLabel = computed(() => {
-  if (!primary.value?.fluidVariantId || primary.value.fluidTemperature == null) return null;
-  return `${primary.value.fluidTemperature.toLocaleString()} K`;
-});
-
+const primaryTooltipContext = computed(() => ({
+  hint: displayPickHint.value,
+  amountLabel: amount.value >= 1 ? amountFull.value : null,
+  probabilityLabel:
+    primary.value?.fluidVariantId || !hasNonTrivialProb.value ? null : probPercentPrecise.value,
+}));
 const popoverVisible = ref(false);
 
 function onClick(e: MouseEvent) {
@@ -147,14 +145,6 @@ function lookupCandidate(kind: 'recipe' | 'usage', c: RecipeSlotCandidate, e?: M
 
 function hasCandidateHover(c: RecipeSlotCandidate) {
   return !!c.tooltipText || !!c.fluidVariantId;
-}
-function candidateFluidStateLabel(c: RecipeSlotCandidate) {
-  if (!c.fluidVariantId) return null;
-  return c.fluidGaseous ? t('fluid.gaseous') : t('fluid.liquid');
-}
-function candidateFluidTemperatureLabel(c: RecipeSlotCandidate) {
-  if (!c.fluidVariantId || c.fluidTemperature == null) return null;
-  return `${c.fluidTemperature.toLocaleString()} K`;
 }
 function candidateAmountLabel(c: RecipeSlotCandidate) {
   if (c.amount < 1) return null;
@@ -209,24 +199,16 @@ function candidateAmountLabel(c: RecipeSlotCandidate) {
           placement="right"
         >
           <template #content>
-            <MinecraftTooltipText v-if="c.tooltipText" :text="c.tooltipText" />
-            <div v-else-if="c.fluidVariantId" class="hover-card">
-              <div class="hover-fallback fluid-tooltip">
-                <div class="hover-name">
-                  {{ c.displayName ?? c.fluidVariantId }}
-                </div>
-                <div v-if="candidateFluidTemperatureLabel(c)" class="fluid-line temperature-line">
-                  温度:{{ candidateFluidTemperatureLabel(c) }}
-                </div>
-                <div v-if="candidateFluidStateLabel(c)" class="fluid-line state-line">
-                  状态:{{ candidateFluidStateLabel(c) }}
-                </div>
-                <div v-if="c.modName" class="fluid-mod">{{ c.modName }}</div>
-              </div>
-              <div v-if="candidateAmountLabel(c)" class="hover-meta hover-stats">
-                <span class="hover-amount">数量:{{ candidateAmountLabel(c) }}</span>
-              </div>
-            </div>
+            <FluidTooltipContent
+              v-if="c.fluidVariantId"
+              :fluid="c"
+              :context="{ amountLabel: candidateAmountLabel(c) }"
+            />
+            <ItemTooltipContent
+              v-else
+              :item="c"
+              :context="{ amountLabel: candidateAmountLabel(c) }"
+            />
           </template>
           <div
             class="popover-item"
@@ -264,34 +246,12 @@ function candidateAmountLabel(c: RecipeSlotCandidate) {
   <!-- Single candidate / placeholder: tooltip only -->
   <AppTooltip v-else :disabled="!primary">
     <template #content>
-      <div v-if="primary" class="hover-card">
-        <MinecraftTooltipText v-if="primary.tooltipText" :text="primary.tooltipText" />
-        <div v-else-if="primary.fluidVariantId" class="hover-fallback fluid-tooltip">
-          <div class="hover-name">
-            {{ primary.displayName ?? primary.fluidVariantId }}
-          </div>
-          <div v-if="fluidTemperatureLabel" class="fluid-line temperature-line">
-            温度:{{ fluidTemperatureLabel }}
-          </div>
-          <div v-if="fluidStateLabel" class="fluid-line state-line">状态:{{ fluidStateLabel }}</div>
-          <div v-if="primary.modName" class="fluid-mod">{{ primary.modName }}</div>
-        </div>
-        <div v-else class="hover-fallback">
-          <div class="hover-name">
-            {{ primary.displayName ?? primary.itemVariantId }}
-          </div>
-        </div>
-        <div
-          v-if="amount >= 1 || (!primary.fluidVariantId && hasNonTrivialProb)"
-          class="hover-meta hover-stats"
-        >
-          <span v-if="amount >= 1" class="hover-amount">数量:{{ amountFull }}</span>
-          <span v-if="!primary.fluidVariantId && hasNonTrivialProb" class="hover-prob">{{
-            probPercentPrecise
-          }}</span>
-        </div>
-        <div class="hover-keys">{{ displayPickHint }}</div>
-      </div>
+      <FluidTooltipContent
+        v-if="primary?.fluidVariantId"
+        :fluid="primary"
+        :context="primaryTooltipContext"
+      />
+      <ItemTooltipContent v-else-if="primary" :item="primary" :context="primaryTooltipContext" />
     </template>
     <div
       class="cell"
@@ -476,65 +436,6 @@ function candidateAmountLabel(c: RecipeSlotCandidate) {
   color: var(--el-color-primary);
   font-weight: 600;
 }
-.hover-card {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  width: max-content;
-  max-width: min(520px, calc(100vw - 32px));
-}
-.hover-fallback {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
-}
-.hover-name {
-  font-size: 14px;
-  font-weight: 600;
-  word-break: break-word;
-}
-.hover-meta {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: max-content;
-  gap: 6px;
-  align-items: center;
-  min-width: 0;
-}
-.hover-stats {
-  border-top: 1px solid var(--el-border-color-lighter);
-  padding-top: 6px;
-}
-.hover-line {
-  color: var(--el-text-color-secondary);
-  font-size: 12px;
-  white-space: nowrap;
-}
-.fluid-tooltip {
-  font-family: 'WebNEI GTNH Glyphs', Consolas, 'Courier New', monospace;
-  font-size: 13px;
-  line-height: 1.45;
-}
-.fluid-tooltip .hover-name {
-  border-bottom: 1px solid var(--el-border-color-lighter);
-  padding-bottom: 6px;
-}
-.fluid-line {
-  white-space: nowrap;
-}
-.amount-line,
-.temperature-line {
-  color: #5555ff;
-}
-.state-line {
-  color: #00aa00;
-}
-.fluid-mod {
-  color: #5555ff;
-  font-style: italic;
-  white-space: nowrap;
-}
 .mod-tag {
   max-width: 100%;
   min-width: 0;
@@ -543,24 +444,5 @@ function candidateAmountLabel(c: RecipeSlotCandidate) {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-.hover-amount {
-  color: var(--el-color-primary);
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-.hover-prob {
-  color: var(--el-color-danger);
-  font-weight: 600;
-}
-.hover-candidates {
-  font-size: 12px;
-  color: var(--el-color-primary);
-}
-.hover-keys {
-  font-size: 11px;
-  color: var(--el-text-color-secondary);
-  border-top: 1px solid var(--el-border-color-lighter);
-  padding-top: 6px;
 }
 </style>

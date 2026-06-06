@@ -1,11 +1,9 @@
 package moe.takochan.webnei.gtore;
 
+import java.util.List;
+
 public record GtUndergroundFluidDetail(
-        String fluidId,
-        String dimension,
         GtFluidRef fluid,
-        GtDimensionRef dimensionDisplay,
-        int chance,
-        int minAmount,
-        int maxAmount) {
+        List<GtDimensionRef> dimensions,
+        List<GtUndergroundFluidEntry> entries) {
 }

@@ -8,4 +8,7 @@ import org.springframework.stereotype.Repository;
 public interface GtOreSmallRepository
         extends JpaRepository<GtOreSmallEntity, GtOreSmallEntity.OreSmallId>,
                 JpaSpecificationExecutor<GtOreSmallEntity> {
+
+    java.util.List<GtOreSmallEntity> findByDatasetIdAndSmallOreItemVariantId(
+            String datasetId, String smallOreItemVariantId, org.springframework.data.domain.Sort sort);
 }

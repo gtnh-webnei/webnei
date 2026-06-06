@@ -24,8 +24,21 @@ const nav = computed(() => {
     { to: `/datasets/${enc}/categories`, label: t('nav.categories') },
     { to: `/datasets/${enc}/quest-lines`, label: t('nav.quests') },
     { to: `/datasets/${enc}/mobs`, label: t('nav.mobs') },
+    {
+      label: t('nav.gt'),
+      index: `/datasets/${enc}/gt`,
+      children: [{ to: `/datasets/${enc}/gt/ore-veins`, label: t('gtResource.pageTitle') }],
+    },
     { to: `/datasets/${enc}/mods`, label: t('nav.mods') },
   ];
+});
+
+const activeNav = computed(() => {
+  const id = activeDatasetId.value ?? route.params.datasetId;
+  if (route.path.includes('/gt/') && typeof id === 'string') {
+    return `/datasets/${encodeURIComponent(id)}/gt`;
+  }
+  return route.path;
 });
 
 function routeViewKey(viewRoute: RouteLocationNormalizedLoaded): string {
@@ -42,13 +55,21 @@ function routeViewKey(viewRoute: RouteLocationNormalizedLoaded): string {
       <el-menu
         mode="horizontal"
         :ellipsis="false"
-        :default-active="route.path"
+        :default-active="activeNav"
         router
         class="nav-menu"
       >
-        <el-menu-item v-for="item in nav" :key="item.to" :index="item.to">
-          {{ item.label }}
-        </el-menu-item>
+        <template v-for="item in nav" :key="item.to ?? item.index">
+          <el-sub-menu v-if="item.children" :index="item.index">
+            <template #title>{{ item.label }}</template>
+            <el-menu-item v-for="child in item.children" :key="child.to" :index="child.to">
+              {{ child.label }}
+            </el-menu-item>
+          </el-sub-menu>
+          <el-menu-item v-else :index="item.to">
+            {{ item.label }}
+          </el-menu-item>
+        </template>
       </el-menu>
       <div class="spacer" />
       <DatasetSwitcher />

@@ -11,4 +11,6 @@ public interface GtBartWorksOreLayerRepository
         extends JpaRepository<GtBartWorksOreLayerEntity, GtBartWorksOreLayerEntity.BartWorksOreLayerId> {
 
     List<GtBartWorksOreLayerEntity> findByDatasetIdAndEntryId(String datasetId, String entryId, Sort sort);
+
+    List<GtBartWorksOreLayerEntity> findByDatasetIdAndItemVariantId(String datasetId, String itemVariantId, Sort sort);
 }

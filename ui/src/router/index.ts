@@ -1,18 +1,19 @@
-import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
-import AppShell from '@/layouts/AppShell.vue'
-import DatasetIndex from '@/views/DatasetIndex.vue'
-import ItemBrowser from '@/views/ItemBrowser.vue'
-import ItemContainersView from '@/views/ItemContainersView.vue'
-import FluidBrowser from '@/views/FluidBrowser.vue'
-import ModBrowser from '@/views/ModBrowser.vue'
-import RecipeLookup from '@/views/RecipeLookup.vue'
-import CategoryGallery from '@/views/CategoryGallery.vue'
-import CategoryDetail from '@/views/CategoryDetail.vue'
-import RecipeDetail from '@/views/RecipeDetail.vue'
-import QuestLineList from '@/views/QuestLineList.vue'
-import QuestLineCanvas from '@/views/QuestLineCanvas.vue'
-import MobBrowser from '@/views/MobBrowser.vue'
-import MobDetail from '@/views/MobDetail.vue'
+import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
+import AppShell from '@/layouts/AppShell.vue';
+import DatasetIndex from '@/views/DatasetIndex.vue';
+import ItemBrowser from '@/views/ItemBrowser.vue';
+import ItemContainersView from '@/views/ItemContainersView.vue';
+import FluidBrowser from '@/views/FluidBrowser.vue';
+import ModBrowser from '@/views/ModBrowser.vue';
+import RecipeLookup from '@/views/RecipeLookup.vue';
+import CategoryGallery from '@/views/CategoryGallery.vue';
+import CategoryDetail from '@/views/CategoryDetail.vue';
+import RecipeDetail from '@/views/RecipeDetail.vue';
+import QuestLineList from '@/views/QuestLineList.vue';
+import QuestLineCanvas from '@/views/QuestLineCanvas.vue';
+import MobBrowser from '@/views/MobBrowser.vue';
+import MobDetail from '@/views/MobDetail.vue';
+import GtResourceView from '@/views/GtResourceView.vue';
 
 const routes: RouteRecordRaw[] = [
   {
@@ -87,11 +88,16 @@ const routes: RouteRecordRaw[] = [
         name: 'mob',
         component: MobDetail,
       },
+      {
+        path: 'datasets/:datasetId/gt/:section?',
+        name: 'gt',
+        component: GtResourceView,
+      },
     ],
   },
-]
+];
 
 export const router = createRouter({
   history: createWebHistory(),
   routes,
-})
+});

@@ -95,6 +95,14 @@ function goToItem(itemVariantId: string) {
   });
 }
 
+function goToUndergroundResource(fluidId: string, dimension: string) {
+  router.push({
+    name: 'gt',
+    params: { datasetId: props.datasetId, section: 'underground-fluids' },
+    query: { fluidId, dimension },
+  });
+}
+
 watch(
   () => [props.datasetId, props.fluidVariantId],
   () => {
@@ -165,7 +173,7 @@ onMounted(() => {
                 {{ detail.unlocalizedName }}
               </el-descriptions-item>
               <el-descriptions-item :label="$t('common.mod')">
-                <el-tag size="small" type="info" effect="plain" round>{{ detail.modName }}</el-tag>
+                {{ detail.modName }}
               </el-descriptions-item>
               <el-descriptions-item :label="$t('fluid.state')">
                 {{ gaseousLabel }}
@@ -182,7 +190,7 @@ onMounted(() => {
               <el-descriptions-item :label="$t('fluid.luminosity')">
                 {{ detail.luminosity }}
               </el-descriptions-item>
-              <el-descriptions-item v-if="detail.nbtHash" label="NBT Hash">
+              <el-descriptions-item v-if="detail.nbtHash" :label="$t('common.nbtHash')">
                 <code class="small">{{ detail.nbtHash }}</code>
               </el-descriptions-item>
             </el-descriptions>
@@ -190,7 +198,7 @@ onMounted(() => {
 
           <el-card v-if="nbtLines.length" shadow="never" class="section">
             <template #header>
-              <span class="section-title">NBT</span>
+              <span class="section-title">{{ $t('common.nbt') }}</span>
             </template>
             <pre class="nbt-text">{{ detail.nbtText }}</pre>
           </el-card>
@@ -202,6 +210,38 @@ onMounted(() => {
               <span class="section-title">{{ $t('common.chemicalExpression') }}</span>
             </template>
             <code class="chemical-expression">{{ detail.chemicalExpression }}</code>
+          </el-card>
+
+          <el-card v-if="detail.undergroundResources.length" shadow="never" class="section">
+            <template #header>
+              <span class="section-title">{{ $t('fluid.undergroundResources') }}</span>
+            </template>
+            <div class="underground-list">
+              <button
+                v-for="resource in detail.undergroundResources"
+                :key="`${resource.fluidId}|${resource.dimension}`"
+                type="button"
+                class="underground-row"
+                @click="goToUndergroundResource(resource.fluidId, resource.dimension)"
+              >
+                <span class="underground-dimension">
+                  <img
+                    v-if="resource.dimensionDisplay.iconAssetUrl"
+                    :src="resource.dimensionDisplay.iconAssetUrl"
+                    :alt="resource.dimensionDisplay.displayName"
+                  />
+                </span>
+                <span class="underground-stats">
+                  <el-tag size="small" effect="plain" round>
+                    {{ resource.minAmount }}-{{ resource.maxAmount }} L
+                  </el-tag>
+                  <el-tag size="small" type="warning" effect="plain" round>
+                    {{ resource.chance }}
+                  </el-tag>
+                </span>
+                <span class="underground-link">{{ $t('fluid.viewWorldGen') }} →</span>
+              </button>
+            </div>
           </el-card>
 
           <el-card shadow="never" class="section">
@@ -483,6 +523,54 @@ onMounted(() => {
 .count-hint {
   font-size: 11px;
   color: var(--el-color-primary);
+}
+
+.underground-list {
+  display: grid;
+  gap: 8px;
+}
+.underground-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content max-content;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 8px;
+  background: var(--el-fill-color-light);
+  padding: 8px 10px;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.underground-row:hover {
+  border-color: var(--el-color-primary-light-5);
+  background: var(--el-color-primary-light-9);
+}
+.underground-dimension {
+  width: 20px;
+  height: 20px;
+  display: inline-grid;
+  place-items: center;
+}
+.underground-dimension img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+.underground-stats {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: max-content;
+  gap: 4px;
+}
+.underground-link {
+  color: var(--el-color-primary);
+  font-size: 12px;
+  white-space: nowrap;
 }
 
 .ext-block {

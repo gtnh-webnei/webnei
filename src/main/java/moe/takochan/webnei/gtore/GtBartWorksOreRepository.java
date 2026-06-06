@@ -8,4 +8,7 @@ import org.springframework.stereotype.Repository;
 public interface GtBartWorksOreRepository
         extends JpaRepository<GtBartWorksOreEntity, GtBartWorksOreEntity.BartWorksOreId>,
                 JpaSpecificationExecutor<GtBartWorksOreEntity> {
+
+    java.util.List<GtBartWorksOreEntity> findByDatasetIdAndResultItemVariantId(
+            String datasetId, String resultItemVariantId, org.springframework.data.domain.Sort sort);
 }
