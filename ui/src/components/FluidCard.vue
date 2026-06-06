@@ -138,15 +138,19 @@ const imgFailed = ref(false);
 .tags {
   display: flex;
   gap: 4px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  min-width: 0;
 }
 .mod-tag {
   max-width: 100%;
   min-width: 0;
+  align-items: center;
 }
 .mod-tag :deep(.el-tag__content) {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  line-height: 1.25;
+  padding-bottom: 1px;
 }
 </style>

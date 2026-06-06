@@ -86,11 +86,14 @@ defineEmits<{
 .mod-tag {
   max-width: 100%;
   min-width: 0;
+  align-items: center;
 }
 .mod-tag :deep(.el-tag__content) {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  line-height: 1.25;
+  padding-bottom: 1px;
 }
 .id {
   font-size: 11px;

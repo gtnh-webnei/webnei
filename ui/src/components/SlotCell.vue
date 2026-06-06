@@ -197,7 +197,16 @@ function lookupCandidate(kind: 'recipe' | 'usage', c: RecipeSlotCandidate, e?: M
                 {{ c.displayName ?? c.itemVariantId ?? c.fluidVariantId }}
               </div>
               <div class="popover-sub">
-                <span v-if="c.modName" class="mod">{{ c.modName }}</span>
+                <el-tag
+                  v-if="c.modName"
+                  size="small"
+                  type="info"
+                  effect="plain"
+                  round
+                  class="mod-tag"
+                >
+                  {{ c.modName }}
+                </el-tag>
                 <span v-if="c.amount >= 1" class="qty"
                   >×{{ isFluid ? formatFluidFull(c.amount) : formatFull(c.amount) }}</span
                 >

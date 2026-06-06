@@ -165,7 +165,7 @@ onMounted(() => {
                 {{ detail.unlocalizedName }}
               </el-descriptions-item>
               <el-descriptions-item :label="$t('common.mod')">
-                {{ detail.modName }}
+                <el-tag size="small" type="info" effect="plain" round>{{ detail.modName }}</el-tag>
               </el-descriptions-item>
               <el-descriptions-item :label="$t('fluid.state')">
                 {{ gaseousLabel }}
