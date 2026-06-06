@@ -5,6 +5,9 @@
 Spring Boot + JPA 后端 + Vue 3 / Vite 前端，用于浏览 NESQL 导出数据 —
 物品、流体、怪物、配方、任务、Thaumcraft 要素、GT 矿石/世界生成数据。
 
+> 本项目消费 [nesql-exporter](https://github.com/gtnh-webnei/nesql-exporter)
+> 导出的数据。数据库必须先用 NESQL 导出包灌入数据，后端才能提供 API。
+
 ## 架构
 
 ```text

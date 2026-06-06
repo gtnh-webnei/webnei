@@ -6,6 +6,11 @@ Spring Boot + JPA backend with a Vue 3 / Vite frontend for browsing NESQL
 export data — items, fluids, mobs, recipes, quests, Thaumcraft aspects, and
 GT ore/worldgen data.
 
+> This project consumes data exported by
+> [nesql-exporter](https://github.com/gtnh-webnei/nesql-exporter).
+> The database must be populated with a NESQL export bundle before the
+> backend can serve any data.
+
 ## Architecture
 
 ```text
