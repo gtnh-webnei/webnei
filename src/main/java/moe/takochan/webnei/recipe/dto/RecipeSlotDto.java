@@ -13,6 +13,8 @@ public record RecipeSlotDto(
         String displayName,
         String modId,
         String modName,
+        Boolean fluidGaseous,
+        Integer fluidTemperature,
         String tooltipText,
         String assetUrl,
         List<RecipeSlotCandidateDto> candidates,

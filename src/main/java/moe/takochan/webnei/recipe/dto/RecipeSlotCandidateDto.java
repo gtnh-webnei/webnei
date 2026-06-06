@@ -7,6 +7,8 @@ public record RecipeSlotCandidateDto(
         String displayName,
         String modId,
         String modName,
+        Boolean fluidGaseous,
+        Integer fluidTemperature,
         String tooltipText,
         String assetUrl) {
 }

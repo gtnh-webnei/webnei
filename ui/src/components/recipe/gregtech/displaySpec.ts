@@ -310,6 +310,8 @@ function primarySlotCandidate(slot: RecipeSlot): RecipeSlotCandidate | null {
       displayName: slot.displayName,
       modId: slot.modId,
       modName: slot.modName,
+      fluidGaseous: slot.fluidGaseous,
+      fluidTemperature: slot.fluidTemperature,
       tooltipText: slot.tooltipText,
       assetUrl: slot.assetUrl,
     };

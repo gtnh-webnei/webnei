@@ -16,6 +16,8 @@ export interface RecipeSlotCandidate {
   displayName: string | null;
   modId: string | null;
   modName: string | null;
+  fluidGaseous: boolean | null;
+  fluidTemperature: number | null;
   tooltipText: string | null;
   assetUrl: string | null;
 }
@@ -31,6 +33,8 @@ export interface RecipeSlot {
   displayName: string | null;
   modId: string | null;
   modName: string | null;
+  fluidGaseous: boolean | null;
+  fluidTemperature: number | null;
   tooltipText: string | null;
   assetUrl: string | null;
   candidates: RecipeSlotCandidate[];

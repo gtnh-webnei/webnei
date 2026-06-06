@@ -371,6 +371,12 @@ public class RecipeService {
                 .filter(s -> !s.isBlank())
                 .distinct()
                 .toList());
+        Map<String, FluidVariantBrowserEntity> directFluidRefs = loadFluidRefs(datasetId, rows.stream()
+                .map(RecipeSlotBrowserEntity::getFluidVariantId)
+                .filter(Objects::nonNull)
+                .filter(s -> !s.isBlank())
+                .distinct()
+                .toList());
         Map<String, String> placementByCategoryRoleSlot = new HashMap<>();
         for (Map.Entry<String, List<SlotLayoutDto>> e : layoutMap.entrySet()) {
             for (SlotLayoutDto layout : e.getValue()) {
@@ -390,6 +396,7 @@ public class RecipeService {
             String fluid = nullIfEmpty(r.getFluidVariantId());
             String displayName = item != null ? r.getItemDisplayName() : r.getFluidDisplayName();
             String modId = item != null ? r.getItemModId() : r.getFluidModId();
+            FluidVariantBrowserEntity fluidRef = fluid == null ? null : directFluidRefs.get(fluid);
             String tooltipText = item != null && directItemRefs.get(item) != null ? directItemRefs.get(item).getTooltipText() : null;
             String assetPath = item != null ? r.getItemAssetPath() : r.getFluidAssetPath();
             byRecipe.computeIfAbsent(r.getRecipeId(), ignored -> new ArrayList<>())
@@ -404,6 +411,8 @@ public class RecipeService {
                             displayName,
                             modId,
                             modName(modNames, modId),
+                            fluidRef == null ? null : fluidRef.isGaseous(),
+                            fluidRef == null ? null : fluidRef.getTemperature(),
                             tooltipText,
                             assetUrlBuilder.build(dataset, assetPath, null),
                             nullIfEmpty(r.getGroupId()) == null ? List.of() : candidatesByGroup.getOrDefault(r.getGroupId(), List.of()),
@@ -433,6 +442,8 @@ public class RecipeService {
                             item == null ? null : item.getDisplayName(),
                             item == null ? null : item.getModId(),
                             item == null ? null : modName(modNames, item.getModId()),
+                            null,
+                            null,
                             item == null ? null : item.getTooltipText(),
                             assetUrlBuilder.build(dataset, item == null ? null : item.getAssetPath(), item == null ? null : item.getAssetSha256()),
                             List.of(),
@@ -483,6 +494,8 @@ public class RecipeService {
                             item == null ? (fluid == null ? null : fluid.getDisplayName()) : item.getDisplayName(),
                             modId,
                             modName(modNames, modId),
+                            fluid == null ? null : fluid.isGaseous(),
+                            fluid == null ? null : fluid.getTemperature(),
                             item == null ? null : item.getTooltipText(),
                             assetUrlBuilder.build(dataset,
                                     item == null ? (fluid == null ? null : fluid.getAssetPath()) : item.getAssetPath(),

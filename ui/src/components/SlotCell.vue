@@ -48,6 +48,8 @@ const direct = computed<RecipeSlotCandidate | null>(() => {
     displayName: s.displayName,
     modId: s.modId,
     modName: s.modName,
+    fluidGaseous: s.fluidGaseous,
+    fluidTemperature: s.fluidTemperature,
     tooltipText: s.tooltipText,
     assetUrl: s.assetUrl,
   };
@@ -84,6 +86,14 @@ const amountCompact = computed(() =>
 const amountFull = computed(() =>
   props.isFluid ? formatFluidFull(amount.value) : formatFull(amount.value),
 );
+const fluidStateLabel = computed(() => {
+  if (!primary.value?.fluidVariantId) return null;
+  return primary.value.fluidGaseous ? t('fluid.gaseous') : t('fluid.liquid');
+});
+const fluidTemperatureLabel = computed(() => {
+  if (!primary.value?.fluidVariantId || primary.value.fluidTemperature == null) return null;
+  return `${primary.value.fluidTemperature.toLocaleString()} K`;
+});
 
 const popoverVisible = ref(false);
 
@@ -134,6 +144,22 @@ function lookupCandidate(kind: 'recipe' | 'usage', c: RecipeSlotCandidate, e?: M
   });
   popoverVisible.value = false;
 }
+
+function hasCandidateHover(c: RecipeSlotCandidate) {
+  return !!c.tooltipText || !!c.fluidVariantId;
+}
+function candidateFluidStateLabel(c: RecipeSlotCandidate) {
+  if (!c.fluidVariantId) return null;
+  return c.fluidGaseous ? t('fluid.gaseous') : t('fluid.liquid');
+}
+function candidateFluidTemperatureLabel(c: RecipeSlotCandidate) {
+  if (!c.fluidVariantId || c.fluidTemperature == null) return null;
+  return `${c.fluidTemperature.toLocaleString()} K`;
+}
+function candidateAmountLabel(c: RecipeSlotCandidate) {
+  if (c.amount < 1) return null;
+  return c.fluidVariantId ? formatFluidFull(c.amount) : formatFull(c.amount);
+}
 </script>
 
 <template>
@@ -179,11 +205,28 @@ function lookupCandidate(kind: 'recipe' | 'usage', c: RecipeSlotCandidate, e?: M
         <AppTooltip
           v-for="(c, idx) in candidates"
           :key="`${c.itemVariantId ?? ''}|${c.fluidVariantId ?? ''}|${idx}`"
-          :disabled="!c.tooltipText"
+          :disabled="!hasCandidateHover(c)"
           placement="right"
         >
           <template #content>
             <MinecraftTooltipText v-if="c.tooltipText" :text="c.tooltipText" />
+            <div v-else-if="c.fluidVariantId" class="hover-card">
+              <div class="hover-fallback fluid-tooltip">
+                <div class="hover-name">
+                  {{ c.displayName ?? c.fluidVariantId }}
+                </div>
+                <div v-if="candidateFluidTemperatureLabel(c)" class="fluid-line temperature-line">
+                  温度:{{ candidateFluidTemperatureLabel(c) }}
+                </div>
+                <div v-if="candidateFluidStateLabel(c)" class="fluid-line state-line">
+                  状态:{{ candidateFluidStateLabel(c) }}
+                </div>
+                <div v-if="c.modName" class="fluid-mod">{{ c.modName }}</div>
+              </div>
+              <div v-if="candidateAmountLabel(c)" class="hover-meta hover-stats">
+                <span class="hover-amount">数量:{{ candidateAmountLabel(c) }}</span>
+              </div>
+            </div>
           </template>
           <div
             class="popover-item"
@@ -223,25 +266,29 @@ function lookupCandidate(kind: 'recipe' | 'usage', c: RecipeSlotCandidate, e?: M
     <template #content>
       <div v-if="primary" class="hover-card">
         <MinecraftTooltipText v-if="primary.tooltipText" :text="primary.tooltipText" />
-        <div v-else class="hover-name">
-          {{ primary.displayName ?? primary.itemVariantId ?? primary.fluidVariantId }}
+        <div v-else-if="primary.fluidVariantId" class="hover-fallback fluid-tooltip">
+          <div class="hover-name">
+            {{ primary.displayName ?? primary.fluidVariantId }}
+          </div>
+          <div v-if="fluidTemperatureLabel" class="fluid-line temperature-line">
+            温度:{{ fluidTemperatureLabel }}
+          </div>
+          <div v-if="fluidStateLabel" class="fluid-line state-line">状态:{{ fluidStateLabel }}</div>
+          <div v-if="primary.modName" class="fluid-mod">{{ primary.modName }}</div>
         </div>
-        <div v-if="!primary.tooltipText" class="hover-meta">
-          <el-tag
-            v-if="primary.modName"
-            size="small"
-            type="info"
-            effect="plain"
-            round
-            class="mod-tag"
-          >
-            {{ primary.modName }}
-          </el-tag>
-          <el-tag v-if="isFluid" size="small" type="primary" effect="plain" round>{{
-            t('fluid.tag')
-          }}</el-tag>
-          <span v-if="amount >= 1" class="hover-amount">×{{ amountFull }}</span>
-          <span v-if="hasNonTrivialProb" class="hover-prob">{{ probPercentPrecise }}</span>
+        <div v-else class="hover-fallback">
+          <div class="hover-name">
+            {{ primary.displayName ?? primary.itemVariantId }}
+          </div>
+        </div>
+        <div
+          v-if="amount >= 1 || (!primary.fluidVariantId && hasNonTrivialProb)"
+          class="hover-meta hover-stats"
+        >
+          <span v-if="amount >= 1" class="hover-amount">数量:{{ amountFull }}</span>
+          <span v-if="!primary.fluidVariantId && hasNonTrivialProb" class="hover-prob">{{
+            probPercentPrecise
+          }}</span>
         </div>
         <div class="hover-keys">{{ displayPickHint }}</div>
       </div>
@@ -436,17 +483,52 @@ function lookupCandidate(kind: 'recipe' | 'usage', c: RecipeSlotCandidate, e?: M
   width: max-content;
   max-width: min(520px, calc(100vw - 32px));
 }
+.hover-fallback {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
 .hover-name {
   font-size: 14px;
   font-weight: 600;
   word-break: break-word;
 }
 .hover-meta {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: max-content;
   gap: 6px;
   align-items: center;
   min-width: 0;
+}
+.hover-stats {
+  padding-top: 2px;
+}
+.hover-line {
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.fluid-tooltip {
+  font-family: 'WebNEI GTNH Glyphs', Consolas, 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.fluid-line {
+  white-space: nowrap;
+}
+.amount-line,
+.temperature-line {
+  color: #5555ff;
+}
+.state-line {
+  color: #00aa00;
+}
+.fluid-mod {
+  color: #5555ff;
+  font-style: italic;
+  white-space: nowrap;
 }
 .mod-tag {
   max-width: 100%;
