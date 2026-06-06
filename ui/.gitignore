@@ -1,7 +1,0 @@
-node_modules
-dist
-dist-ssr
-.vite
-.tmp
-*.log
-.DS_Store

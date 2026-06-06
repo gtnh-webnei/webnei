@@ -45,6 +45,12 @@ ui/.env.*
 !ui/.env.example
 
 ### Frontend generated/cache ###
+ui/node_modules
+ui/dist
+ui/dist-ssr
+ui/.vite
+ui/.tmp
+ui/*.log
 ui/package-lock.json
 ui/components.d.ts
 ui/auto-imports.d.ts
