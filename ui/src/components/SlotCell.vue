@@ -176,20 +176,33 @@ function candidateAmountLabel(c: RecipeSlotCandidate) {
           :alt="primary.displayName ?? ''"
           loading="lazy"
           @error="($event.target as HTMLImageElement).style.display = 'none'"
-        />
-        <span v-if="!primary?.assetUrl && isFluid" class="cell-fallback">
+        >
+        <span
+          v-if="!primary?.assetUrl && isFluid"
+          class="cell-fallback"
+        >
           {{ t('fluid.liquid') }}
         </span>
-        <span v-if="showAmount" class="amount">{{ amountCompact }}</span>
+        <span
+          v-if="showAmount"
+          class="amount"
+        >{{ amountCompact }}</span>
         <span class="badge">+{{ extraCount }}</span>
-        <span v-if="showProb" class="prob">{{ probPercent }}%</span>
+        <span
+          v-if="showProb"
+          class="prob"
+        >{{ probPercent }}%</span>
       </div>
     </template>
 
     <div class="popover-list">
       <div class="popover-summary">
-        <div class="popover-title">{{ t('recipe.candidates', { count: candidates.length }) }}</div>
-        <div class="popover-hint">{{ displayPickHint }}</div>
+        <div class="popover-title">
+          {{ t('recipe.candidates', { count: candidates.length }) }}
+        </div>
+        <div class="popover-hint">
+          {{ displayPickHint }}
+        </div>
       </div>
       <div class="popover-items">
         <AppTooltip
@@ -216,7 +229,12 @@ function candidateAmountLabel(c: RecipeSlotCandidate) {
             @contextmenu="lookupCandidate('recipe', c, $event)"
             @auxclick="(e: MouseEvent) => e.button === 1 && lookupCandidate('usage', c, e)"
           >
-            <img v-if="c.assetUrl" :src="c.assetUrl" :alt="c.displayName ?? ''" loading="lazy" />
+            <img
+              v-if="c.assetUrl"
+              :src="c.assetUrl"
+              :alt="c.displayName ?? ''"
+              loading="lazy"
+            >
             <div class="popover-text">
               <div class="popover-name">
                 {{ c.displayName ?? c.itemVariantId ?? c.fluidVariantId }}
@@ -232,9 +250,10 @@ function candidateAmountLabel(c: RecipeSlotCandidate) {
                 >
                   {{ c.modName }}
                 </el-tag>
-                <span v-if="c.amount >= 1" class="qty"
-                  >×{{ isFluid ? formatFluidFull(c.amount) : formatFull(c.amount) }}</span
-                >
+                <span
+                  v-if="c.amount >= 1"
+                  class="qty"
+                >×{{ isFluid ? formatFluidFull(c.amount) : formatFull(c.amount) }}</span>
               </div>
             </div>
           </div>
@@ -244,14 +263,21 @@ function candidateAmountLabel(c: RecipeSlotCandidate) {
   </el-popover>
 
   <!-- Single candidate / placeholder: tooltip only -->
-  <AppTooltip v-else :disabled="!primary">
+  <AppTooltip
+    v-else
+    :disabled="!primary"
+  >
     <template #content>
       <FluidTooltipContent
         v-if="primary?.fluidVariantId"
         :fluid="primary"
         :context="primaryTooltipContext"
       />
-      <ItemTooltipContent v-else-if="primary" :item="primary" :context="primaryTooltipContext" />
+      <ItemTooltipContent
+        v-else-if="primary"
+        :item="primary"
+        :context="primaryTooltipContext"
+      />
     </template>
     <div
       class="cell"
@@ -270,9 +296,15 @@ function candidateAmountLabel(c: RecipeSlotCandidate) {
         :src="primary.assetUrl"
         :alt="primary.displayName ?? ''"
         loading="lazy"
-      />
-      <span v-if="showAmount" class="amount">{{ amountCompact }}</span>
-      <span v-if="showProb" class="prob">{{ probPercent }}%</span>
+      >
+      <span
+        v-if="showAmount"
+        class="amount"
+      >{{ amountCompact }}</span>
+      <span
+        v-if="showProb"
+        class="prob"
+      >{{ probPercent }}%</span>
     </div>
   </AppTooltip>
 </template>

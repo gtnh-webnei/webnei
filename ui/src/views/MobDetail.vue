@@ -84,11 +84,26 @@ onMounted(load);
 <template>
   <div class="mob-detail">
     <header class="header">
-      <el-button text @click="back">{{ $t('common.back') }}</el-button>
+      <el-button
+        text
+        @click="back"
+      >
+        {{ $t('common.back') }}
+      </el-button>
     </header>
 
-    <el-skeleton v-if="loading" :rows="6" animated />
-    <el-alert v-else-if="error" :title="error" type="error" :closable="false" show-icon />
+    <el-skeleton
+      v-if="loading"
+      :rows="6"
+      animated
+    />
+    <el-alert
+      v-else-if="error"
+      :title="error"
+      type="error"
+      :closable="false"
+      show-icon
+    />
 
     <template v-else-if="detail">
       <section class="hero">
@@ -97,20 +112,44 @@ onMounted(load);
             v-if="detail.summary.assetUrl"
             :src="detail.summary.assetUrl"
             :alt="detail.summary.displayName"
-          />
+          >
         </div>
         <div class="hero-meta">
           <h1>{{ detail.summary.displayName }}</h1>
-          <div class="entity-name">{{ detail.summary.entityName }}</div>
+          <div class="entity-name">
+            {{ detail.summary.entityName }}
+          </div>
           <div class="tag-row">
-            <el-tag size="small" effect="plain" round>{{ detail.summary.modName }}</el-tag>
-            <el-tag size="small" type="danger" effect="plain" round
-              >♥ {{ detail.summary.maxHealth }}</el-tag
+            <el-tag
+              size="small"
+              effect="plain"
+              round
             >
-            <el-tag v-if="detail.summary.armor > 0" size="small" type="info" effect="plain" round>
+              {{ detail.summary.modName }}
+            </el-tag>
+            <el-tag
+              size="small"
+              type="danger"
+              effect="plain"
+              round
+            >
+              ♥ {{ detail.summary.maxHealth }}
+            </el-tag>
+            <el-tag
+              v-if="detail.summary.armor > 0"
+              size="small"
+              type="info"
+              effect="plain"
+              round
+            >
               ⛨ {{ detail.summary.armor }}
             </el-tag>
-            <el-tag size="small" type="info" effect="plain" round>
+            <el-tag
+              size="small"
+              type="info"
+              effect="plain"
+              round
+            >
               {{ detail.summary.width.toFixed(2) }} × {{ detail.summary.height.toFixed(2) }} m
             </el-tag>
             <el-tag
@@ -137,31 +176,57 @@ onMounted(load);
 
       <section class="info-grid">
         <div class="info-card">
-          <div class="info-label">{{ $t('mob.peacefulMode') }}</div>
-          <div class="info-value" :class="{ on: detail.info.allowedInPeaceful }">
+          <div class="info-label">
+            {{ $t('mob.peacefulMode') }}
+          </div>
+          <div
+            class="info-value"
+            :class="{ on: detail.info.allowedInPeaceful }"
+          >
             {{ peaceAllowedLabel }}
           </div>
         </div>
         <div class="info-card">
-          <div class="info-label">{{ $t('mob.soulVial') }}</div>
-          <div class="info-value" :class="{ on: detail.info.soulVialUsable }">
+          <div class="info-label">
+            {{ $t('mob.soulVial') }}
+          </div>
+          <div
+            class="info-value"
+            :class="{ on: detail.info.soulVialUsable }"
+          >
             {{ soulVialLabel }}
           </div>
         </div>
         <div class="info-card">
-          <div class="info-label">{{ $t('mob.infernal') }}</div>
-          <div class="info-value" :class="{ on: detail.info.allowedInfernal }">
+          <div class="info-label">
+            {{ $t('mob.infernal') }}
+          </div>
+          <div
+            class="info-value"
+            :class="{ on: detail.info.allowedInfernal }"
+          >
             {{ infernalLabel }}
           </div>
         </div>
       </section>
 
       <section class="drops-section">
-        <div class="section-title">{{ $t('mob.dropTablePrefix') }}{{ detail.drops.length }}</div>
-        <div v-if="detail.drops.length === 0" class="empty-drops">
-          <el-empty :description="$t('mob.noDropData')" :image-size="60" />
+        <div class="section-title">
+          {{ $t('mob.dropTablePrefix') }}{{ detail.drops.length }}
         </div>
-        <div v-else class="drop-list">
+        <div
+          v-if="detail.drops.length === 0"
+          class="empty-drops"
+        >
+          <el-empty
+            :description="$t('mob.noDropData')"
+            :image-size="60"
+          />
+        </div>
+        <div
+          v-else
+          class="drop-list"
+        >
           <div
             v-for="(d, idx) in detail.drops"
             :key="`${d.dropType}-${d.itemVariantId}-${idx}`"
@@ -172,22 +237,48 @@ onMounted(load);
             @keydown.enter.prevent="goItem(d.itemVariantId)"
             @keydown.space.prevent="goItem(d.itemVariantId)"
           >
-            <el-tag size="small" :type="dropMeta(d).type" effect="plain" round>
+            <el-tag
+              size="small"
+              :type="dropMeta(d).type"
+              effect="plain"
+              round
+            >
               {{ $t(dropMeta(d).key) }}
             </el-tag>
             <div class="drop-icon">
-              <img v-if="d.assetUrl" :src="d.assetUrl" :alt="d.displayName ?? ''" loading="lazy" />
+              <img
+                v-if="d.assetUrl"
+                :src="d.assetUrl"
+                :alt="d.displayName ?? ''"
+                loading="lazy"
+              >
             </div>
             <div class="drop-name">
               {{ d.displayName ?? d.itemVariantId }}
             </div>
-            <div class="drop-qty">× {{ d.stackSize }}</div>
-            <div class="drop-prob">{{ pct(d.probability) }}</div>
+            <div class="drop-qty">
+              × {{ d.stackSize }}
+            </div>
+            <div class="drop-prob">
+              {{ pct(d.probability) }}
+            </div>
             <div class="drop-tags">
-              <el-tag v-if="d.playerOnly" size="small" type="warning" effect="plain" round>
+              <el-tag
+                v-if="d.playerOnly"
+                size="small"
+                type="warning"
+                effect="plain"
+                round
+              >
                 {{ $t('mob.requirePlayerKill') }}
               </el-tag>
-              <el-tag v-if="!d.lootable" size="small" type="info" effect="plain" round>
+              <el-tag
+                v-if="!d.lootable"
+                size="small"
+                type="info"
+                effect="plain"
+                round
+              >
                 {{ $t('mob.notLootBag') }}
               </el-tag>
             </div>

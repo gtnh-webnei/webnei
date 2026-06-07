@@ -52,7 +52,10 @@ const unhandledSpecialItems = computed(() => {
     :declared-cols="declaredCols"
     :declared-rows="declaredRows"
   >
-    <template v-if="gt?.voltageTier" #header-tag>
+    <template
+      v-if="gt?.voltageTier"
+      #header-tag
+    >
       <GregTechTierBadge :tier="gt.voltageTier" />
     </template>
 
@@ -65,7 +68,10 @@ const unhandledSpecialItems = computed(() => {
       @lookup="(k, p) => emit('lookup', k, p)"
     />
 
-    <template v-if="gt" #footer>
+    <template
+      v-if="gt"
+      #footer
+    >
       <section class="gt-info-panel">
         <div class="gt-stack">
           <GregTechMetadataStrip
@@ -75,7 +81,10 @@ const unhandledSpecialItems = computed(() => {
             :spec-messages-url="displaySpecMessagesUrl"
             :handler-id="category?.handlerId"
           />
-          <GregTechSpecialItems v-if="unhandledSpecialItems.length" :items="unhandledSpecialItems" />
+          <GregTechSpecialItems
+            v-if="unhandledSpecialItems.length"
+            :items="unhandledSpecialItems"
+          />
         </div>
       </section>
     </template>

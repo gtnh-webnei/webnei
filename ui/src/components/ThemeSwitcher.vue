@@ -17,8 +17,14 @@ const options = computed<{ value: ThemeMode; label: string; icon: typeof Sunny }
 </script>
 
 <template>
-  <el-dropdown trigger="click" @command="(c: ThemeMode) => store.setMode(c)">
-    <el-button circle :title="options.find((o) => o.value === mode)?.label">
+  <el-dropdown
+    trigger="click"
+    @command="(c: ThemeMode) => store.setMode(c)"
+  >
+    <el-button
+      circle
+      :title="options.find((o) => o.value === mode)?.label"
+    >
       <el-icon>
         <Sunny v-if="mode === 'light'" />
         <Moon v-else-if="mode === 'dark'" />
@@ -33,7 +39,9 @@ const options = computed<{ value: ThemeMode; label: string; icon: typeof Sunny }
           :command="o.value"
           :class="{ active: o.value === mode }"
         >
-          <el-icon class="mr"><component :is="o.icon" /></el-icon>
+          <el-icon class="mr">
+            <component :is="o.icon" />
+          </el-icon>
           {{ o.label }}
         </el-dropdown-item>
       </el-dropdown-menu>

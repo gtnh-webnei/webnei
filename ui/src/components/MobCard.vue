@@ -20,20 +20,42 @@ defineEmits<{
     @keydown.space.prevent="$emit('select', mob)"
   >
     <div class="portrait-wrap">
-      <img v-if="mob.assetUrl" :src="mob.assetUrl" :alt="mob.displayName" loading="lazy" />
+      <img
+        v-if="mob.assetUrl"
+        :src="mob.assetUrl"
+        :alt="mob.displayName"
+        loading="lazy"
+      >
     </div>
     <div class="meta">
-      <div class="name">{{ mob.displayName }}</div>
+      <div class="name">
+        {{ mob.displayName }}
+      </div>
       <div class="row mod-row">
-        <el-tag size="small" type="info" effect="plain" round class="mod-tag">
+        <el-tag
+          size="small"
+          type="info"
+          effect="plain"
+          round
+          class="mod-tag"
+        >
           {{ mob.modName }}
         </el-tag>
       </div>
       <div class="row attr-row">
         <span class="stat">♥ {{ mob.maxHealth }}</span>
-        <span v-if="mob.armor > 0" class="stat">⛨ {{ mob.armor }}</span>
-        <span v-if="mob.immuneToFire" class="badge fire">{{ $t('mob.fireImmuneBadge') }}</span>
-        <span v-if="mob.leashable" class="badge leash">{{ $t('mob.leashableBadge') }}</span>
+        <span
+          v-if="mob.armor > 0"
+          class="stat"
+        >⛨ {{ mob.armor }}</span>
+        <span
+          v-if="mob.immuneToFire"
+          class="badge fire"
+        >{{ $t('mob.fireImmuneBadge') }}</span>
+        <span
+          v-if="mob.leashable"
+          class="badge leash"
+        >{{ $t('mob.leashableBadge') }}</span>
       </div>
     </div>
   </div>

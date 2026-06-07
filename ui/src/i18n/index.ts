@@ -6,7 +6,7 @@ type MessageTree = Record<string, unknown>;
 
 export const DEFAULT_LOCALE: string = 'zh_CN';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export const i18n = createI18n({
   legacy: false,
   globalInjection: true,

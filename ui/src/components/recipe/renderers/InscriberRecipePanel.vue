@@ -66,11 +66,21 @@ function onLookup(
 </script>
 
 <template>
-  <RecipePanelShell :recipe="recipe" :category="category" :declared-cols="2" :declared-rows="3">
+  <RecipePanelShell
+    :recipe="recipe"
+    :category="category"
+    :declared-cols="2"
+    :declared-rows="3"
+  >
     <section class="side inputs">
       <div class="side-header">
-        <div class="side-label">{{ $t('recipe.input') }}</div>
-        <span v-if="itemInputs.length" class="meta-chip">
+        <div class="side-label">
+          {{ $t('recipe.input') }}
+        </div>
+        <span
+          v-if="itemInputs.length"
+          class="meta-chip"
+        >
           <span class="dot item" />{{ $t('recipe.itemCountLabel', { count: itemInputs.length }) }}
         </span>
       </div>
@@ -85,8 +95,16 @@ function onLookup(
           @lookup="onLookup"
         >
           <template #cell="{ slotData, index, cellSize, declared }">
-            <div v-if="index === 1" class="inscriber-arrow" aria-hidden="true">
-              <svg viewBox="0 0 52 52" width="100%" height="100%">
+            <div
+              v-if="index === 1"
+              class="inscriber-arrow"
+              aria-hidden="true"
+            >
+              <svg
+                viewBox="0 0 52 52"
+                width="100%"
+                height="100%"
+              >
                 <path
                   d="M 4 26 H 26 V 48"
                   fill="none"
@@ -105,8 +123,16 @@ function onLookup(
                 />
               </svg>
             </div>
-            <div v-else-if="index === 5" class="inscriber-arrow" aria-hidden="true">
-              <svg viewBox="0 0 52 52" width="100%" height="100%">
+            <div
+              v-else-if="index === 5"
+              class="inscriber-arrow"
+              aria-hidden="true"
+            >
+              <svg
+                viewBox="0 0 52 52"
+                width="100%"
+                height="100%"
+              >
                 <path
                   d="M 4 26 H 26 V 4"
                   fill="none"
@@ -125,7 +151,11 @@ function onLookup(
                 />
               </svg>
             </div>
-            <div v-else-if="index === 2" class="inscriber-empty" aria-hidden="true" />
+            <div
+              v-else-if="index === 2"
+              class="inscriber-empty"
+              aria-hidden="true"
+            />
             <SlotCell
               v-else
               :slot="slotData"
@@ -140,7 +170,10 @@ function onLookup(
       </div>
     </section>
 
-    <div v-if="itemOutputs.length" class="divider">
+    <div
+      v-if="itemOutputs.length"
+      class="divider"
+    >
       <span class="divider-line" />
       <span class="divider-label">{{ $t('recipe.outputDivider') }}</span>
       <span class="divider-line" />

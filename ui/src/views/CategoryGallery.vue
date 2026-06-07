@@ -58,7 +58,9 @@ function openCategory(c: RecipeCategory) {
   <div class="gallery">
     <header class="header">
       <h1>{{ t('category.pageTitle') }}</h1>
-      <p class="lead">{{ t('category.leadText') }}</p>
+      <p class="lead">
+        {{ t('category.leadText') }}
+      </p>
     </header>
 
     <BrowserToolbar
@@ -72,17 +74,38 @@ function openCategory(c: RecipeCategory) {
       :total-suffix="`/ ${total}`"
     >
       <template #extra>
-        <el-checkbox v-model="hideEmpty" border size="default">
+        <el-checkbox
+          v-model="hideEmpty"
+          border
+          size="default"
+        >
           {{ t('category.hideZeroRecipes') }}
         </el-checkbox>
       </template>
     </BrowserToolbar>
 
-    <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
-    <el-skeleton v-if="loading && items.length === 0" :rows="6" animated />
-    <el-empty v-else-if="!loading && items.length === 0" :description="t('category.noMatch')" />
+    <el-alert
+      v-if="error"
+      :title="error"
+      type="error"
+      :closable="false"
+      show-icon
+    />
+    <el-skeleton
+      v-if="loading && items.length === 0"
+      :rows="6"
+      animated
+    />
+    <el-empty
+      v-else-if="!loading && items.length === 0"
+      :description="t('category.noMatch')"
+    />
 
-    <div v-else v-loading="loading" class="grid">
+    <div
+      v-else
+      v-loading="loading"
+      class="grid"
+    >
       <CategoryCard
         v-for="c in items"
         :key="c.categoryId"

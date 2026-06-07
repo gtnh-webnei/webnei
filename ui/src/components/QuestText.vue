@@ -152,7 +152,10 @@ function parse(tokens: Token[], start: number, parentTag: string | null): { html
 </script>
 
 <template>
-  <div class="quest-text" v-html="rendered" />
+  <div
+    class="quest-text"
+    v-html="rendered"
+  />
 </template>
 
 <style scoped>

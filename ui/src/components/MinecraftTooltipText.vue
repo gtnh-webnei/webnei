@@ -15,7 +15,10 @@ const bodyLines = computed(() => rawLines.value.slice(1).map(parseMinecraftForma
 
 <template>
   <div class="minecraft-tooltip-text">
-    <div v-if="titleLine.length" class="mc-title">
+    <div
+      v-if="titleLine.length"
+      class="mc-title"
+    >
       <span
         v-for="(segment, segmentIndex) in titleLine"
         :key="segmentIndex"
@@ -25,8 +28,16 @@ const bodyLines = computed(() => rawLines.value.slice(1).map(parseMinecraftForma
       </span>
     </div>
     <div class="mc-body">
-      <div v-for="(line, lineIndex) in bodyLines" :key="lineIndex" class="mc-line">
-        <span v-for="(segment, segmentIndex) in line" :key="segmentIndex" :class="segment.classes">
+      <div
+        v-for="(line, lineIndex) in bodyLines"
+        :key="lineIndex"
+        class="mc-line"
+      >
+        <span
+          v-for="(segment, segmentIndex) in line"
+          :key="segmentIndex"
+          :class="segment.classes"
+        >
           {{ segment.text }}
         </span>
       </div>

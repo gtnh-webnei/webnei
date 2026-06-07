@@ -21,13 +21,23 @@ defineEmits<{
     @click="$emit('select', item)"
     @keydown.enter="$emit('select', item)"
   >
-    <ItemIcon :item="item" :size="40" :interactive="false" />
+    <ItemIcon
+      :item="item"
+      :size="40"
+      :interactive="false"
+    />
     <div class="meta">
       <div class="name">
         {{ item.displayName || item.registryName }}
       </div>
       <div class="sub">
-        <el-tag size="small" type="info" effect="plain" round class="mod-tag">
+        <el-tag
+          size="small"
+          type="info"
+          effect="plain"
+          round
+          class="mod-tag"
+        >
           {{ item.modName }}
         </el-tag>
       </div>

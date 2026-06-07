@@ -40,11 +40,21 @@ const fluidTemperatureLabel = computed(() => {
 </script>
 
 <template>
-  <IngredientTooltipBase :ingredient="ingredient" :context="context" variant="fluid">
-    <div v-if="fluidTemperatureLabel" class="fluid-line temperature-line">
+  <IngredientTooltipBase
+    :ingredient="ingredient"
+    :context="context"
+    variant="fluid"
+  >
+    <div
+      v-if="fluidTemperatureLabel"
+      class="fluid-line temperature-line"
+    >
       {{ t('fluid.temperature') }}:{{ fluidTemperatureLabel }}
     </div>
-    <div v-if="fluidStateLabel" class="fluid-line state-line">
+    <div
+      v-if="fluidStateLabel"
+      class="fluid-line state-line"
+    >
       {{ t('fluid.state') }}:{{ fluidStateLabel }}
     </div>
   </IngredientTooltipBase>

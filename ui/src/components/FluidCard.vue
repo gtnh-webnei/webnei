@@ -28,7 +28,10 @@ const imgFailed = ref(false);
     @click="$emit('select', fluid)"
     @keydown.enter="$emit('select', fluid)"
   >
-    <div class="icon-wrap" :class="{ gaseous: fluid.gaseous }">
+    <div
+      class="icon-wrap"
+      :class="{ gaseous: fluid.gaseous }"
+    >
       <img
         v-if="fluid.assetUrl && !imgFailed"
         :src="fluid.assetUrl"
@@ -36,18 +39,36 @@ const imgFailed = ref(false);
         loading="lazy"
         draggable="false"
         @error="imgFailed = true"
-      />
-      <div v-else class="initial" :class="{ gaseous: fluid.gaseous }">
+      >
+      <div
+        v-else
+        class="initial"
+        :class="{ gaseous: fluid.gaseous }"
+      >
         {{ fallbackInitial }}
       </div>
     </div>
     <div class="meta">
-      <div class="name">{{ fluid.displayName }}</div>
+      <div class="name">
+        {{ fluid.displayName }}
+      </div>
       <div class="tags">
-        <el-tag size="small" type="info" effect="plain" round class="mod-tag">
+        <el-tag
+          size="small"
+          type="info"
+          effect="plain"
+          round
+          class="mod-tag"
+        >
           {{ fluid.modName }}
         </el-tag>
-        <el-tag v-if="fluid.gaseous" size="small" type="warning" effect="plain" round>
+        <el-tag
+          v-if="fluid.gaseous"
+          size="small"
+          type="warning"
+          effect="plain"
+          round
+        >
           {{ t('fluid.gaseous') }}
         </el-tag>
       </div>

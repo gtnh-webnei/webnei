@@ -12,16 +12,45 @@ const { datasets, loading, error } = storeToRefs(store);
   <div class="dataset-index">
     <header class="page-header">
       <h1>{{ t('dataset.brandName') }}</h1>
-      <p class="lead">{{ t('dataset.leadText') }}</p>
+      <p class="lead">
+        {{ t('dataset.leadText') }}
+      </p>
     </header>
 
-    <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
-    <el-skeleton v-if="loading" :rows="4" animated />
-    <el-empty v-else-if="datasets.length === 0" :description="t('dataset.emptyState')" />
+    <el-alert
+      v-if="error"
+      :title="error"
+      type="error"
+      :closable="false"
+      show-icon
+    />
+    <el-skeleton
+      v-if="loading"
+      :rows="4"
+      animated
+    />
+    <el-empty
+      v-else-if="datasets.length === 0"
+      :description="t('dataset.emptyState')"
+    />
 
-    <el-row v-else :gutter="20">
-      <el-col v-for="d in datasets" :key="d.datasetId" :xs="24" :sm="24" :md="12" :lg="12" :xl="8">
-        <el-card class="dataset-card" shadow="hover">
+    <el-row
+      v-else
+      :gutter="20"
+    >
+      <el-col
+        v-for="d in datasets"
+        :key="d.datasetId"
+        :xs="24"
+        :sm="24"
+        :md="12"
+        :lg="12"
+        :xl="8"
+      >
+        <el-card
+          class="dataset-card"
+          shadow="hover"
+        >
           <template #header>
             <div class="card-header">
               <div class="title-block">
@@ -30,7 +59,13 @@ const { datasets, loading, error } = storeToRefs(store);
                   {{ d.packSlug }} · {{ d.packVersion }} · {{ d.variant }} · {{ d.language }}
                 </span>
               </div>
-              <el-tag type="info" effect="plain" size="small"> MC {{ d.minecraftVersion }} </el-tag>
+              <el-tag
+                type="info"
+                effect="plain"
+                size="small"
+              >
+                MC {{ d.minecraftVersion }}
+              </el-tag>
             </div>
           </template>
 
@@ -46,7 +81,13 @@ const { datasets, loading, error } = storeToRefs(store);
             <div class="meta-row plugins">
               <span class="k">{{ t('dataset.plugins') }}</span>
               <span class="tags">
-                <el-tag v-for="p in d.activePlugins" :key="p" size="small" effect="light" round>
+                <el-tag
+                  v-for="p in d.activePlugins"
+                  :key="p"
+                  size="small"
+                  effect="light"
+                  round
+                >
                   {{ p }}
                 </el-tag>
               </span>
@@ -56,7 +97,9 @@ const { datasets, loading, error } = storeToRefs(store);
           <template #footer>
             <div class="actions">
               <router-link :to="`/datasets/${encodeURIComponent(d.datasetId)}/items`">
-                <el-button type="primary">{{ t('dataset.startBrowsing') }}</el-button>
+                <el-button type="primary">
+                  {{ t('dataset.startBrowsing') }}
+                </el-button>
               </router-link>
               <router-link :to="`/datasets/${encodeURIComponent(d.datasetId)}/mods`">
                 <el-button>{{ t('dataset.modList') }}</el-button>

@@ -64,10 +64,19 @@ function onAuxClick(e: MouseEvent) {
       loading="lazy"
       decoding="async"
       draggable="false"
-    />
-    <div v-else class="placeholder">?</div>
+    >
+    <div
+      v-else
+      class="placeholder"
+    >
+      ?
+    </div>
   </div>
-  <div v-else class="item-icon empty" :style="sizeStyle" />
+  <div
+    v-else
+    class="item-icon empty"
+    :style="sizeStyle"
+  />
 </template>
 
 <style scoped>

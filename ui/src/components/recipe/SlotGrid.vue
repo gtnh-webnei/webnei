@@ -117,7 +117,10 @@ defineExpose({ grid });
       gap: GAP + 'px',
     }"
   >
-    <template v-for="(s, idx) in grid.cells" :key="idx">
+    <template
+      v-for="(s, idx) in grid.cells"
+      :key="idx"
+    >
       <slot
         name="cell"
         :slot-data="s"

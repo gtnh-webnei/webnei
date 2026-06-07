@@ -104,9 +104,19 @@ onMounted(load);
 <template>
   <div class="item-containers">
     <header class="header">
-      <el-button text @click="back">{{ t('common.back') }}</el-button>
+      <el-button
+        text
+        @click="back"
+      >
+        {{ t('common.back') }}
+      </el-button>
       <div class="title-row">
-        <img v-if="item?.assetUrl" :src="item.assetUrl" class="hero-icon" :alt="item.displayName" />
+        <img
+          v-if="item?.assetUrl"
+          :src="item.assetUrl"
+          class="hero-icon"
+          :alt="item.displayName"
+        >
         <div>
           <h1>
             {{ t('container.asFluidContainer', { name: item?.displayName ?? itemVariantId }) }}
@@ -133,10 +143,25 @@ onMounted(load);
       </div>
     </div>
 
-    <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
-    <el-skeleton v-if="loading" :rows="8" animated />
+    <el-alert
+      v-if="error"
+      :title="error"
+      type="error"
+      :closable="false"
+      show-icon
+    />
+    <el-skeleton
+      v-if="loading"
+      :rows="8"
+      animated
+    />
 
-    <el-table v-else :data="filtered" stripe class="container-table">
+    <el-table
+      v-else
+      :data="filtered"
+      stripe
+      class="container-table"
+    >
       <el-table-column
         :label="t('container.colFluid')"
         min-width="200"
@@ -150,16 +175,31 @@ onMounted(load);
             @pick="pickFluid"
             @lookup="lookupFluid"
           />
-          <div class="sub">{{ row.fluidVariantId }}</div>
+          <div class="sub">
+            {{ row.fluidVariantId }}
+          </div>
         </template>
       </el-table-column>
-      <el-table-column :label="t('container.colFilledContainer')" min-width="220">
+      <el-table-column
+        :label="t('container.colFilledContainer')"
+        min-width="220"
+      >
         <template #default="{ row }">
-          <div class="cell-row" @click="goToItem(row.containerItemVariantId)">
-            <img v-if="row.containerAssetUrl" :src="row.containerAssetUrl" />
+          <div
+            class="cell-row"
+            @click="goToItem(row.containerItemVariantId)"
+          >
+            <img
+              v-if="row.containerAssetUrl"
+              :src="row.containerAssetUrl"
+            >
             <div>
-              <div class="link">{{ row.containerDisplayName ?? row.containerItemVariantId }}</div>
-              <div class="sub">{{ row.containerItemVariantId }}</div>
+              <div class="link">
+                {{ row.containerDisplayName ?? row.containerItemVariantId }}
+              </div>
+              <div class="sub">
+                {{ row.containerItemVariantId }}
+              </div>
             </div>
           </div>
         </template>
@@ -172,19 +212,36 @@ onMounted(load);
         :sort-by="(r: FluidContainerEntry) => r.amount"
       >
         <template #default="{ row }">
-          <span v-if="row.amount > 0" class="amount">{{ row.amount }} mB</span>
-          <span v-else class="amount-zero">—</span>
+          <span
+            v-if="row.amount > 0"
+            class="amount"
+          >{{ row.amount }} mB</span>
+          <span
+            v-else
+            class="amount-zero"
+          >—</span>
         </template>
       </el-table-column>
-      <el-table-column :label="t('container.colEmptyContainer')" min-width="220">
+      <el-table-column
+        :label="t('container.colEmptyContainer')"
+        min-width="220"
+      >
         <template #default="{ row }">
-          <div class="cell-row" @click="goToItem(row.emptyContainerItemVariantId)">
-            <img v-if="row.emptyContainerAssetUrl" :src="row.emptyContainerAssetUrl" />
+          <div
+            class="cell-row"
+            @click="goToItem(row.emptyContainerItemVariantId)"
+          >
+            <img
+              v-if="row.emptyContainerAssetUrl"
+              :src="row.emptyContainerAssetUrl"
+            >
             <div>
               <div class="link">
                 {{ row.emptyContainerDisplayName ?? row.emptyContainerItemVariantId }}
               </div>
-              <div class="sub">{{ row.emptyContainerItemVariantId }}</div>
+              <div class="sub">
+                {{ row.emptyContainerItemVariantId }}
+              </div>
             </div>
           </div>
         </template>

@@ -56,7 +56,10 @@ function onAuxClick(e: MouseEvent) {
 <template>
   <AppTooltip :placement="placement">
     <template #content>
-      <ItemTooltipContent :item="item" :context="{ hint: t('common.pickHintSlot') }" />
+      <ItemTooltipContent
+        :item="item"
+        :context="{ hint: t('common.pickHintSlot') }"
+      />
     </template>
 
     <button
@@ -67,8 +70,16 @@ function onAuxClick(e: MouseEvent) {
       @contextmenu="lookup('recipe', $event)"
       @auxclick="onAuxClick"
     >
-      <img v-if="item.assetUrl" :src="item.assetUrl" :alt="displayName" loading="lazy" />
-      <span v-if="variant === 'text' || variant === 'row'" class="item-ref-name">{{
+      <img
+        v-if="item.assetUrl"
+        :src="item.assetUrl"
+        :alt="displayName"
+        loading="lazy"
+      >
+      <span
+        v-if="variant === 'text' || variant === 'row'"
+        class="item-ref-name"
+      >{{
         displayName
       }}</span>
     </button>

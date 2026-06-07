@@ -27,19 +27,42 @@ const descriptionLines = computed(() =>
 </script>
 
 <template>
-  <el-card class="recipe-panel" shadow="never">
+  <el-card
+    class="recipe-panel"
+    shadow="never"
+  >
     <template #header>
       <div class="header">
         <div class="title-block">
-          <div class="title">{{ recipe.categoryDisplayName }}</div>
+          <div class="title">
+            {{ recipe.categoryDisplayName }}
+          </div>
           <div class="sub">
-            <el-tag size="small" type="info" effect="plain" round class="mod-tag">
+            <el-tag
+              size="small"
+              type="info"
+              effect="plain"
+              round
+              class="mod-tag"
+            >
               {{ recipe.sourceModName }}
             </el-tag>
-            <el-tag v-if="shapeless" size="small" type="warning" effect="dark" round>
+            <el-tag
+              v-if="shapeless"
+              size="small"
+              type="warning"
+              effect="dark"
+              round
+            >
               {{ t('recipe.shapeless') }}
             </el-tag>
-            <el-tag v-else-if="declaredOrdered" size="small" type="success" effect="plain" round>
+            <el-tag
+              v-else-if="declaredOrdered"
+              size="small"
+              type="success"
+              effect="plain"
+              round
+            >
               {{ t('recipe.shapedPrefix', { w: declaredCols, h: declaredRows }) }}
             </el-tag>
           </div>
@@ -51,8 +74,15 @@ const descriptionLines = computed(() =>
     </template>
 
     <div class="body">
-      <div v-if="descriptionLines.length" class="description-block">
-        <div v-for="(line, idx) in descriptionLines" :key="idx" class="description-line">
+      <div
+        v-if="descriptionLines.length"
+        class="description-block"
+      >
+        <div
+          v-for="(line, idx) in descriptionLines"
+          :key="idx"
+          class="description-line"
+        >
           {{ line }}
         </div>
       </div>

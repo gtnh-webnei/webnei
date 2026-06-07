@@ -374,37 +374,74 @@ const rewardTypeLabels = computed<Record<string, string>>(() => ({
 <template>
   <div class="quest-line-canvas">
     <header class="header">
-      <el-button text @click="back">{{ $t('common.back') }}</el-button>
+      <el-button
+        text
+        @click="back"
+      >
+        {{ $t('common.back') }}
+      </el-button>
       <div class="title-block">
         <h1>{{ lineDetail?.line?.name ?? $t('common.loading') }}</h1>
-        <p v-if="lineDetail" class="lead">
+        <p
+          v-if="lineDetail"
+          class="lead"
+        >
           {{ $t('quest.nodeTaskCount', { count: lineDetail.nodes.length }) }} ·
           {{ $t('quest.nodeEdgeCount', { count: lineDetail.edges.length }) }}
         </p>
       </div>
     </header>
 
-    <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
+    <el-alert
+      v-if="error"
+      :title="error"
+      type="error"
+      :closable="false"
+      show-icon
+    />
 
     <div class="canvas-frame">
-      <div v-if="loading" class="canvas-loading">
-        <el-skeleton :rows="6" animated />
+      <div
+        v-if="loading"
+        class="canvas-loading"
+      >
+        <el-skeleton
+          :rows="6"
+          animated
+        />
       </div>
-      <div ref="containerRef" class="canvas-host" />
+      <div
+        ref="containerRef"
+        class="canvas-host"
+      />
       <div
         v-if="lineDetail"
         class="canvas-toolbar"
         role="toolbar"
         :aria-label="$t('quest.canvasToolbar')"
       >
-        <el-tooltip :content="$t('quest.hoverTooltip')" placement="left">
+        <el-tooltip
+          :content="$t('quest.hoverTooltip')"
+          placement="left"
+        >
           <div class="ct-switch">
-            <el-switch v-model="questHoverEnabled" size="small" :disabled="!hoverCapable" />
+            <el-switch
+              v-model="questHoverEnabled"
+              size="small"
+              :disabled="!hoverCapable"
+            />
           </div>
         </el-tooltip>
         <div class="ct-divider" />
-        <el-tooltip :content="$t('quest.fitWindow')" placement="left">
-          <button type="button" class="ct-btn" @click="canvasFit">
+        <el-tooltip
+          :content="$t('quest.fitWindow')"
+          placement="left"
+        >
+          <button
+            type="button"
+            class="ct-btn"
+            @click="canvasFit"
+          >
             <svg
               viewBox="0 0 24 24"
               width="16"
@@ -422,11 +459,27 @@ const rewardTypeLabels = computed<Record<string, string>>(() => ({
             </svg>
           </button>
         </el-tooltip>
-        <el-tooltip :content="$t('quest.resetZoom')" placement="left">
-          <button type="button" class="ct-btn" @click="canvasReset">1:1</button>
+        <el-tooltip
+          :content="$t('quest.resetZoom')"
+          placement="left"
+        >
+          <button
+            type="button"
+            class="ct-btn"
+            @click="canvasReset"
+          >
+            1:1
+          </button>
         </el-tooltip>
-        <el-tooltip :content="$t('quest.centerGraph')" placement="left">
-          <button type="button" class="ct-btn" @click="canvasCenter">
+        <el-tooltip
+          :content="$t('quest.centerGraph')"
+          placement="left"
+        >
+          <button
+            type="button"
+            class="ct-btn"
+            @click="canvasCenter"
+          >
             <svg
               viewBox="0 0 24 24"
               width="16"
@@ -437,14 +490,29 @@ const rewardTypeLabels = computed<Record<string, string>>(() => ({
               stroke-linecap="round"
               stroke-linejoin="round"
             >
-              <circle cx="12" cy="12" r="9" />
-              <circle cx="12" cy="12" r="3" />
+              <circle
+                cx="12"
+                cy="12"
+                r="9"
+              />
+              <circle
+                cx="12"
+                cy="12"
+                r="3"
+              />
             </svg>
           </button>
         </el-tooltip>
         <div class="ct-divider" />
-        <el-tooltip :content="$t('quest.zoomIn')" placement="left">
-          <button type="button" class="ct-btn" @click="canvasZoomIn">
+        <el-tooltip
+          :content="$t('quest.zoomIn')"
+          placement="left"
+        >
+          <button
+            type="button"
+            class="ct-btn"
+            @click="canvasZoomIn"
+          >
             <svg
               viewBox="0 0 24 24"
               width="16"
@@ -455,13 +523,30 @@ const rewardTypeLabels = computed<Record<string, string>>(() => ({
               stroke-linecap="round"
               stroke-linejoin="round"
             >
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
+              <line
+                x1="12"
+                y1="5"
+                x2="12"
+                y2="19"
+              />
+              <line
+                x1="5"
+                y1="12"
+                x2="19"
+                y2="12"
+              />
             </svg>
           </button>
         </el-tooltip>
-        <el-tooltip :content="$t('quest.zoomOut')" placement="left">
-          <button type="button" class="ct-btn" @click="canvasZoomOut">
+        <el-tooltip
+          :content="$t('quest.zoomOut')"
+          placement="left"
+        >
+          <button
+            type="button"
+            class="ct-btn"
+            @click="canvasZoomOut"
+          >
             <svg
               viewBox="0 0 24 24"
               width="16"
@@ -472,21 +557,43 @@ const rewardTypeLabels = computed<Record<string, string>>(() => ({
               stroke-linecap="round"
               stroke-linejoin="round"
             >
-              <line x1="5" y1="12" x2="19" y2="12" />
+              <line
+                x1="5"
+                y1="12"
+                x2="19"
+                y2="12"
+              />
             </svg>
           </button>
         </el-tooltip>
       </div>
     </div>
 
-    <el-drawer v-model="drawerOpen" direction="rtl" size="480px" :with-header="false">
+    <el-drawer
+      v-model="drawerOpen"
+      direction="rtl"
+      size="480px"
+      :with-header="false"
+    >
       <div class="drawer-body">
-        <el-skeleton v-if="questLoading" :rows="6" animated />
-        <el-alert v-else-if="questError" :title="questError" type="error" :closable="false" />
+        <el-skeleton
+          v-if="questLoading"
+          :rows="6"
+          animated
+        />
+        <el-alert
+          v-else-if="questError"
+          :title="questError"
+          type="error"
+          :closable="false"
+        />
         <template v-else-if="questDetail">
           <header class="quest-hero">
             <div class="quest-icon">
-              <img v-if="questDetail.node.iconAssetUrl" :src="questDetail.node.iconAssetUrl" />
+              <img
+                v-if="questDetail.node.iconAssetUrl"
+                :src="questDetail.node.iconAssetUrl"
+              >
             </div>
             <div class="quest-title">
               <h2>{{ questDetail.node.name }}</h2>
@@ -510,22 +617,38 @@ const rewardTypeLabels = computed<Record<string, string>>(() => ({
             class="quest-desc"
           />
 
-          <section v-if="questDetail.tasks.length" class="quest-section">
+          <section
+            v-if="questDetail.tasks.length"
+            class="quest-section"
+          >
             <div class="section-title">
               {{ $t('quest.taskConditions', { count: questDetail.tasks.length }) }}
             </div>
             <div class="task-list">
-              <div v-for="task in questDetail.tasks" :key="task.taskId" class="task-card">
+              <div
+                v-for="task in questDetail.tasks"
+                :key="task.taskId"
+                class="task-card"
+              >
                 <div class="task-header">
-                  <el-tag size="small" type="primary" effect="plain" round>
+                  <el-tag
+                    size="small"
+                    type="primary"
+                    effect="plain"
+                    round
+                  >
                     {{ taskTypeLabels[task.taskType] ?? task.taskType }}
                   </el-tag>
                   <span class="task-name">{{ task.name }}</span>
-                  <span v-if="task.numberRequired > 0" class="task-num"
-                    >×{{ task.numberRequired }}</span
-                  >
+                  <span
+                    v-if="task.numberRequired > 0"
+                    class="task-num"
+                  >×{{ task.numberRequired }}</span>
                 </div>
-                <div v-if="task.itemGroups.length" class="task-items">
+                <div
+                  v-if="task.itemGroups.length"
+                  class="task-items"
+                >
                   <div
                     v-for="g in task.itemGroups"
                     :key="`tg-${task.taskId}-${g.listIndex}`"
@@ -538,42 +661,73 @@ const rewardTypeLabels = computed<Record<string, string>>(() => ({
                       :title="e.displayName ?? e.itemVariantId ?? e.fluidVariantId ?? ''"
                       @click="e.itemVariantId && goToItem(e.itemVariantId)"
                     >
-                      <img v-if="e.assetUrl" :src="e.assetUrl" loading="lazy" />
+                      <img
+                        v-if="e.assetUrl"
+                        :src="e.assetUrl"
+                        loading="lazy"
+                      >
                       <span class="item-name">{{
                         e.displayName ?? e.itemVariantId ?? e.fluidVariantId
                       }}</span>
-                      <span v-if="e.amount > 1" class="item-amount">×{{ e.amount }}</span>
+                      <span
+                        v-if="e.amount > 1"
+                        class="item-amount"
+                      >×{{ e.amount }}</span>
                     </div>
                   </div>
                 </div>
-                <div v-if="task.mobVariantId" class="task-mob">
+                <div
+                  v-if="task.mobVariantId"
+                  class="task-mob"
+                >
                   {{ $t('quest.huntTarget') }}{{ task.mobVariantId }}
                 </div>
-                <div v-if="task.dimensionName" class="task-mob">
+                <div
+                  v-if="task.dimensionName"
+                  class="task-mob"
+                >
                   {{ $t('quest.dimension') }}{{ task.dimensionName }}
                 </div>
               </div>
             </div>
           </section>
 
-          <section v-if="questDetail.rewards.length" class="quest-section">
+          <section
+            v-if="questDetail.rewards.length"
+            class="quest-section"
+          >
             <div class="section-title">
               {{ $t('quest.rewards', { count: questDetail.rewards.length }) }}
             </div>
             <div class="task-list">
-              <div v-for="reward in questDetail.rewards" :key="reward.rewardId" class="task-card">
+              <div
+                v-for="reward in questDetail.rewards"
+                :key="reward.rewardId"
+                class="task-card"
+              >
                 <div class="task-header">
-                  <el-tag size="small" type="warning" effect="plain" round>
+                  <el-tag
+                    size="small"
+                    type="warning"
+                    effect="plain"
+                    round
+                  >
                     {{ rewardTypeLabels[reward.rewardType] ?? reward.rewardType }}
                   </el-tag>
                   <span class="task-name">{{ reward.name }}</span>
-                  <span v-if="reward.xp > 0" class="task-num">{{
+                  <span
+                    v-if="reward.xp > 0"
+                    class="task-num"
+                  >{{
                     reward.levels
                       ? $t('quest.xpLevel', { count: reward.xp })
                       : $t('quest.xpPoints', { count: reward.xp })
                   }}</span>
                 </div>
-                <div v-if="reward.itemGroups.length" class="task-items">
+                <div
+                  v-if="reward.itemGroups.length"
+                  class="task-items"
+                >
                   <div
                     v-for="g in reward.itemGroups"
                     :key="`rg-${reward.rewardId}-${g.listIndex}`"
@@ -586,11 +740,18 @@ const rewardTypeLabels = computed<Record<string, string>>(() => ({
                       :title="e.displayName ?? e.itemVariantId ?? e.fluidVariantId ?? ''"
                       @click="e.itemVariantId && goToItem(e.itemVariantId)"
                     >
-                      <img v-if="e.assetUrl" :src="e.assetUrl" loading="lazy" />
+                      <img
+                        v-if="e.assetUrl"
+                        :src="e.assetUrl"
+                        loading="lazy"
+                      >
                       <span class="item-name">{{
                         e.displayName ?? e.itemVariantId ?? e.fluidVariantId
                       }}</span>
-                      <span v-if="e.amount > 1" class="item-amount">×{{ e.amount }}</span>
+                      <span
+                        v-if="e.amount > 1"
+                        class="item-amount"
+                      >×{{ e.amount }}</span>
                     </div>
                   </div>
                 </div>

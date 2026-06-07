@@ -43,7 +43,9 @@ function openMob(mob: MobSummary) {
   <div class="mob-browser">
     <header class="header">
       <h1>{{ $t('mob.pageTitle') }}</h1>
-      <p class="lead">{{ $t('common.totalCount') }} {{ total.toLocaleString() }}{{ $t('mob.totalLabel') }}</p>
+      <p class="lead">
+        {{ $t('common.totalCount') }} {{ total.toLocaleString() }}{{ $t('mob.totalLabel') }}
+      </p>
     </header>
 
     <BrowserToolbar
@@ -56,11 +58,28 @@ function openMob(mob: MobSummary) {
       :total-suffix="$t('common.items')"
     />
 
-    <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
-    <el-skeleton v-if="loading && items.length === 0" :rows="6" animated />
-    <el-empty v-else-if="!loading && items.length === 0" :description="$t('mob.noMatch')" />
+    <el-alert
+      v-if="error"
+      :title="error"
+      type="error"
+      :closable="false"
+      show-icon
+    />
+    <el-skeleton
+      v-if="loading && items.length === 0"
+      :rows="6"
+      animated
+    />
+    <el-empty
+      v-else-if="!loading && items.length === 0"
+      :description="$t('mob.noMatch')"
+    />
 
-    <div v-else v-loading="loading" class="grid">
+    <div
+      v-else
+      v-loading="loading"
+      class="grid"
+    >
       <MobCard
         v-for="mob in items"
         :key="mob.mobVariantId"
@@ -69,7 +88,10 @@ function openMob(mob: MobSummary) {
       />
     </div>
 
-    <div v-if="total > 0" class="pager">
+    <div
+      v-if="total > 0"
+      class="pager"
+    >
       <el-pagination
         v-model:current-page="page"
         v-model:page-size="pageSize"

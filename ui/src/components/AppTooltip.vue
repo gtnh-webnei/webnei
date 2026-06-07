@@ -56,7 +56,9 @@ withDefaults(
   >
     <template #content>
       <div class="webnei-tooltip-content">
-        <slot name="content">{{ content }}</slot>
+        <slot name="content">
+          {{ content }}
+        </slot>
       </div>
     </template>
     <slot />

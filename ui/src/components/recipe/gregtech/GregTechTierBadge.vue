@@ -30,7 +30,10 @@ const color = computed(() => TIER_COLORS[props.tier] ?? TIER_COLORS.LV);
 </script>
 
 <template>
-  <div class="tier-badge" :style="{ color: color.fg, background: color.bg, borderColor: color.fg }">
+  <div
+    class="tier-badge"
+    :style="{ color: color.fg, background: color.bg, borderColor: color.fg }"
+  >
     <span class="label">{{ t('recipe.tier') }}</span>
     <span class="tier">{{ tier }}</span>
   </div>

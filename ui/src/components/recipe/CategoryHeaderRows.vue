@@ -108,8 +108,14 @@ watch(
 </script>
 
 <template>
-  <div v-if="machines.length > 0 || tiers.length > 0" class="header-rows">
-    <section v-if="!hideMachines && machines.length > 0" class="row">
+  <div
+    v-if="machines.length > 0 || tiers.length > 0"
+    class="header-rows"
+  >
+    <section
+      v-if="!hideMachines && machines.length > 0"
+      class="row"
+    >
       <div class="row-label">
         <span>{{ t('category.applicableMachines') }}</span>
         <span class="row-count">{{ machines.length }}</span>
@@ -120,20 +126,30 @@ watch(
           :key="m.itemVariantId"
           :content="m.displayName ?? m.itemVariantId"
         >
-          <button type="button" class="machine-cell" @click="openMachine(m)">
+          <button
+            type="button"
+            class="machine-cell"
+            @click="openMachine(m)"
+          >
             <img
               v-if="m.assetUrl"
               :src="m.assetUrl"
               :alt="m.displayName ?? m.itemVariantId"
               class="machine-icon"
+            >
+            <span
+              v-else
+              class="machine-icon placeholder"
             />
-            <span v-else class="machine-icon placeholder" />
           </button>
         </AppTooltip>
       </div>
     </section>
 
-    <section v-if="tiers.length > 0" class="row">
+    <section
+      v-if="tiers.length > 0"
+      class="row"
+    >
       <div class="row-label">
         <span>{{ t('category.voltage') }}</span>
         <span class="row-count">{{ tiers.length }}</span>

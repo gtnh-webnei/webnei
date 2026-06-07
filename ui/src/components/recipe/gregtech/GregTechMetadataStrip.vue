@@ -67,18 +67,32 @@ function colorCodeToCss(code: string | undefined): string {
 </script>
 
 <template>
-  <div v-if="items.length" class="display-strip">
+  <div
+    v-if="items.length"
+    class="display-strip"
+  >
     <dl class="meta-list">
-      <template v-for="(item, idx) in items" :key="idx">
+      <template
+        v-for="(item, idx) in items"
+        :key="idx"
+      >
         <template v-if="item.label === null">
           <dt class="label freetext-label" />
-          <dd class="value freetext" :style="colorCodeToCss(item.colorCode)">
+          <dd
+            class="value freetext"
+            :style="colorCodeToCss(item.colorCode)"
+          >
             {{ stripColorCode(item.value) }}
           </dd>
         </template>
         <template v-else>
-          <dt class="label">{{ item.label }}</dt>
-          <dd class="value" :style="colorCodeToCss(item.colorCode)">
+          <dt class="label">
+            {{ item.label }}
+          </dt>
+          <dd
+            class="value"
+            :style="colorCodeToCss(item.colorCode)"
+          >
             {{ stripColorCode(item.value) }}
           </dd>
         </template>

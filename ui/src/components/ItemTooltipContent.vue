@@ -27,5 +27,9 @@ const ingredient = computed(() => ({
 </script>
 
 <template>
-  <IngredientTooltipBase :ingredient="ingredient" :context="context" variant="item" />
+  <IngredientTooltipBase
+    :ingredient="ingredient"
+    :context="context"
+    variant="item"
+  />
 </template>

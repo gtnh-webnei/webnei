@@ -80,8 +80,18 @@ function onSortChange({
       :total-suffix="`/ ${total}`"
     />
 
-    <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
-    <el-skeleton v-if="loading && items.length === 0" :rows="6" animated />
+    <el-alert
+      v-if="error"
+      :title="error"
+      type="error"
+      :closable="false"
+      show-icon
+    />
+    <el-skeleton
+      v-if="loading && items.length === 0"
+      :rows="6"
+      animated
+    />
 
     <el-table
       v-else
@@ -92,7 +102,12 @@ function onSortChange({
       class="mod-table"
       @sort-change="onSortChange"
     >
-      <el-table-column prop="modId" :label="t('mod.colModId')" min-width="170" sortable="custom">
+      <el-table-column
+        prop="modId"
+        :label="t('mod.colModId')"
+        min-width="170"
+        sortable="custom"
+      >
         <template #default="{ row }">
           <code class="mod-id">{{ row.modId }}</code>
         </template>
@@ -111,7 +126,13 @@ function onSortChange({
         sortable="custom"
       >
         <template #default="{ row }">
-          <el-tag size="small" type="info" effect="plain">{{ row.version }}</el-tag>
+          <el-tag
+            size="small"
+            type="info"
+            effect="plain"
+          >
+            {{ row.version }}
+          </el-tag>
         </template>
       </el-table-column>
       <el-table-column
@@ -131,7 +152,11 @@ function onSortChange({
         sortable="custom"
       >
         <template #default="{ row }">
-          <el-tag size="small" :type="row.sourceType === 'file' ? '' : 'warning'" effect="plain">
+          <el-tag
+            size="small"
+            :type="row.sourceType === 'file' ? '' : 'warning'"
+            effect="plain"
+          >
             {{ row.sourceType }}
           </el-tag>
         </template>
@@ -144,13 +169,30 @@ function onSortChange({
         sortable="custom"
       >
         <template #default="{ row }">
-          <el-icon v-if="row.enabled" color="var(--el-color-success)"><Check /></el-icon>
-          <el-icon v-else color="var(--el-color-danger)"><Close /></el-icon>
+          <el-icon
+            v-if="row.enabled"
+            color="var(--el-color-success)"
+          >
+            <Check />
+          </el-icon>
+          <el-icon
+            v-else
+            color="var(--el-color-danger)"
+          >
+            <Close />
+          </el-icon>
         </template>
       </el-table-column>
-      <el-table-column prop="sourceSha256" :label="t('mod.colSha256')" min-width="120">
+      <el-table-column
+        prop="sourceSha256"
+        :label="t('mod.colSha256')"
+        min-width="120"
+      >
         <template #default="{ row }">
-          <el-tooltip :content="row.sourceSha256" placement="top">
+          <el-tooltip
+            :content="row.sourceSha256"
+            placement="top"
+          >
             <code class="sha">{{ row.sourceSha256.slice(0, 8) }}…</code>
           </el-tooltip>
         </template>

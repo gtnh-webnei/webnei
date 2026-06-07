@@ -50,7 +50,12 @@ function routeViewKey(viewRoute: RouteLocationNormalizedLoaded): string {
   <el-container class="app-shell">
     <el-header class="app-header">
       <div class="brand">
-        <router-link to="/" class="brand-link">{{ t('dataset.brandName') }}</router-link>
+        <router-link
+          to="/"
+          class="brand-link"
+        >
+          {{ t('dataset.brandName') }}
+        </router-link>
       </div>
       <el-menu
         mode="horizontal"
@@ -59,14 +64,29 @@ function routeViewKey(viewRoute: RouteLocationNormalizedLoaded): string {
         router
         class="nav-menu"
       >
-        <template v-for="item in nav" :key="item.to ?? item.index">
-          <el-sub-menu v-if="item.children" :index="item.index">
-            <template #title>{{ item.label }}</template>
-            <el-menu-item v-for="child in item.children" :key="child.to" :index="child.to">
+        <template
+          v-for="item in nav"
+          :key="item.to ?? item.index"
+        >
+          <el-sub-menu
+            v-if="item.children"
+            :index="item.index"
+          >
+            <template #title>
+              {{ item.label }}
+            </template>
+            <el-menu-item
+              v-for="child in item.children"
+              :key="child.to"
+              :index="child.to"
+            >
               {{ child.label }}
             </el-menu-item>
           </el-sub-menu>
-          <el-menu-item v-else :index="item.to">
+          <el-menu-item
+            v-else
+            :index="item.to"
+          >
             {{ item.label }}
           </el-menu-item>
         </template>
@@ -75,17 +95,24 @@ function routeViewKey(viewRoute: RouteLocationNormalizedLoaded): string {
       <DatasetSwitcher />
       <ThemeSwitcher />
     </el-header>
-    <el-main class="app-main" :class="{ 'is-full-height': fullHeight }">
+    <el-main
+      class="app-main"
+      :class="{ 'is-full-height': fullHeight }"
+    >
       <div :class="fullHeight ? 'page-full' : 'page'">
         <router-view v-slot="{ Component, route: viewRoute }">
           <keep-alive :max="32">
             <component
-              v-if="viewRoute.meta.keepAlive"
               :is="Component"
+              v-if="viewRoute.meta.keepAlive"
               :key="routeViewKey(viewRoute)"
             />
           </keep-alive>
-          <component v-if="!viewRoute.meta.keepAlive" :is="Component" :key="viewRoute.fullPath" />
+          <component
+            :is="Component"
+            v-if="!viewRoute.meta.keepAlive"
+            :key="viewRoute.fullPath"
+          />
         </router-view>
       </div>
     </el-main>

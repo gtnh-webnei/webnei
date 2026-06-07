@@ -77,11 +77,27 @@ onMounted(load);
       </div>
     </div>
 
-    <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
-    <el-skeleton v-if="loading && lines.length === 0" :rows="6" animated />
-    <el-empty v-else-if="filtered.length === 0" :description="$t('quest.noQuestLines')" />
+    <el-alert
+      v-if="error"
+      :title="error"
+      type="error"
+      :closable="false"
+      show-icon
+    />
+    <el-skeleton
+      v-if="loading && lines.length === 0"
+      :rows="6"
+      animated
+    />
+    <el-empty
+      v-else-if="filtered.length === 0"
+      :description="$t('quest.noQuestLines')"
+    />
 
-    <div v-else class="grid">
+    <div
+      v-else
+      class="grid"
+    >
       <div
         v-for="line in filtered"
         :key="line.questLineId"
@@ -93,16 +109,34 @@ onMounted(load);
         @keydown.space.prevent="openLine(line)"
       >
         <div class="icon-wrap">
-          <img v-if="line.iconAssetUrl" :src="line.iconAssetUrl" :alt="line.name" loading="lazy" />
+          <img
+            v-if="line.iconAssetUrl"
+            :src="line.iconAssetUrl"
+            :alt="line.name"
+            loading="lazy"
+          >
         </div>
         <div class="meta">
-          <div class="name">{{ line.name }}</div>
-          <div class="sub">
-            <el-tag size="small" type="info" effect="plain" round>{{
-              $t('quest.taskCount', { count: line.questCount })
-            }}</el-tag>
+          <div class="name">
+            {{ line.name }}
           </div>
-          <QuestText v-if="line.description" :text="line.description" class="desc" />
+          <div class="sub">
+            <el-tag
+              size="small"
+              type="info"
+              effect="plain"
+              round
+            >
+              {{
+                $t('quest.taskCount', { count: line.questCount })
+              }}
+            </el-tag>
+          </div>
+          <QuestText
+            v-if="line.description"
+            :text="line.description"
+            class="desc"
+          />
         </div>
       </div>
     </div>

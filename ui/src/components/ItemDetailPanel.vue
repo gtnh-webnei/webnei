@@ -151,10 +151,23 @@ onMounted(() => {
 
 <template>
   <div class="item-detail">
-    <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
-    <el-skeleton v-if="loading" :rows="8" animated />
+    <el-alert
+      v-if="error"
+      :title="error"
+      type="error"
+      :closable="false"
+      show-icon
+    />
+    <el-skeleton
+      v-if="loading"
+      :rows="8"
+      animated
+    />
 
-    <div v-else-if="detail" class="content">
+    <div
+      v-else-if="detail"
+      class="content"
+    >
       <header class="hero">
         <div class="icon-wrap">
           <img
@@ -162,29 +175,55 @@ onMounted(() => {
             :src="detail.assetUrl"
             :alt="detail.displayName"
             class="hero-icon"
-          />
+          >
         </div>
         <div class="title-block">
-          <h1 class="title">{{ detail.displayName || detail.registryName }}</h1>
+          <h1 class="title">
+            {{ detail.displayName || detail.registryName }}
+          </h1>
           <div class="subtitle">
-            <el-tag size="default" type="info" effect="plain" round>{{ detail.modName }}</el-tag>
+            <el-tag
+              size="default"
+              type="info"
+              effect="plain"
+              round
+            >
+              {{ detail.modName }}
+            </el-tag>
           </div>
           <div class="actions">
-            <el-button type="primary" @click="goLookup('recipe')">{{
-              $t('common.viewRecipe')
-            }}</el-button>
-            <el-button @click="goLookup('usage')">{{ $t('common.viewUsage') }}</el-button>
+            <el-button
+              type="primary"
+              @click="goLookup('recipe')"
+            >
+              {{
+                $t('common.viewRecipe')
+              }}
+            </el-button>
+            <el-button @click="goLookup('usage')">
+              {{ $t('common.viewUsage') }}
+            </el-button>
           </div>
         </div>
       </header>
 
       <el-row :gutter="16">
-        <el-col :xs="24" :md="14">
-          <el-card shadow="never" class="section">
+        <el-col
+          :xs="24"
+          :md="14"
+        >
+          <el-card
+            shadow="never"
+            class="section"
+          >
             <template #header>
               <span class="section-title">{{ $t('common.basicAttributes') }}</span>
             </template>
-            <el-descriptions :column="1" border size="default">
+            <el-descriptions
+              :column="1"
+              border
+              size="default"
+            >
               <el-descriptions-item :label="$t('common.variantId')">
                 <code>{{ detail.itemVariantId }}</code>
               </el-descriptions-item>
@@ -207,20 +246,31 @@ onMounted(() => {
               <el-descriptions-item :label="$t('item.maxStackSize')">
                 {{ detail.maxStackSize }}
               </el-descriptions-item>
-              <el-descriptions-item v-if="detail.nbtHash" :label="$t('common.nbtHash')">
+              <el-descriptions-item
+                v-if="detail.nbtHash"
+                :label="$t('common.nbtHash')"
+              >
                 <code class="small">{{ detail.nbtHash }}</code>
               </el-descriptions-item>
             </el-descriptions>
           </el-card>
 
-          <el-card v-if="detail.tooltipText" shadow="never" class="section">
+          <el-card
+            v-if="detail.tooltipText"
+            shadow="never"
+            class="section"
+          >
             <template #header>
               <span class="section-title">{{ $t('common.tooltip') }}</span>
             </template>
             <MinecraftTooltipText :text="detail.tooltipText" />
           </el-card>
 
-          <el-card v-if="detail.nbtText" shadow="never" class="section">
+          <el-card
+            v-if="detail.nbtText"
+            shadow="never"
+            class="section"
+          >
             <template #header>
               <span class="section-title">{{ $t('common.nbt') }}</span>
             </template>
@@ -228,15 +278,26 @@ onMounted(() => {
           </el-card>
         </el-col>
 
-        <el-col :xs="24" :md="10">
-          <el-card v-if="detail.chemicalExpression" shadow="never" class="section">
+        <el-col
+          :xs="24"
+          :md="10"
+        >
+          <el-card
+            v-if="detail.chemicalExpression"
+            shadow="never"
+            class="section"
+          >
             <template #header>
               <span class="section-title">{{ $t('common.chemicalExpression') }}</span>
             </template>
             <code class="chemical-expression">{{ detail.chemicalExpression }}</code>
           </el-card>
 
-          <el-card v-if="detail.worldGeneration.length" shadow="never" class="section">
+          <el-card
+            v-if="detail.worldGeneration.length"
+            shadow="never"
+            class="section"
+          >
             <template #header>
               <span class="section-title">{{ $t('item.worldGeneration') }}</span>
             </template>
@@ -250,7 +311,10 @@ onMounted(() => {
               >
                 <span class="worldgen-title">{{ resource.title }}</span>
                 <span class="worldgen-type">{{ resource.type }}</span>
-                <span v-if="resource.dimensions.length" class="worldgen-dimensions">
+                <span
+                  v-if="resource.dimensions.length"
+                  class="worldgen-dimensions"
+                >
                   <span
                     v-for="dim in resource.dimensions.slice(0, 6)"
                     :key="dim.dimension"
@@ -260,8 +324,11 @@ onMounted(() => {
                       v-if="dim.iconAssetUrl && resource.section !== 'bartworks-ores'"
                       :src="dim.iconAssetUrl"
                       :alt="dim.displayName"
-                    />
-                    <span v-else class="worldgen-dimension-text">{{ dim.displayName }}</span>
+                    >
+                    <span
+                      v-else
+                      class="worldgen-dimension-text"
+                    >{{ dim.displayName }}</span>
                   </span>
                 </span>
                 <span class="worldgen-stat">{{ resource.statText }}</span>
@@ -269,13 +336,25 @@ onMounted(() => {
             </div>
           </el-card>
 
-          <el-card shadow="never" class="section">
+          <el-card
+            shadow="never"
+            class="section"
+          >
             <template #header>
               <span class="section-title">{{ $t('common.extrasInfo') }}</span>
             </template>
 
-            <el-skeleton v-if="extrasLoading" :rows="3" animated />
-            <el-alert v-else-if="extrasError" :title="extrasError" type="error" :closable="false" />
+            <el-skeleton
+              v-if="extrasLoading"
+              :rows="3"
+              animated
+            />
+            <el-alert
+              v-else-if="extrasError"
+              :title="extrasError"
+              type="error"
+              :closable="false"
+            />
 
             <template v-else-if="extras">
               <!-- 参与配方计数 -->
@@ -303,7 +382,10 @@ onMounted(() => {
               </div>
 
               <!-- 矿典 -->
-              <div v-if="extras.oreDictNames.length" class="ext-block">
+              <div
+                v-if="extras.oreDictNames.length"
+                class="ext-block"
+              >
                 <div class="ext-block-title">
                   {{ $t('item.oreDictEntries') }}
                   <span class="ext-count">{{ extras.oreDictNames.length }}</span>
@@ -323,7 +405,10 @@ onMounted(() => {
               </div>
 
               <!-- 流体容器 -->
-              <div v-if="extras.fluidContainers.length" class="ext-block">
+              <div
+                v-if="extras.fluidContainers.length"
+                class="ext-block"
+              >
                 <div class="ext-block-title">
                   {{ $t('common.fluidContainer') }}
                   <span class="ext-count">
@@ -345,7 +430,11 @@ onMounted(() => {
                       :title="c.containerDisplayName ?? c.containerItemVariantId"
                       @click="goToItem(c.containerItemVariantId)"
                     >
-                      <img v-if="c.containerAssetUrl" :src="c.containerAssetUrl" loading="lazy" />
+                      <img
+                        v-if="c.containerAssetUrl"
+                        :src="c.containerAssetUrl"
+                        loading="lazy"
+                      >
                       <span class="container-name">{{
                         c.containerDisplayName ?? c.containerItemVariantId
                       }}</span>
@@ -357,7 +446,10 @@ onMounted(() => {
                         @pick="pickFluid"
                         @lookup="lookupFluid"
                       />
-                      <span v-if="c.amount > 0" class="container-amount">{{ c.amount }} mB</span>
+                      <span
+                        v-if="c.amount > 0"
+                        class="container-amount"
+                      >{{ c.amount }} mB</span>
                       <span class="container-arrow-line">→</span>
                     </div>
                     <div
@@ -369,7 +461,7 @@ onMounted(() => {
                         v-if="c.emptyContainerAssetUrl"
                         :src="c.emptyContainerAssetUrl"
                         loading="lazy"
-                      />
+                      >
                       <span class="container-name">{{
                         c.emptyContainerDisplayName ?? c.emptyContainerItemVariantId
                       }}</span>
@@ -387,7 +479,10 @@ onMounted(() => {
               </div>
 
               <!-- Thaumcraft 要素 -->
-              <div v-if="extras.aspects.length" class="ext-block">
+              <div
+                v-if="extras.aspects.length"
+                class="ext-block"
+              >
                 <div class="ext-block-title">
                   {{ $t('item.thaumcraftAspects') }}
                   <span class="ext-count">{{ extras.aspects.length }}</span>
@@ -405,28 +500,46 @@ onMounted(() => {
                       :alt="a.name"
                       class="aspect-icon"
                       loading="lazy"
-                    />
+                    >
                     <div class="aspect-meta">
                       <div class="aspect-name">
                         {{ a.name }}
-                        <el-tag v-if="a.primal" size="small" type="warning" effect="plain" round>{{
-                          $t('item.primal')
-                        }}</el-tag>
+                        <el-tag
+                          v-if="a.primal"
+                          size="small"
+                          type="warning"
+                          effect="plain"
+                          round
+                        >
+                          {{
+                            $t('item.primal')
+                          }}
+                        </el-tag>
                       </div>
-                      <div class="aspect-amount">× {{ a.amount }}</div>
+                      <div class="aspect-amount">
+                        × {{ a.amount }}
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div v-if="!hasAnyExtras" class="ext-hint">{{ $t('common.noExtras') }}</div>
+              <div
+                v-if="!hasAnyExtras"
+                class="ext-hint"
+              >
+                {{ $t('common.noExtras') }}
+              </div>
             </template>
           </el-card>
         </el-col>
       </el-row>
     </div>
 
-    <el-empty v-else-if="!loading" :description="$t('item.notFound')" />
+    <el-empty
+      v-else-if="!loading"
+      :description="$t('item.notFound')"
+    />
   </div>
 </template>
 
