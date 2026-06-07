@@ -20,7 +20,6 @@ import moe.takochan.webnei.asset.AssetUrlBuilder;
 import moe.takochan.webnei.common.NotFoundException;
 import moe.takochan.webnei.common.PageRequest;
 import moe.takochan.webnei.common.PageResponse;
-import moe.takochan.webnei.dataset.DatasetService;
 import moe.takochan.webnei.dataset.DatasetSummary;
 import moe.takochan.webnei.fluid.FluidModOptionRepository;
 import moe.takochan.webnei.fluid.FluidVariantBrowserEntity;
@@ -47,7 +46,6 @@ import org.springframework.stereotype.Service;
 @Service
 public class RecipeService {
 
-    private final DatasetService datasetService;
     private final RecipeBrowserRepository recipeRepo;
     private final RecipeLookupBrowserRepository lookupRepo;
     private final RecipeLookupBreakdownRepository lookupBreakdownRepo;
@@ -65,8 +63,7 @@ public class RecipeService {
     private final AssetUrlBuilder assetUrlBuilder;
     private final ObjectMapper objectMapper;
 
-    public RecipeService(DatasetService datasetService,
-                        RecipeBrowserRepository recipeRepo,
+    public RecipeService(RecipeBrowserRepository recipeRepo,
                         RecipeLookupBrowserRepository lookupRepo,
                         RecipeLookupBreakdownRepository lookupBreakdownRepo,
                         RecipeSlotBrowserRepository slotRepo,
@@ -82,7 +79,6 @@ public class RecipeService {
                         NeiTextureExportRepository textureRepo,
                         AssetUrlBuilder assetUrlBuilder,
                         ObjectMapper objectMapper) {
-        this.datasetService = datasetService;
         this.recipeRepo = recipeRepo;
         this.lookupRepo = lookupRepo;
         this.lookupBreakdownRepo = lookupBreakdownRepo;
@@ -101,18 +97,17 @@ public class RecipeService {
         this.objectMapper = objectMapper;
     }
 
-    public RecipeDto detail(String datasetId, String recipeId) {
-        DatasetSummary dataset = datasetService.requireById(datasetId);
+    public RecipeDto detail(DatasetSummary dataset, String recipeId) {
         return loadRecipe(dataset, recipeId)
                 .orElseThrow(() -> new NotFoundException("Recipe not found: " + recipeId));
     }
 
     public PageResponse<RecipeDto> lookup(
-            String datasetId, RecipeLookupQuery query, PageRequest page) {
+            DatasetSummary dataset, RecipeLookupQuery query, PageRequest page) {
         if (query.target() == null || query.target().isBlank()) {
             throw new IllegalArgumentException("target is required");
         }
-        DatasetSummary dataset = datasetService.requireById(datasetId);
+        String datasetId = dataset.datasetId();
         Page<RecipeLookupBrowserEntity> result = lookupRepo.findAll(
                 lookupSpec(datasetId, query),
                 pageRequest(page, Sort.by("displayOrder").ascending()
@@ -122,11 +117,11 @@ public class RecipeService {
         return new PageResponse<>(recipes, page.page(), page.size(), result.getTotalElements());
     }
 
-    public List<HandlerBreakdownDto> lookupBreakdown(String datasetId, RecipeLookupQuery query) {
+    public List<HandlerBreakdownDto> lookupBreakdown(DatasetSummary dataset, RecipeLookupQuery query) {
         if (query.target() == null || query.target().isBlank()) {
             throw new IllegalArgumentException("target is required");
         }
-        DatasetSummary dataset = datasetService.requireById(datasetId);
+        String datasetId = dataset.datasetId();
         String kind = query.isUsage() ? "usage" : "recipe";
         List<RecipeLookupBreakdownEntity> rows = lookupBreakdownRepo.findByDatasetIdAndTargetIdAndLookupKindOrderByDisplayOrderAscCategoryIdAsc(
                 datasetId, query.target(), kind);
@@ -187,8 +182,8 @@ public class RecipeService {
     }
 
     public PageResponse<RecipeDto> listRecipesByCategory(
-            String datasetId, String categoryId, String query, String voltageTier, PageRequest page) {
-        DatasetSummary dataset = datasetService.requireById(datasetId);
+            DatasetSummary dataset, String categoryId, String query, String voltageTier, PageRequest page) {
+        String datasetId = dataset.datasetId();
         Page<RecipeBrowserEntity> result = recipeRepo.findAll(
                 recipeCategorySpec(datasetId, categoryId, query, voltageTier),
                 pageRequest(page, Sort.by("displayOrder").ascending()

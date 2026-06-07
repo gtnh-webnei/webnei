@@ -7,7 +7,6 @@ import java.util.Map;
 
 import moe.takochan.webnei.asset.AssetUrlBuilder;
 import moe.takochan.webnei.common.NotFoundException;
-import moe.takochan.webnei.dataset.DatasetService;
 import moe.takochan.webnei.dataset.DatasetSummary;
 import moe.takochan.webnei.quest.dto.QuestDetail;
 import moe.takochan.webnei.quest.dto.QuestEdge;
@@ -24,7 +23,6 @@ import org.springframework.stereotype.Service;
 @Service
 public class QuestService {
 
-    private final DatasetService datasetService;
     private final QuestLineBrowserRepository lineRepo;
     private final QuestBrowserRepository questRepo;
     private final QuestLineNodeBrowserRepository nodeRepo;
@@ -35,8 +33,7 @@ public class QuestService {
     private final QuestRewardItemBrowserRepository rewardItemRepo;
     private final AssetUrlBuilder assetUrlBuilder;
 
-    public QuestService(DatasetService datasetService,
-                        QuestLineBrowserRepository lineRepo,
+    public QuestService(QuestLineBrowserRepository lineRepo,
                         QuestBrowserRepository questRepo,
                         QuestLineNodeBrowserRepository nodeRepo,
                         QuestLineEdgeBrowserRepository edgeRepo,
@@ -45,7 +42,6 @@ public class QuestService {
                         QuestTaskItemBrowserRepository taskItemRepo,
                         QuestRewardItemBrowserRepository rewardItemRepo,
                         AssetUrlBuilder assetUrlBuilder) {
-        this.datasetService = datasetService;
         this.lineRepo = lineRepo;
         this.questRepo = questRepo;
         this.nodeRepo = nodeRepo;
@@ -57,16 +53,16 @@ public class QuestService {
         this.assetUrlBuilder = assetUrlBuilder;
     }
 
-    public List<QuestLineSummary> listLines(String datasetId) {
-        DatasetSummary dataset = datasetService.requireById(datasetId);
+    public List<QuestLineSummary> listLines(DatasetSummary dataset) {
+        String datasetId = dataset.datasetId();
         return lineRepo.findByDatasetIdOrderByOrderIndexAscQuestLineIdAsc(datasetId)
                 .stream()
                 .map(e -> toLineSummary(e, dataset))
                 .toList();
     }
 
-    public QuestLineDetail lineDetail(String datasetId, String questLineId) {
-        DatasetSummary dataset = datasetService.requireById(datasetId);
+    public QuestLineDetail lineDetail(DatasetSummary dataset, String questLineId) {
+        String datasetId = dataset.datasetId();
         QuestLineBrowserEntity line = lineRepo.findById(new QuestLineBrowserEntity.QuestLineId(datasetId, questLineId))
                 .orElseThrow(() -> new NotFoundException("Quest line not found: " + questLineId));
         List<QuestNode> nodes = nodeRepo.findByDatasetIdAndQuestLineIdOrderByPosYAscPosXAsc(datasetId, questLineId)
@@ -80,8 +76,8 @@ public class QuestService {
         return new QuestLineDetail(toLineSummary(line, dataset), nodes, edges);
     }
 
-    public QuestDetail questDetail(String datasetId, String questId) {
-        DatasetSummary dataset = datasetService.requireById(datasetId);
+    public QuestDetail questDetail(DatasetSummary dataset, String questId) {
+        String datasetId = dataset.datasetId();
         QuestBrowserEntity quest = questRepo.findById(new QuestBrowserEntity.QuestId(datasetId, questId))
                 .orElseThrow(() -> new NotFoundException("Quest not found: " + questId));
         List<QuestTaskDetail> tasks = loadTasks(dataset, questId);

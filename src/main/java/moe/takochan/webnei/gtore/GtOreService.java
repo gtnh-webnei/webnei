@@ -10,7 +10,6 @@ import java.util.Optional;
 
 import moe.takochan.webnei.asset.AssetUrlBuilder;
 import moe.takochan.webnei.common.NotFoundException;
-import moe.takochan.webnei.dataset.DatasetService;
 import moe.takochan.webnei.dataset.DatasetSummary;
 import moe.takochan.webnei.fluid.FluidModOptionEntity;
 import moe.takochan.webnei.fluid.FluidModOptionRepository;
@@ -26,7 +25,6 @@ import org.springframework.stereotype.Service;
 @Service
 public class GtOreService {
 
-    private final DatasetService datasetService;
     private final AssetUrlBuilder assetUrlBuilder;
     private final ItemVariantRepository itemVariantRepository;
     private final FluidVariantRepository fluidVariantRepository;
@@ -44,7 +42,6 @@ public class GtOreService {
     private final GtBartWorksOreLayerRepository bartWorksOreLayerRepository;
 
     public GtOreService(
-            DatasetService datasetService,
             AssetUrlBuilder assetUrlBuilder,
             ItemVariantRepository itemVariantRepository,
             FluidVariantRepository fluidVariantRepository,
@@ -60,7 +57,6 @@ public class GtOreService {
             GtUndergroundFluidBrowserRepository undergroundFluidBrowserRepository,
             GtBartWorksOreRepository bartWorksOreRepository,
             GtBartWorksOreLayerRepository bartWorksOreLayerRepository) {
-        this.datasetService = datasetService;
         this.assetUrlBuilder = assetUrlBuilder;
         this.itemVariantRepository = itemVariantRepository;
         this.fluidVariantRepository = fluidVariantRepository;
@@ -78,8 +74,8 @@ public class GtOreService {
         this.bartWorksOreLayerRepository = bartWorksOreLayerRepository;
     }
 
-    public GtResourceListResponse<GtOreVeinSummary> listOreVeins(String datasetId, String q, String dimension) {
-        DatasetSummary dataset = datasetService.requireById(datasetId);
+    public GtResourceListResponse<GtOreVeinSummary> listOreVeins(DatasetSummary dataset, String q, String dimension) {
+        String datasetId = dataset.datasetId();
         Specification<GtOreVeinEntity> spec = hasDatasetId(datasetId);
         if (q != null && !q.isBlank()) spec = spec.and(veinSearch(q));
         if (dimension != null && !dimension.isBlank()) spec = spec.and(veinHasDimension(datasetId, dimension));
@@ -90,8 +86,8 @@ public class GtOreService {
         return new GtResourceListResponse<>(items, oreVeinDimensionOptions(dataset), List.of());
     }
 
-    public GtOreVeinDetail oreVeinDetail(String datasetId, String veinName) {
-        DatasetSummary dataset = datasetService.requireById(datasetId);
+    public GtOreVeinDetail oreVeinDetail(DatasetSummary dataset, String veinName) {
+        String datasetId = dataset.datasetId();
         GtOreVeinEntity vein = oreVeinRepository.findById(new GtOreVeinEntity.OreVeinId(datasetId, veinName))
                 .orElseThrow(() -> new NotFoundException("GT ore vein not found: " + veinName));
         List<GtOreVeinLayerEntity> layers = oreVeinLayerRepository.findByDatasetIdAndVeinName(
@@ -104,8 +100,8 @@ public class GtOreService {
                 veinDimensions(dataset, veinName));
     }
 
-    public GtResourceListResponse<GtSmallOreSummary> listSmallOres(String datasetId, String q, String dimension) {
-        DatasetSummary dataset = datasetService.requireById(datasetId);
+    public GtResourceListResponse<GtSmallOreSummary> listSmallOres(DatasetSummary dataset, String q, String dimension) {
+        String datasetId = dataset.datasetId();
         Specification<GtOreSmallEntity> spec = hasDatasetId(datasetId);
         if (q != null && !q.isBlank()) spec = spec.and(smallOreSearch(q));
         if (dimension != null && !dimension.isBlank()) spec = spec.and(smallOreHasDimension(datasetId, dimension));
@@ -116,8 +112,8 @@ public class GtOreService {
         return new GtResourceListResponse<>(items, smallOreDimensionOptions(dataset), List.of());
     }
 
-    public GtSmallOreDetail smallOreDetail(String datasetId, String oreGenName) {
-        DatasetSummary dataset = datasetService.requireById(datasetId);
+    public GtSmallOreDetail smallOreDetail(DatasetSummary dataset, String oreGenName) {
+        String datasetId = dataset.datasetId();
         GtOreSmallEntity ore = oreSmallRepository.findById(new GtOreSmallEntity.OreSmallId(datasetId, oreGenName))
                 .orElseThrow(() -> new NotFoundException("GT small ore not found: " + oreGenName));
         List<GtItemRef> drops = oreSmallDropRepository.findByDatasetIdAndOreGenName(
@@ -132,8 +128,8 @@ public class GtOreService {
     }
 
     public GtResourceListResponse<GtUndergroundFluidSummary> listUndergroundFluids(
-            String datasetId, String q, String dimension) {
-        DatasetSummary dataset = datasetService.requireById(datasetId);
+            DatasetSummary dataset, String q, String dimension) {
+        String datasetId = dataset.datasetId();
         Specification<GtUndergroundFluidBrowserEntity> spec = undergroundFluidHasDatasetId(datasetId);
         if (dimension != null && !dimension.isBlank()) {
             spec = spec.and((root, cq, cb) -> cb.equal(root.get("dimension"), dimension));
@@ -148,8 +144,8 @@ public class GtOreService {
         return new GtResourceListResponse<>(items, undergroundFluidDimensionOptions(dataset), List.of());
     }
 
-    public GtUndergroundFluidDetail undergroundFluidDetail(String datasetId, String fluidId) {
-        DatasetSummary dataset = datasetService.requireById(datasetId);
+    public GtUndergroundFluidDetail undergroundFluidDetail(DatasetSummary dataset, String fluidId) {
+        String datasetId = dataset.datasetId();
         List<GtUndergroundFluidBrowserEntity> rows = undergroundFluidBrowserRepository.findByDatasetIdAndFluidId(
                 datasetId, fluidId, undergroundFluidSort());
         if (rows.isEmpty()) throw new NotFoundException("GT underground fluid not found: " + fluidId);
@@ -158,8 +154,8 @@ public class GtOreService {
     }
 
     public GtResourceListResponse<GtBartWorksOreSummary> listBartWorksOres(
-            String datasetId, String q, String type, String dimension) {
-        DatasetSummary dataset = datasetService.requireById(datasetId);
+            DatasetSummary dataset, String q, String type, String dimension) {
+        String datasetId = dataset.datasetId();
         Specification<GtBartWorksOreEntity> spec = hasDatasetId(datasetId);
         if (type != null && !type.isBlank()) spec = spec.and((root, cq, cb) -> cb.equal(root.get("entryType"), type));
         if (dimension != null && !dimension.isBlank()) spec = spec.and((root, cq, cb) -> cb.equal(root.get("dimension"), dimension));
@@ -171,8 +167,8 @@ public class GtOreService {
         return new GtResourceListResponse<>(items, bartWorksDimensionOptions(dataset), bartWorksTypes(datasetId));
     }
 
-    public GtBartWorksOreDetail bartWorksOreDetail(String datasetId, String entryId) {
-        DatasetSummary dataset = datasetService.requireById(datasetId);
+    public GtBartWorksOreDetail bartWorksOreDetail(DatasetSummary dataset, String entryId) {
+        String datasetId = dataset.datasetId();
         GtBartWorksOreEntity ore = bartWorksOreRepository.findById(new GtBartWorksOreEntity.BartWorksOreId(datasetId, entryId))
                 .orElseThrow(() -> new NotFoundException("BartWorks ore not found: " + entryId));
         List<GtBartWorksOreLayer> layers = bartWorksOreLayerRepository.findByDatasetIdAndEntryId(

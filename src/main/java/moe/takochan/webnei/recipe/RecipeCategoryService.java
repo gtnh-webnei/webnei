@@ -11,7 +11,6 @@ import moe.takochan.webnei.asset.AssetUrlBuilder;
 import moe.takochan.webnei.common.ModOptionDto;
 import moe.takochan.webnei.common.PageRequest;
 import moe.takochan.webnei.common.PageResponse;
-import moe.takochan.webnei.dataset.DatasetService;
 import moe.takochan.webnei.dataset.DatasetSummary;
 import moe.takochan.webnei.recipe.dto.CategoryMachineDto;
 import moe.takochan.webnei.recipe.dto.CategoryVoltageTierDto;
@@ -26,7 +25,6 @@ import org.springframework.stereotype.Service;
 @Service
 public class RecipeCategoryService {
 
-    private final DatasetService datasetService;
     private final RecipeCategoryBrowserRepository categoryRepo;
     private final RecipeCategoryMachineBrowserRepository machineRepo;
     private final RecipeCategoryVoltageTierRepository voltageTierRepo;
@@ -35,15 +33,13 @@ public class RecipeCategoryService {
     private final NeiTextureExportRepository textureRepo;
     private final AssetUrlBuilder assetUrlBuilder;
 
-    public RecipeCategoryService(DatasetService datasetService,
-                                 RecipeCategoryBrowserRepository categoryRepo,
+    public RecipeCategoryService(RecipeCategoryBrowserRepository categoryRepo,
                                  RecipeCategoryMachineBrowserRepository machineRepo,
                                  RecipeCategoryVoltageTierRepository voltageTierRepo,
                                  RecipeLookupVoltageTierRepository lookupVoltageTierRepo,
                                  GregTechRecipeRepository gregTechRecipeRepo,
                                  NeiTextureExportRepository textureRepo,
                                  AssetUrlBuilder assetUrlBuilder) {
-        this.datasetService = datasetService;
         this.categoryRepo = categoryRepo;
         this.machineRepo = machineRepo;
         this.voltageTierRepo = voltageTierRepo;
@@ -53,8 +49,8 @@ public class RecipeCategoryService {
         this.assetUrlBuilder = assetUrlBuilder;
     }
 
-    public List<RecipeCategoryDto> listCategories(String datasetId) {
-        DatasetSummary dataset = datasetService.requireById(datasetId);
+    public List<RecipeCategoryDto> listCategories(DatasetSummary dataset) {
+        String datasetId = dataset.datasetId();
         List<RecipeCategoryBrowserEntity> entities = categoryRepo.findAll(
                 hasDatasetId(datasetId),
                 Sort.by("displayOrder").ascending().and(Sort.by("categoryId").ascending()));
@@ -62,9 +58,8 @@ public class RecipeCategoryService {
     }
 
     public PageResponse<RecipeCategoryDto> listCategoriesPage(
-            String datasetId, String query, String modId, boolean hideEmpty, PageRequest page) {
-        DatasetSummary dataset = datasetService.requireById(datasetId);
-
+            DatasetSummary dataset, String query, String modId, boolean hideEmpty, PageRequest page) {
+        String datasetId = dataset.datasetId();
         Specification<RecipeCategoryBrowserEntity> spec = hasDatasetId(datasetId);
         if (modId != null && !modId.isBlank()) {
             spec = spec.and(modIdEq(modId));
@@ -86,8 +81,8 @@ public class RecipeCategoryService {
         return new PageResponse<>(items, page.page(), page.size(), result.getTotalElements());
     }
 
-    public List<ModOptionDto> listCategoryMods(String datasetId) {
-        datasetService.requireById(datasetId);
+    public List<ModOptionDto> listCategoryMods(DatasetSummary dataset) {
+        String datasetId = dataset.datasetId();
         Map<String, String> mods = new HashMap<>();
         for (RecipeCategoryBrowserEntity e : categoryRepo.findAll(hasDatasetId(datasetId))) {
             if (e.getModId() != null && !e.getModId().isBlank()) {
@@ -100,8 +95,8 @@ public class RecipeCategoryService {
                 .toList();
     }
 
-    public List<CategoryMachineDto> listCategoryMachines(String datasetId, String categoryId) {
-        DatasetSummary dataset = datasetService.requireById(datasetId);
+    public List<CategoryMachineDto> listCategoryMachines(DatasetSummary dataset, String categoryId) {
+        String datasetId = dataset.datasetId();
         return machineRepo.findByDatasetIdAndCategoryId(
                         datasetId,
                         categoryId,
@@ -117,8 +112,8 @@ public class RecipeCategoryService {
     }
 
     public List<CategoryVoltageTierDto> listCategoryVoltageTiers(
-            String datasetId, String categoryId, String target, String kind, String query) {
-        datasetService.requireById(datasetId);
+            DatasetSummary dataset, String categoryId, String target, String kind, String query) {
+        String datasetId = dataset.datasetId();
         boolean hasLookup = target != null && !target.isBlank() && kind != null && !kind.isBlank();
         if (hasLookup) {
             return lookupVoltageTierRepo.findByDatasetIdAndCategoryIdAndTargetIdAndLookupKindOrderByMinVoltageAsc(

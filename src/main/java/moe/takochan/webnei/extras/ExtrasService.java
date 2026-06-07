@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 import jakarta.persistence.criteria.Predicate;
 
 import moe.takochan.webnei.asset.AssetUrlBuilder;
-import moe.takochan.webnei.dataset.DatasetService;
 import moe.takochan.webnei.dataset.DatasetSummary;
 import moe.takochan.webnei.fluid.FluidModOptionEntity;
 import moe.takochan.webnei.fluid.FluidModOptionRepository;
@@ -25,7 +24,6 @@ public class ExtrasService {
 
     private static final int CONTAINER_PREVIEW_LIMIT = 50;
 
-    private final DatasetService datasetService;
     private final ItemOreDictionaryNameRepository oreDictRepo;
     private final FluidContainerBrowserRepository containerRepo;
     private final FluidVariantRepository fluidVariantRepo;
@@ -35,8 +33,7 @@ public class ExtrasService {
     private final RecipeLookupCountRepository recipeLookupCountRepo;
     private final AssetUrlBuilder assetUrlBuilder;
 
-    public ExtrasService(DatasetService datasetService,
-                         ItemOreDictionaryNameRepository oreDictRepo,
+    public ExtrasService(ItemOreDictionaryNameRepository oreDictRepo,
                          FluidContainerBrowserRepository containerRepo,
                          FluidVariantRepository fluidVariantRepo,
                          FluidModOptionRepository fluidModOptionRepo,
@@ -44,7 +41,6 @@ public class ExtrasService {
                          FluidBlockBrowserRepository blockRepo,
                          RecipeLookupCountRepository recipeLookupCountRepo,
                          AssetUrlBuilder assetUrlBuilder) {
-        this.datasetService = datasetService;
         this.oreDictRepo = oreDictRepo;
         this.containerRepo = containerRepo;
         this.fluidVariantRepo = fluidVariantRepo;
@@ -55,8 +51,8 @@ public class ExtrasService {
         this.assetUrlBuilder = assetUrlBuilder;
     }
 
-    public ItemExtras itemExtras(String datasetId, String itemVariantId) {
-        DatasetSummary dataset = datasetService.requireById(datasetId);
+    public ItemExtras itemExtras(DatasetSummary dataset, String itemVariantId) {
+        String datasetId = dataset.datasetId();
 
         List<String> oreNames = oreDictRepo.findByDatasetIdAndItemVariantIdOrderByOreNameAsc(datasetId, itemVariantId)
                 .stream()
@@ -83,13 +79,12 @@ public class ExtrasService {
                 counts.getOrDefault("recipe", 0L));
     }
 
-    public List<FluidContainerEntry> allContainersForItem(String datasetId, String itemVariantId) {
-        DatasetSummary dataset = datasetService.requireById(datasetId);
+    public List<FluidContainerEntry> allContainersForItem(DatasetSummary dataset, String itemVariantId) {
         return listContainersForItem(dataset, itemVariantId, null);
     }
 
-    public FluidExtras fluidExtras(String datasetId, String fluidVariantId) {
-        DatasetSummary dataset = datasetService.requireById(datasetId);
+    public FluidExtras fluidExtras(DatasetSummary dataset, String fluidVariantId) {
+        String datasetId = dataset.datasetId();
         List<FluidContainerBrowserEntity> containerRows = containerRepo.findByDatasetIdAndFluidVariantId(
                 datasetId, fluidVariantId,
                 Sort.by("amount").ascending().and(Sort.by("containerItemVariantId").ascending()));

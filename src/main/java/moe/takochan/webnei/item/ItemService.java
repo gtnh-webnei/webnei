@@ -14,7 +14,6 @@ import moe.takochan.webnei.common.ModOptionDto;
 import moe.takochan.webnei.common.NotFoundException;
 import moe.takochan.webnei.common.PageRequest;
 import moe.takochan.webnei.common.PageResponse;
-import moe.takochan.webnei.dataset.DatasetService;
 import moe.takochan.webnei.dataset.DatasetSummary;
 import moe.takochan.webnei.gtore.WorldGenerationService;
 
@@ -27,18 +26,16 @@ import org.springframework.stereotype.Service;
 @Service
 public class ItemService {
 
-    private final DatasetService datasetService;
     private final ItemVariantRepository itemRepo;
     private final ItemModOptionRepository modOptionRepo;
     private final NeiPanelEntryRepository panelRepo;
     private final AssetUrlBuilder assetUrlBuilder;
     private final WorldGenerationService worldGenerationService;
 
-    public ItemService(DatasetService datasetService, ItemVariantRepository itemRepo,
+    public ItemService(ItemVariantRepository itemRepo,
                        ItemModOptionRepository modOptionRepo,
                        NeiPanelEntryRepository panelRepo, AssetUrlBuilder assetUrlBuilder,
                        WorldGenerationService worldGenerationService) {
-        this.datasetService = datasetService;
         this.itemRepo = itemRepo;
         this.modOptionRepo = modOptionRepo;
         this.panelRepo = panelRepo;
@@ -46,9 +43,8 @@ public class ItemService {
         this.worldGenerationService = worldGenerationService;
     }
 
-    public PageResponse<NeiPanelEntryDto> listPanel(String datasetId, ItemQuery query, PageRequest page) {
-        DatasetSummary dataset = datasetService.requireById(datasetId);
-
+    public PageResponse<NeiPanelEntryDto> listPanel(DatasetSummary dataset, ItemQuery query, PageRequest page) {
+        String datasetId = dataset.datasetId();
         Specification<NeiPanelEntryEntity> spec = panelSpec(datasetId, query);
         int pageIndex = page != null ? page.page() : 0;
         int pageSize = page != null ? page.size() : 100;
@@ -65,8 +61,8 @@ public class ItemService {
         return new PageResponse<>(items, pageIndex, pageSize, result.getTotalElements());
     }
 
-    public ItemDetailDto detail(String datasetId, String itemVariantId) {
-        DatasetSummary dataset = datasetService.requireById(datasetId);
+    public ItemDetailDto detail(DatasetSummary dataset, String itemVariantId) {
+        String datasetId = dataset.datasetId();
         ItemVariantBrowserEntity e = itemRepo.findById(new ItemVariantBrowserEntity.ItemVariantId(datasetId, itemVariantId))
                 .orElseThrow(() -> new NotFoundException("Item variant not found: " + itemVariantId));
         return new ItemDetailDto(
@@ -90,9 +86,8 @@ public class ItemService {
                 worldGenerationService.forItem(dataset, itemVariantId));
     }
 
-    public List<ModOptionDto> listMods(String datasetId) {
-        datasetService.requireById(datasetId);
-        return modOptionRepo.findByDatasetIdOrderByNameAscModIdAsc(datasetId)
+    public List<ModOptionDto> listMods(DatasetSummary dataset) {
+        return modOptionRepo.findByDatasetIdOrderByNameAscModIdAsc(dataset.datasetId())
                 .stream()
                 .map(e -> new ModOptionDto(e.getModId(), e.getName()))
                 .toList();

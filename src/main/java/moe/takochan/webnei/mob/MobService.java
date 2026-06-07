@@ -10,7 +10,6 @@ import moe.takochan.webnei.common.ModOptionDto;
 import moe.takochan.webnei.common.NotFoundException;
 import moe.takochan.webnei.common.PageRequest;
 import moe.takochan.webnei.common.PageResponse;
-import moe.takochan.webnei.dataset.DatasetService;
 import moe.takochan.webnei.dataset.DatasetSummary;
 import moe.takochan.webnei.mob.dto.MobDetail;
 import moe.takochan.webnei.mob.dto.MobDropRow;
@@ -25,20 +24,17 @@ import org.springframework.stereotype.Service;
 @Service
 public class MobService {
 
-    private final DatasetService datasetService;
     private final MobVariantRepository mobRepo;
     private final MobModOptionRepository modOptionRepo;
     private final MobInfoRepository mobInfoRepo;
     private final MobDropBrowserRepository mobDropRepo;
     private final AssetUrlBuilder assetUrlBuilder;
 
-    public MobService(DatasetService datasetService,
-                      MobVariantRepository mobRepo,
+    public MobService(MobVariantRepository mobRepo,
                       MobModOptionRepository modOptionRepo,
                       MobInfoRepository mobInfoRepo,
                       MobDropBrowserRepository mobDropRepo,
                       AssetUrlBuilder assetUrlBuilder) {
-        this.datasetService = datasetService;
         this.mobRepo = mobRepo;
         this.modOptionRepo = modOptionRepo;
         this.mobInfoRepo = mobInfoRepo;
@@ -47,9 +43,8 @@ public class MobService {
     }
 
     public PageResponse<MobSummary> listMobs(
-            String datasetId, String q, String modId, PageRequest page) {
-        DatasetSummary dataset = datasetService.requireById(datasetId);
-
+            DatasetSummary dataset, String q, String modId, PageRequest page) {
+        String datasetId = dataset.datasetId();
         Specification<MobVariantBrowserEntity> spec = hasDatasetId(datasetId);
         if (modId != null && !modId.isBlank()) {
             spec = spec.and(modIdEq(modId));
@@ -73,16 +68,15 @@ public class MobService {
         return new PageResponse<>(items, pageIndex, pageSize, result.getTotalElements());
     }
 
-    public List<ModOptionDto> listMods(String datasetId) {
-        datasetService.requireById(datasetId);
-        return modOptionRepo.findByDatasetIdOrderByNameAscModIdAsc(datasetId)
+    public List<ModOptionDto> listMods(DatasetSummary dataset) {
+        return modOptionRepo.findByDatasetIdOrderByNameAscModIdAsc(dataset.datasetId())
                 .stream()
                 .map(e -> new ModOptionDto(e.getModId(), e.getName()))
                 .toList();
     }
 
-    public MobDetail mobDetail(String datasetId, String mobVariantId) {
-        DatasetSummary dataset = datasetService.requireById(datasetId);
+    public MobDetail mobDetail(DatasetSummary dataset, String mobVariantId) {
+        String datasetId = dataset.datasetId();
         MobVariantBrowserEntity mob = mobRepo.findById(new MobVariantBrowserEntity.MobVariantId(datasetId, mobVariantId))
                 .orElseThrow(() -> new NotFoundException("Mob not found: " + mobVariantId));
         MobDetail.MobInfo info = mobInfoRepo.findById(new MobInfoEntity.MobInfoId(datasetId, mobVariantId))

@@ -11,7 +11,6 @@ import moe.takochan.webnei.common.ModOptionDto;
 import moe.takochan.webnei.common.NotFoundException;
 import moe.takochan.webnei.common.PageRequest;
 import moe.takochan.webnei.common.PageResponse;
-import moe.takochan.webnei.dataset.DatasetService;
 import moe.takochan.webnei.dataset.DatasetSummary;
 import moe.takochan.webnei.gtore.GtDimensionRef;
 import moe.takochan.webnei.gtore.GtUndergroundFluidBrowserEntity;
@@ -28,19 +27,17 @@ import org.springframework.stereotype.Service;
 @Service
 public class FluidService {
 
-    private final DatasetService datasetService;
     private final FluidVariantRepository fluidRepo;
     private final FluidModOptionRepository modOptionRepo;
     private final GtUndergroundFluidBrowserRepository undergroundFluidRepo;
     private final ItemVariantRepository itemVariantRepo;
     private final AssetUrlBuilder assetUrlBuilder;
 
-    public FluidService(DatasetService datasetService, FluidVariantRepository fluidRepo,
+    public FluidService(FluidVariantRepository fluidRepo,
                         FluidModOptionRepository modOptionRepo,
                         GtUndergroundFluidBrowserRepository undergroundFluidRepo,
                         ItemVariantRepository itemVariantRepo,
                         AssetUrlBuilder assetUrlBuilder) {
-        this.datasetService = datasetService;
         this.fluidRepo = fluidRepo;
         this.modOptionRepo = modOptionRepo;
         this.undergroundFluidRepo = undergroundFluidRepo;
@@ -48,9 +45,8 @@ public class FluidService {
         this.assetUrlBuilder = assetUrlBuilder;
     }
 
-    public PageResponse<FluidSummary> list(String datasetId, FluidQuery query, PageRequest page) {
-        DatasetSummary dataset = datasetService.requireById(datasetId);
-
+    public PageResponse<FluidSummary> list(DatasetSummary dataset, FluidQuery query, PageRequest page) {
+        String datasetId = dataset.datasetId();
         Specification<FluidVariantBrowserEntity> spec = hasDatasetId(datasetId);
         if (query.modId() != null && !query.modId().isBlank()) {
             spec = spec.and(modIdEq(query.modId()));
@@ -77,8 +73,8 @@ public class FluidService {
         return new PageResponse<>(items, pageIndex, pageSize, result.getTotalElements());
     }
 
-    public FluidDetail detail(String datasetId, String fluidVariantId) {
-        DatasetSummary dataset = datasetService.requireById(datasetId);
+    public FluidDetail detail(DatasetSummary dataset, String fluidVariantId) {
+        String datasetId = dataset.datasetId();
         FluidVariantBrowserEntity e = fluidRepo.findById(new FluidVariantBrowserEntity.FluidVariantId(datasetId, fluidVariantId))
                 .orElseThrow(() -> new NotFoundException("Fluid variant not found: " + fluidVariantId));
         return new FluidDetail(
@@ -99,12 +95,11 @@ public class FluidService {
                 e.getNbtText(),
                 e.getChemicalExpression(),
                 assetUrlBuilder.build(dataset, e.getAssetPath(), null),
-                undergroundResources(datasetId, e.getFluidId(), e.getRegistryName()));
+                undergroundResources(dataset, e.getFluidId(), e.getRegistryName()));
     }
 
-    public List<ModOptionDto> listMods(String datasetId) {
-        datasetService.requireById(datasetId);
-        return modOptionRepo.findByDatasetIdOrderByNameAscModIdAsc(datasetId)
+    public List<ModOptionDto> listMods(DatasetSummary dataset) {
+        return modOptionRepo.findByDatasetIdOrderByNameAscModIdAsc(dataset.datasetId())
                 .stream()
                 .map(e -> new ModOptionDto(e.getModId(), e.getName()))
                 .toList();
@@ -126,7 +121,8 @@ public class FluidService {
     }
 
     private List<FluidUndergroundResource> undergroundResources(
-            String datasetId, String fluidId, String registryName) {
+            DatasetSummary dataset, String fluidId, String registryName) {
+        String datasetId = dataset.datasetId();
         Sort sort = Sort.by("dimensionSortOrder").ascending()
                 .and(Sort.by("dimensionDisplayName").ascending())
                 .and(Sort.by("dimension").ascending());
@@ -134,7 +130,6 @@ public class FluidService {
                 .filter(v -> v != null && !v.isBlank())
                 .distinct()
                 .toList();
-        DatasetSummary dataset = datasetService.requireById(datasetId);
         List<GtUndergroundFluidBrowserEntity> rows = candidates.stream()
                 .flatMap(id -> undergroundFluidRepo.findByDatasetIdAndFluidId(datasetId, id, sort).stream())
                 .collect(java.util.stream.Collectors.toMap(

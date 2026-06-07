@@ -5,6 +5,7 @@ import java.util.List;
 import moe.takochan.webnei.common.ModOptionDto;
 import moe.takochan.webnei.common.PageRequest;
 import moe.takochan.webnei.common.PageResponse;
+import moe.takochan.webnei.dataset.DatasetResolver;
 import moe.takochan.webnei.mob.dto.MobDetail;
 import moe.takochan.webnei.mob.dto.MobSummary;
 
@@ -21,9 +22,11 @@ public class MobController {
     private static final int DEFAULT_PAGE_SIZE = 100;
     private static final int MAX_PAGE_SIZE = 192;
 
+    private final DatasetResolver datasetResolver;
     private final MobService mobService;
 
-    public MobController(MobService mobService) {
+    public MobController(DatasetResolver datasetResolver, MobService mobService) {
+        this.datasetResolver = datasetResolver;
         this.mobService = mobService;
     }
 
@@ -34,18 +37,18 @@ public class MobController {
             @RequestParam(required = false) String modId,
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size) {
-        return mobService.listMobs(datasetId, q, modId, PageRequest.of(page, size, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE));
+        return mobService.listMobs(datasetResolver.resolve(datasetId), q, modId, PageRequest.of(page, size, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE));
     }
 
     @GetMapping("/mobs/mods")
     public List<ModOptionDto> listMobMods(@PathVariable String datasetId) {
-        return mobService.listMods(datasetId);
+        return mobService.listMods(datasetResolver.resolve(datasetId));
     }
 
     @GetMapping("/mobs/{mobVariantId}")
     public MobDetail mobDetail(
             @PathVariable String datasetId,
             @PathVariable String mobVariantId) {
-        return mobService.mobDetail(datasetId, mobVariantId);
+        return mobService.mobDetail(datasetResolver.resolve(datasetId), mobVariantId);
     }
 }
