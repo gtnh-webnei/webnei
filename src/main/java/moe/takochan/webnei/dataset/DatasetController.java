@@ -15,6 +15,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/datasets")
 public class DatasetController {
 
+    private static final int DEFAULT_MOD_PAGE_SIZE = 50;
+    private static final int MAX_MOD_PAGE_SIZE = 200;
+
     private final DatasetService datasetService;
 
     public DatasetController(DatasetService datasetService) {
@@ -40,6 +43,6 @@ public class DatasetController {
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size) {
         return datasetService.listModsPage(
-                datasetId, q, sort, desc, PageRequest.of(page, size == null ? 50 : size));
+                datasetId, q, sort, desc, PageRequest.of(page, size, DEFAULT_MOD_PAGE_SIZE, MAX_MOD_PAGE_SIZE));
     }
 }

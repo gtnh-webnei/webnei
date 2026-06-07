@@ -21,6 +21,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/datasets/{datasetId}")
 public class RecipeController {
 
+    private static final int DEFAULT_CATEGORY_PAGE_SIZE = 24;
+    private static final int MAX_CATEGORY_PAGE_SIZE = 96;
+    private static final int DEFAULT_LOOKUP_PAGE_SIZE = 12;
+    private static final int MAX_LOOKUP_PAGE_SIZE = 48;
+
     private final RecipeService recipeService;
 
     public RecipeController(RecipeService recipeService) {
@@ -41,7 +46,7 @@ public class RecipeController {
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size) {
         return recipeService.listCategoriesPage(
-                datasetId, q, modId, hideEmpty, PageRequest.of(page, size == null ? 24 : size));
+                datasetId, q, modId, hideEmpty, PageRequest.of(page, size, DEFAULT_CATEGORY_PAGE_SIZE, MAX_CATEGORY_PAGE_SIZE));
     }
 
     @GetMapping("/recipe-categories/mods")
@@ -62,7 +67,7 @@ public class RecipeController {
         return recipeService.lookup(
                 datasetId,
                 new RecipeLookupQuery(target, kind, handlerId, categoryId, voltageTier),
-                PageRequest.of(page, size == null ? 12 : size));
+                PageRequest.of(page, size, DEFAULT_LOOKUP_PAGE_SIZE, MAX_LOOKUP_PAGE_SIZE));
     }
 
     @GetMapping("/recipes/lookup/breakdown")
@@ -87,7 +92,7 @@ public class RecipeController {
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size) {
         return recipeService.listRecipesByCategory(
-                datasetId, categoryId, q, voltageTier, PageRequest.of(page, size == null ? 24 : size));
+                datasetId, categoryId, q, voltageTier, PageRequest.of(page, size, DEFAULT_CATEGORY_PAGE_SIZE, MAX_CATEGORY_PAGE_SIZE));
     }
 
     @GetMapping("/categories/{categoryId}/machines")

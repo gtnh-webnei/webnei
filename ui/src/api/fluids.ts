@@ -25,7 +25,7 @@ export async function getFluidDetail(
 
 export async function listFluidMods(datasetId: string): Promise<ModOption[]> {
   const { data } = await http.get<ModOption[]>(
-    `/datasets/${encodeURIComponent(datasetId)}/fluid-mods`,
+    `/datasets/${encodeURIComponent(datasetId)}/fluids/mods`,
   );
   return data;
 }

@@ -21,6 +21,8 @@ export async function getItemDetail(datasetId: string, itemVariantId: string): P
 }
 
 export async function listMods(datasetId: string): Promise<ModOption[]> {
-  const { data } = await http.get<ModOption[]>(`/datasets/${encodeURIComponent(datasetId)}/mods`);
+  const { data } = await http.get<ModOption[]>(
+    `/datasets/${encodeURIComponent(datasetId)}/items/mods`,
+  );
   return data;
 }

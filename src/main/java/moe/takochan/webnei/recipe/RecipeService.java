@@ -140,16 +140,15 @@ public class RecipeService {
             spec = spec.and(categorySearch(query));
         }
 
-        int pageIndex = page != null ? page.page() : 0;
-        int pageSize = page != null ? page.size() : 50;
+        PageRequest checkedPage = Objects.requireNonNull(page, "page");
         Pageable pageable = org.springframework.data.domain.PageRequest.of(
-                pageIndex, pageSize,
+                checkedPage.page(), checkedPage.size(),
                 Sort.by("displayOrder").ascending()
                         .and(Sort.by("categoryId").ascending()));
 
         Page<RecipeCategoryBrowserEntity> result = categoryRepo.findAll(spec, pageable);
         List<RecipeCategoryDto> items = toDtoList(result.getContent(), dataset);
-        return new PageResponse<>(items, pageIndex, pageSize, result.getTotalElements());
+        return new PageResponse<>(items, checkedPage.page(), checkedPage.size(), result.getTotalElements());
     }
 
     public List<ModOptionDto> listCategoryMods(String datasetId) {
@@ -180,11 +179,11 @@ public class RecipeService {
         DatasetSummary dataset = datasetService.requireById(datasetId);
         Page<RecipeLookupBrowserEntity> result = lookupRepo.findAll(
                 lookupSpec(datasetId, query),
-                pageRequest(page, 50, Sort.by("displayOrder").ascending()
+                pageRequest(page, Sort.by("displayOrder").ascending()
                         .and(Sort.by("recipeId").ascending())));
         List<String> recipeIds = result.stream().map(RecipeLookupBrowserEntity::getRecipeId).toList();
         List<RecipeDto> recipes = loadRecipes(dataset, recipeIds);
-        return new PageResponse<>(recipes, pageIndex(page), pageSize(page, 50), result.getTotalElements());
+        return new PageResponse<>(recipes, page.page(), page.size(), result.getTotalElements());
     }
 
     public List<HandlerBreakdownDto> lookupBreakdown(String datasetId, RecipeLookupQuery query) {
@@ -256,11 +255,11 @@ public class RecipeService {
         DatasetSummary dataset = datasetService.requireById(datasetId);
         Page<RecipeBrowserEntity> result = recipeRepo.findAll(
                 recipeCategorySpec(datasetId, categoryId, query, voltageTier),
-                pageRequest(page, 50, Sort.by("displayOrder").ascending()
+                pageRequest(page, Sort.by("displayOrder").ascending()
                         .and(Sort.by("recipeId").ascending())));
         List<String> recipeIds = result.stream().map(RecipeBrowserEntity::getRecipeId).toList();
         List<RecipeDto> recipes = loadRecipes(dataset, recipeIds);
-        return new PageResponse<>(recipes, pageIndex(page), pageSize(page, 50), result.getTotalElements());
+        return new PageResponse<>(recipes, page.page(), page.size(), result.getTotalElements());
     }
 
     public List<CategoryMachineDto> listCategoryMachines(String datasetId, String categoryId) {
@@ -674,16 +673,9 @@ public class RecipeService {
                 e.getHandlerClass());
     }
 
-    private static Pageable pageRequest(PageRequest page, int defaultSize, Sort sort) {
-        return org.springframework.data.domain.PageRequest.of(pageIndex(page), pageSize(page, defaultSize), sort);
-    }
-
-    private static int pageIndex(PageRequest page) {
-        return page != null ? page.page() : 0;
-    }
-
-    private static int pageSize(PageRequest page, int defaultSize) {
-        return page != null ? page.size() : defaultSize;
+    private static Pageable pageRequest(PageRequest page, Sort sort) {
+        PageRequest checkedPage = Objects.requireNonNull(page, "page");
+        return org.springframework.data.domain.PageRequest.of(checkedPage.page(), checkedPage.size(), sort);
     }
 
     private static Specification<RecipeCategoryBrowserEntity> hasDatasetId(String datasetId) {

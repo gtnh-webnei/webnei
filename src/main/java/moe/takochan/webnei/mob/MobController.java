@@ -18,6 +18,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/datasets/{datasetId}")
 public class MobController {
 
+    private static final int DEFAULT_PAGE_SIZE = 100;
+    private static final int MAX_PAGE_SIZE = 192;
+
     private final MobService mobService;
 
     public MobController(MobService mobService) {
@@ -31,7 +34,7 @@ public class MobController {
             @RequestParam(required = false) String modId,
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size) {
-        return mobService.listMobs(datasetId, q, modId, PageRequest.of(page, size));
+        return mobService.listMobs(datasetId, q, modId, PageRequest.of(page, size, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE));
     }
 
     @GetMapping("/mobs/mods")
