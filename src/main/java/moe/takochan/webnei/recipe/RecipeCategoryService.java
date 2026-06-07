@@ -126,7 +126,7 @@ public class RecipeCategoryService {
             return gregTechRecipeRepo.findVoltageTiersByCategoryAndSearch(
                             datasetId, categoryId, "%" + query.trim().toLowerCase() + "%")
                     .stream()
-                    .map(row -> new CategoryVoltageTierDto((String) row[0], (Long) row[1]))
+                    .map(row -> new CategoryVoltageTierDto(row.getTier(), row.getRecipeCount()))
                     .toList();
         }
         return voltageTierRepo.findByDatasetIdAndCategoryIdOrderByMinVoltageAsc(datasetId, categoryId)

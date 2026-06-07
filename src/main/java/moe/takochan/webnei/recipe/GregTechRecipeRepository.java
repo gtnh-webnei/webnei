@@ -13,8 +13,13 @@ public interface GregTechRecipeRepository
 
     List<GregTechRecipeEntity> findByDatasetIdAndRecipeIdIn(String datasetId, List<String> recipeIds);
 
+    interface CategoryVoltageTierCount {
+        String getTier();
+        long getRecipeCount();
+    }
+
     @Query("""
-            select g.voltageTier, count(g.recipeId), min(g.voltage)
+            select g.voltageTier as tier, count(g.recipeId) as recipeCount
             from GregTechRecipeEntity g
             where g.datasetId = :datasetId
               and g.voltageTier is not null
@@ -29,7 +34,7 @@ public interface GregTechRecipeRepository
             group by g.voltageTier
             order by min(g.voltage) asc, g.voltageTier asc
             """)
-    List<Object[]> findVoltageTiersByCategoryAndSearch(
+    List<CategoryVoltageTierCount> findVoltageTiersByCategoryAndSearch(
             @Param("datasetId") String datasetId,
             @Param("categoryId") String categoryId,
             @Param("pattern") String pattern);
