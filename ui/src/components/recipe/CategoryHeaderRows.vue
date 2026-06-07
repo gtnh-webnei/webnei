@@ -165,19 +165,19 @@ watch(
           <span class="chip-badge">{{ tiersTotal.toLocaleString() }}</span>
         </button>
         <button
-          v-for="t in tiers"
-          :key="t.tier"
+          v-for="tier in tiers"
+          :key="tier.tier"
           type="button"
           class="chip tier-chip"
-          :class="{ active: activeTier === t.tier }"
+          :class="{ active: activeTier === tier.tier }"
           :style="{
-            '--tier-fg': tierColor(t.tier).fg,
-            '--tier-bg': tierColor(t.tier).bg,
+            '--tier-fg': tierColor(tier.tier).fg,
+            '--tier-bg': tierColor(tier.tier).bg,
           }"
-          @click="selectTier(t.tier)"
+          @click="selectTier(tier.tier)"
         >
-          <span class="chip-name">{{ t.tier }}</span>
-          <span class="chip-badge">{{ t.recipeCount.toLocaleString() }}</span>
+          <span class="chip-name">{{ tier.tier }}</span>
+          <span class="chip-badge">{{ tier.recipeCount.toLocaleString() }}</span>
         </button>
       </div>
     </section>

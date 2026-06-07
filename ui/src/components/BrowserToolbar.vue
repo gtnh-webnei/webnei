@@ -23,6 +23,7 @@ const props = withDefaults(
     secondaryPlaceholder: '',
     secondaryOptions: () => [],
     showSecondary: true,
+    total: undefined,
     totalLabel: '',
     totalSuffix: '',
   },
