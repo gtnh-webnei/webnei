@@ -440,7 +440,7 @@ function renderLine(
   }
 
   let value: unknown = raw;
-  let valueText = '';
+  let valueText: string;
   if (line.valueKeyExpr) {
     const keyOrValue = evalExpr(line.valueKeyExpr, { value: raw, ctx, tables });
     valueText = renderMaybeI18nKey(keyOrValue, t);
@@ -628,7 +628,7 @@ function renderVoltageBlock(
   for (const seg of segments) {
     if (!seg) continue;
     const bindings = { value: ctx.voltage, ctx, tables };
-    let text = '';
+    let text: string;
     let result: unknown = ctx.voltage;
     if (seg.valueKeyExpr) {
       const keyOrValue = evalExpr(seg.valueKeyExpr, bindings);

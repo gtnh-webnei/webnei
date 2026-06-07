@@ -158,8 +158,7 @@ function onLookup(
             />
             <SlotCell
               v-else
-              :slot="slotData"
-              :size="cellSize"
+              v-bind="{ slot: slotData, size: cellSize }"
               :placeholder="declared && !slotData"
               :pick-hint="pickHint"
               @pick="onPick"

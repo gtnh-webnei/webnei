@@ -95,7 +95,7 @@ const primaryTooltipContext = computed(() => ({
 }));
 const popoverVisible = ref(false);
 
-function onClick(e: MouseEvent) {
+function onClick() {
   if (hasMultiple.value) {
     popoverVisible.value = !popoverVisible.value;
     return;

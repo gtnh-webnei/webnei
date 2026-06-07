@@ -129,8 +129,7 @@ defineExpose({ grid });
         :declared="grid.declared"
       >
         <SlotCell
-          :slot="s"
-          :size="grid.cellSize"
+          v-bind="{ slot: s, size: grid.cellSize }"
           :placeholder="grid.declared && !s"
           :pick-hint="pickHint"
           :show-probability-badge="showProbabilityBadge"

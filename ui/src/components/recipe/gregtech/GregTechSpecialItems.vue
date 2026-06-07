@@ -4,7 +4,7 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import type { GregTechSpecialItem } from '@/api/recipes.types';
 
-const props = defineProps<{
+defineProps<{
   items: GregTechSpecialItem[];
 }>();
 

@@ -178,8 +178,7 @@ function onLookup(
       >
         <template #cell="{ slotData, cellSize, declared }">
           <SlotCell
-            :slot="slotData"
-            :size="cellSize"
+            v-bind="{ slot: slotData, size: cellSize }"
             is-fluid
             :placeholder="declared && !slotData"
             :pick-hint="pickHint"
@@ -257,8 +256,7 @@ function onLookup(
       >
         <template #cell="{ slotData, cellSize, declared }">
           <SlotCell
-            :slot="slotData"
-            :size="cellSize"
+            v-bind="{ slot: slotData, size: cellSize }"
             is-fluid
             :placeholder="declared && !slotData"
             :pick-hint="pickHint"

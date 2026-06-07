@@ -1,13 +1,13 @@
 import { createI18n } from 'vue-i18n';
 import zh_CN from './zh_CN';
 import en_US from './en_US';
+import type { MessageSchema } from './messages';
 
 type MessageTree = Record<string, unknown>;
 
 export const DEFAULT_LOCALE: string = 'zh_CN';
 
- 
-export const i18n = createI18n({
+export const i18n = createI18n<[MessageSchema], typeof DEFAULT_LOCALE>({
   legacy: false,
   globalInjection: true,
   locale: DEFAULT_LOCALE,
@@ -20,7 +20,7 @@ export const i18n = createI18n({
     console.warn(`[i18n] missing key: ${key}`);
     return key;
   },
-} as any);
+});
 
 export function setLocale(locale: string | null | undefined) {
   (i18n.global.locale as unknown as { value: string }).value = locale || DEFAULT_LOCALE;

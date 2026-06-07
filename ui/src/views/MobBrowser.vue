@@ -1,41 +1,35 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useI18n } from 'vue-i18n'
-import { storeToRefs } from 'pinia'
-import { useDatasetStore } from '@/stores/dataset'
-import { listMobMods, listMobs } from '@/api/mobs'
-import type { MobSummary } from '@/api/mobs.types'
-import { usePagedBrowser } from '@/composables/usePagedBrowser'
-import BrowserToolbar from '@/components/BrowserToolbar.vue'
-import MobCard from '@/components/MobCard.vue'
+import { computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { storeToRefs } from 'pinia';
+import { useDatasetStore } from '@/stores/dataset';
+import { listMobMods, listMobs } from '@/api/mobs';
+import type { MobSummary } from '@/api/mobs.types';
+import { usePagedBrowser } from '@/composables/usePagedBrowser';
+import BrowserToolbar from '@/components/BrowserToolbar.vue';
+import MobCard from '@/components/MobCard.vue';
 
-const { t } = useI18n()
+const route = useRoute();
+const router = useRouter();
+const datasetStore = useDatasetStore();
+const { activeDatasetId } = storeToRefs(datasetStore);
 
-const route = useRoute()
-const router = useRouter()
-const datasetStore = useDatasetStore()
-const { activeDatasetId } = storeToRefs(datasetStore)
-
-const datasetId = computed(() =>
-  String(route.params.datasetId ?? activeDatasetId.value ?? ''),
-)
+const datasetId = computed(() => String(route.params.datasetId ?? activeDatasetId.value ?? ''));
 
 const browser = usePagedBrowser<MobSummary>({
   datasetId,
   storageKey: 'webnei.mobBrowser.size',
   defaultSize: 48,
-  fetcher: (id, { q, secondary, page, size }) =>
-    listMobs(id, { q, modId: secondary, page, size }),
+  fetcher: (id, { q, secondary, page, size }) => listMobs(id, { q, modId: secondary, page, size }),
   optionsFetcher: listMobMods,
-})
-const { q, secondary, page, pageSize, items, total, loading, error, secondaryOptions } = browser
+});
+const { q, secondary, page, pageSize, items, total, loading, error, secondaryOptions } = browser;
 
 function openMob(mob: MobSummary) {
   router.push({
     name: 'mob',
     params: { datasetId: datasetId.value, mobVariantId: mob.mobVariantId },
-  })
+  });
 }
 </script>
 

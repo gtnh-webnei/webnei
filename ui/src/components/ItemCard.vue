@@ -2,7 +2,7 @@
 import type { NeiPanelEntry } from '@/api/items.types';
 import ItemIcon from './ItemIcon.vue';
 
-const props = defineProps<{
+defineProps<{
   item: NeiPanelEntry;
   selected?: boolean;
 }>();

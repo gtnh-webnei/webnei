@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
-import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import { useDatasetStore } from '@/stores/dataset';
@@ -12,8 +11,6 @@ const route = useRoute();
 const router = useRouter();
 const datasetStore = useDatasetStore();
 const { activeDatasetId } = storeToRefs(datasetStore);
-
-const { t } = useI18n();
 
 const datasetId = computed(() => String(route.params.datasetId ?? activeDatasetId.value ?? ''));
 
@@ -127,9 +124,7 @@ onMounted(load);
               effect="plain"
               round
             >
-              {{
-                $t('quest.taskCount', { count: line.questCount })
-              }}
+              {{ $t('quest.taskCount', { count: line.questCount }) }}
             </el-tag>
           </div>
           <QuestText

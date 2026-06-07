@@ -7,7 +7,7 @@ import { Graph } from '@antv/g6';
 import { getQuestDetail, getQuestLineDetail } from '@/api/quests';
 import { useThemeStore } from '@/stores/theme';
 import QuestText from '@/components/QuestText.vue';
-import type { QuestDetail, QuestLineDetail, QuestNode } from '@/api/quests.types';
+import type { QuestDetail, QuestLineDetail } from '@/api/quests.types';
 
 const route = useRoute();
 const router = useRouter();
@@ -68,12 +68,6 @@ function updateHoverCapable() {
   hoverCapable.value = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 }
 
-const nodeMap = computed(() => {
-  const m = new Map<string, QuestNode>();
-  for (const n of lineDetail.value?.nodes ?? []) m.set(n.questId, n);
-  return m;
-});
-
 async function loadLine() {
   if (!datasetId.value || !lineId.value) return;
   loading.value = true;
@@ -119,8 +113,8 @@ async function renderGraph() {
   // 每个节点用 rect 作底(有边框 + 背景),前景 icon 通过 iconSrc 渲染。
   // 这样能解决 image 节点没边框的问题,也能控制图标的清晰度。
   // G6 v5 的 NodeData/EdgeData 类型很严格(Cursor 枚举、Vector tuple 等),
-  // 这里数据形态由我们手工拼,跳过严格类型用 any。
-  const nodes: any[] = detail.nodes.map((n) => {
+  // 这里让 TS 从手工拼出的对象推断类型。
+  const nodes = detail.nodes.map((n) => {
     const cx = n.posX + n.sizeX / 2;
     const cy = n.posY + n.sizeY / 2;
     return {
@@ -132,12 +126,12 @@ async function renderGraph() {
         // G6 v5 rect 的 size 是节点宽/高(以 [x,y] 为中心向两侧延伸 size/2)。
         // BQ 任务节点 sizeX/sizeY 已经包含完整边框,直接照搬保持 pos 间距与
         // BQ 内一致 — 之前 +4 把节点撑大,挤掉了节点之间的缝隙。
-        size: [n.sizeX, n.sizeY],
+        size: [n.sizeX, n.sizeY] as [number, number],
         fill: palette.value.nodeFill,
         stroke: palette.value.nodeStroke,
         lineWidth: 1.5,
         radius: 3,
-        cursor: 'pointer',
+        cursor: 'pointer' as const,
         iconSrc: n.iconAssetUrl ?? undefined,
         iconWidth: n.sizeX - 4,
         iconHeight: n.sizeY - 4,
@@ -146,7 +140,7 @@ async function renderGraph() {
     };
   });
 
-  const edges: any[] = detail.edges
+  const edges = detail.edges
     .filter((e) => nodeIdSet.has(e.requiredQuestId) && nodeIdSet.has(e.questId))
     .map((e, idx) => ({
       id: `edge-${idx}`,
@@ -162,7 +156,7 @@ async function renderGraph() {
       },
     }));
 
-  const plugins: any[] = effectiveQuestHoverEnabled.value
+  const plugins = effectiveQuestHoverEnabled.value
     ? [
         {
           type: 'tooltip',

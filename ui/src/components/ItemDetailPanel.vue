@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { useI18n } from 'vue-i18n';
 import { storeToRefs } from 'pinia';
 import { useDatasetStore } from '@/stores/dataset';
 import { useExtrasStore } from '@/stores/extras';
@@ -21,8 +20,6 @@ const datasetStore = useDatasetStore();
 const { activeDatasetId } = storeToRefs(datasetStore);
 void activeDatasetId;
 const extrasStore = useExtrasStore();
-const { t } = useI18n();
-
 const detail = ref<ItemDetail | null>(null);
 const loading = ref(false);
 const error = ref<string | null>(null);
@@ -68,11 +65,6 @@ async function loadExtras() {
   } finally {
     extrasLoading.value = false;
   }
-}
-
-function copyId() {
-  if (!detail.value) return;
-  navigator.clipboard?.writeText(detail.value.itemVariantId);
 }
 
 function goLookup(kind: 'recipe' | 'usage', target?: string) {
@@ -196,9 +188,7 @@ onMounted(() => {
               type="primary"
               @click="goLookup('recipe')"
             >
-              {{
-                $t('common.viewRecipe')
-              }}
+              {{ $t('common.viewRecipe') }}
             </el-button>
             <el-button @click="goLookup('usage')">
               {{ $t('common.viewUsage') }}
@@ -511,9 +501,7 @@ onMounted(() => {
                           effect="plain"
                           round
                         >
-                          {{
-                            $t('item.primal')
-                          }}
+                          {{ $t('item.primal') }}
                         </el-tag>
                       </div>
                       <div class="aspect-amount">
