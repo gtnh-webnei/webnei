@@ -82,15 +82,9 @@ public class RecipeCategoryService {
     }
 
     public List<ModOptionDto> listCategoryMods(DatasetSummary dataset) {
-        String datasetId = dataset.datasetId();
-        Map<String, String> mods = new HashMap<>();
-        for (RecipeCategoryBrowserEntity e : categoryRepo.findAll(hasDatasetId(datasetId))) {
-            if (e.getModId() != null && !e.getModId().isBlank()) {
-                mods.putIfAbsent(e.getModId(), e.getModName() == null || e.getModName().isBlank() ? e.getModId() : e.getModName());
-            }
-        }
-        return mods.entrySet().stream()
-                .map(e -> new ModOptionDto(e.getKey(), e.getValue()))
+        return categoryRepo.findModOptions(dataset.datasetId())
+                .stream()
+                .map(e -> new ModOptionDto(e.getModId(), e.getName()))
                 .sorted(Comparator.comparing(ModOptionDto::name).thenComparing(ModOptionDto::modId))
                 .toList();
     }
