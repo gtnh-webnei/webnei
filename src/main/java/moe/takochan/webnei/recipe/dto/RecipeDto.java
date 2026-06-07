@@ -11,9 +11,5 @@ public record RecipeDto(
         String sourceRef,
         String description,
         List<RecipeSlotDto> slots,
-        List<SlotLayoutDto> layout,
-        Integer canvasWidth,
-        Integer canvasHeight,
-        String backgroundAssetUrl,
         GregTechRecipeDto gregtech) {
 }

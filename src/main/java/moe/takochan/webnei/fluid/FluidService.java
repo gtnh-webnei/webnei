@@ -135,7 +135,7 @@ public class FluidService {
                 .distinct()
                 .toList();
         DatasetSummary dataset = datasetService.requireById(datasetId);
-        return candidates.stream()
+        List<GtUndergroundFluidBrowserEntity> rows = candidates.stream()
                 .flatMap(id -> undergroundFluidRepo.findByDatasetIdAndFluidId(datasetId, id, sort).stream())
                 .collect(java.util.stream.Collectors.toMap(
                         f -> f.getFluidId() + "|" + f.getDimension(),
@@ -144,32 +144,53 @@ public class FluidService {
                         java.util.LinkedHashMap::new))
                 .values()
                 .stream()
+                .toList();
+        Map<String, ItemVariantBrowserEntity> dimensionIcons = loadItemVariants(
+                datasetId,
+                rows.stream()
+                        .map(GtUndergroundFluidBrowserEntity::getDimensionIconItemVariantId)
+                        .filter(id -> id != null && !id.isBlank())
+                        .distinct()
+                        .toList());
+        return rows.stream()
                 .map(f -> new FluidUndergroundResource(
                         f.getFluidId(),
                         f.getDimension(),
-                        dimensionRef(dataset, f),
+                        dimensionRef(dataset, f, dimensionIcons),
                         f.getChance(),
                         f.getMinAmount(),
                         f.getMaxAmount()))
                 .toList();
     }
 
-    private GtDimensionRef dimensionRef(DatasetSummary dataset, GtUndergroundFluidBrowserEntity fluid) {
+    private GtDimensionRef dimensionRef(
+            DatasetSummary dataset,
+            GtUndergroundFluidBrowserEntity fluid,
+            Map<String, ItemVariantBrowserEntity> dimensionIcons) {
         return new GtDimensionRef(
                 fluid.getDimension(),
                 fluid.getDimensionFullName() != null ? fluid.getDimensionFullName() : fluid.getDimension(),
                 fluid.getDimensionDisplayName() != null ? fluid.getDimensionDisplayName() : fluid.getDimension(),
                 fluid.getDimensionDisplayAbbr() != null ? fluid.getDimensionDisplayAbbr() : fluid.getDimension(),
                 fluid.getDimensionIconItemVariantId(),
-                itemAssetUrl(dataset, fluid.getDimensionIconItemVariantId()),
+                itemAssetUrl(dataset, fluid.getDimensionIconItemVariantId(), dimensionIcons),
                 fluid.getDimensionSortOrder() == null ? Integer.MAX_VALUE : fluid.getDimensionSortOrder());
     }
 
-    private String itemAssetUrl(DatasetSummary dataset, String itemVariantId) {
+    private Map<String, ItemVariantBrowserEntity> loadItemVariants(String datasetId, List<String> itemVariantIds) {
+        if (itemVariantIds.isEmpty()) return Map.of();
+        return itemVariantRepo.findByDatasetIdAndItemVariantIdIn(datasetId, itemVariantIds)
+                .stream()
+                .collect(java.util.stream.Collectors.toMap(ItemVariantBrowserEntity::getItemVariantId, item -> item));
+    }
+
+    private String itemAssetUrl(
+            DatasetSummary dataset,
+            String itemVariantId,
+            Map<String, ItemVariantBrowserEntity> itemVariants) {
         if (itemVariantId == null || itemVariantId.isBlank()) return null;
-        return itemVariantRepo.findById(new ItemVariantBrowserEntity.ItemVariantId(dataset.datasetId(), itemVariantId))
-                .map(i -> assetUrlBuilder.build(dataset, i.getAssetPath(), i.getAssetSha256()))
-                .orElse(null);
+        ItemVariantBrowserEntity item = itemVariants.get(itemVariantId);
+        return item == null ? null : assetUrlBuilder.build(dataset, item.getAssetPath(), item.getAssetSha256());
     }
 
     private static String stripNamespace(String value) {

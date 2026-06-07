@@ -6,6 +6,7 @@ import { useExtrasStore } from '@/stores/extras';
 import { getFluidDetail } from '@/api/fluids';
 import type { FluidDetail } from '@/api/fluids.types';
 import type { FluidExtras } from '@/api/extras.types';
+import { formatChancePercent } from '@/utils/format';
 
 const props = defineProps<{
   datasetId: string;
@@ -74,11 +75,6 @@ async function loadExtras() {
   }
 }
 
-function copyId() {
-  if (!detail.value) return;
-  navigator.clipboard?.writeText(detail.value.fluidVariantId);
-}
-
 function goLookup(kind: 'recipe' | 'usage') {
   router.replace({
     name: 'lookup',
@@ -118,48 +114,109 @@ onMounted(() => {
 
 <template>
   <div class="fluid-detail">
-    <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
-    <el-skeleton v-if="loading" :rows="6" animated />
+    <el-alert
+      v-if="error"
+      :title="error"
+      type="error"
+      :closable="false"
+      show-icon
+    />
+    <el-skeleton
+      v-if="loading"
+      :rows="6"
+      animated
+    />
 
-    <div v-else-if="detail" class="content">
+    <div
+      v-else-if="detail"
+      class="content"
+    >
       <header class="hero">
-        <div class="icon-wrap" :class="{ gaseous: detail.gaseous }">
+        <div
+          class="icon-wrap"
+          :class="{ gaseous: detail.gaseous }"
+        >
           <img
             v-if="detail.assetUrl && !heroImgFailed"
             :src="detail.assetUrl"
             :alt="detail.displayName"
             class="hero-icon"
             @error="heroImgFailed = true"
-          />
-          <div v-else class="hero-fallback" :class="{ gaseous: detail.gaseous }">
+          >
+          <div
+            v-else
+            class="hero-fallback"
+            :class="{ gaseous: detail.gaseous }"
+          >
             {{ gaseousShortLabel }}
           </div>
         </div>
         <div class="title-block">
-          <h1 class="title">{{ detail.displayName || detail.registryName }}</h1>
+          <h1 class="title">
+            {{ detail.displayName || detail.registryName }}
+          </h1>
           <div class="subtitle">
-            <el-tag size="default" type="info" effect="plain" round>{{ detail.modName }}</el-tag>
-            <el-tag size="small" type="primary" effect="plain" round>{{ $t('fluid.tag') }}</el-tag>
-            <el-tag v-if="detail.gaseous" size="small" type="warning" effect="plain" round>{{
-              $t('fluid.gaseous')
-            }}</el-tag>
+            <el-tag
+              size="default"
+              type="info"
+              effect="plain"
+              round
+            >
+              {{ detail.modName }}
+            </el-tag>
+            <el-tag
+              size="small"
+              type="primary"
+              effect="plain"
+              round
+            >
+              {{ $t('fluid.tag') }}
+            </el-tag>
+            <el-tag
+              v-if="detail.gaseous"
+              size="small"
+              type="warning"
+              effect="plain"
+              round
+            >
+              {{
+                $t('fluid.gaseous')
+              }}
+            </el-tag>
           </div>
           <div class="actions">
-            <el-button type="primary" @click="goLookup('recipe')">{{
-              $t('common.viewRecipe')
-            }}</el-button>
-            <el-button @click="goLookup('usage')">{{ $t('common.viewUsage') }}</el-button>
+            <el-button
+              type="primary"
+              @click="goLookup('recipe')"
+            >
+              {{
+                $t('common.viewRecipe')
+              }}
+            </el-button>
+            <el-button @click="goLookup('usage')">
+              {{ $t('common.viewUsage') }}
+            </el-button>
           </div>
         </div>
       </header>
 
       <el-row :gutter="16">
-        <el-col :xs="24" :md="14">
-          <el-card shadow="never" class="section">
+        <el-col
+          :xs="24"
+          :md="14"
+        >
+          <el-card
+            shadow="never"
+            class="section"
+          >
             <template #header>
               <span class="section-title">{{ $t('common.basicAttributes') }}</span>
             </template>
-            <el-descriptions :column="1" border size="default">
+            <el-descriptions
+              :column="1"
+              border
+              size="default"
+            >
               <el-descriptions-item :label="$t('common.variantId')">
                 <code>{{ detail.fluidVariantId }}</code>
               </el-descriptions-item>
@@ -190,13 +247,20 @@ onMounted(() => {
               <el-descriptions-item :label="$t('fluid.luminosity')">
                 {{ detail.luminosity }}
               </el-descriptions-item>
-              <el-descriptions-item v-if="detail.nbtHash" :label="$t('common.nbtHash')">
+              <el-descriptions-item
+                v-if="detail.nbtHash"
+                :label="$t('common.nbtHash')"
+              >
                 <code class="small">{{ detail.nbtHash }}</code>
               </el-descriptions-item>
             </el-descriptions>
           </el-card>
 
-          <el-card v-if="nbtLines.length" shadow="never" class="section">
+          <el-card
+            v-if="nbtLines.length"
+            shadow="never"
+            class="section"
+          >
             <template #header>
               <span class="section-title">{{ $t('common.nbt') }}</span>
             </template>
@@ -204,15 +268,26 @@ onMounted(() => {
           </el-card>
         </el-col>
 
-        <el-col :xs="24" :md="10">
-          <el-card v-if="detail.chemicalExpression" shadow="never" class="section">
+        <el-col
+          :xs="24"
+          :md="10"
+        >
+          <el-card
+            v-if="detail.chemicalExpression"
+            shadow="never"
+            class="section"
+          >
             <template #header>
               <span class="section-title">{{ $t('common.chemicalExpression') }}</span>
             </template>
             <code class="chemical-expression">{{ detail.chemicalExpression }}</code>
           </el-card>
 
-          <el-card v-if="detail.undergroundResources.length" shadow="never" class="section">
+          <el-card
+            v-if="detail.undergroundResources.length"
+            shadow="never"
+            class="section"
+          >
             <template #header>
               <span class="section-title">{{ $t('fluid.undergroundResources') }}</span>
             </template>
@@ -229,28 +304,51 @@ onMounted(() => {
                     v-if="resource.dimensionDisplay.iconAssetUrl"
                     :src="resource.dimensionDisplay.iconAssetUrl"
                     :alt="resource.dimensionDisplay.displayName"
-                  />
+                  >
+                  <span class="underground-dimension-name">
+                    {{ resource.dimensionDisplay.displayName }}
+                  </span>
                 </span>
                 <span class="underground-stats">
-                  <el-tag size="small" effect="plain" round>
+                  <el-tag
+                    size="small"
+                    effect="plain"
+                    round
+                  >
                     {{ resource.minAmount }}-{{ resource.maxAmount }} L
                   </el-tag>
-                  <el-tag size="small" type="warning" effect="plain" round>
-                    {{ resource.chance }}
+                  <el-tag
+                    size="small"
+                    type="warning"
+                    effect="plain"
+                    round
+                  >
+                    {{ $t('common.probability') }} {{ formatChancePercent(resource.chance) }}
                   </el-tag>
                 </span>
-                <span class="underground-link">{{ $t('fluid.viewWorldGen') }} →</span>
               </button>
             </div>
           </el-card>
 
-          <el-card shadow="never" class="section">
+          <el-card
+            shadow="never"
+            class="section"
+          >
             <template #header>
               <span class="section-title">{{ $t('common.extrasInfo') }}</span>
             </template>
 
-            <el-skeleton v-if="extrasLoading" :rows="3" animated />
-            <el-alert v-else-if="extrasError" :title="extrasError" type="error" :closable="false" />
+            <el-skeleton
+              v-if="extrasLoading"
+              :rows="3"
+              animated
+            />
+            <el-alert
+              v-else-if="extrasError"
+              :title="extrasError"
+              type="error"
+              :closable="false"
+            />
 
             <template v-else-if="extras">
               <div class="counts">
@@ -276,7 +374,10 @@ onMounted(() => {
                 </button>
               </div>
 
-              <div v-if="extras.blocks.length" class="ext-block">
+              <div
+                v-if="extras.blocks.length"
+                class="ext-block"
+              >
                 <div class="ext-block-title">
                   {{ $t('fluid.correspondingBlock') }}
                   <span class="ext-count">{{ extras.blocks.length }}</span>
@@ -289,13 +390,20 @@ onMounted(() => {
                     :title="b.blockDisplayName ?? b.blockItemVariantId"
                     @click="goToItem(b.blockItemVariantId)"
                   >
-                    <img v-if="b.blockAssetUrl" :src="b.blockAssetUrl" loading="lazy" />
+                    <img
+                      v-if="b.blockAssetUrl"
+                      :src="b.blockAssetUrl"
+                      loading="lazy"
+                    >
                     <span class="block-name">{{ b.blockDisplayName ?? b.blockItemVariantId }}</span>
                   </div>
                 </div>
               </div>
 
-              <div v-if="extras.containers.length" class="ext-block">
+              <div
+                v-if="extras.containers.length"
+                class="ext-block"
+              >
                 <div class="ext-block-title">
                   {{ $t('common.fluidContainer') }}
                   <span class="ext-count">{{ extras.containers.length }}</span>
@@ -311,13 +419,20 @@ onMounted(() => {
                       :title="c.containerDisplayName ?? c.containerItemVariantId"
                       @click="goToItem(c.containerItemVariantId)"
                     >
-                      <img v-if="c.containerAssetUrl" :src="c.containerAssetUrl" loading="lazy" />
+                      <img
+                        v-if="c.containerAssetUrl"
+                        :src="c.containerAssetUrl"
+                        loading="lazy"
+                      >
                       <span class="container-name">{{
                         c.containerDisplayName ?? c.containerItemVariantId
                       }}</span>
                     </div>
                     <div class="container-arrow">
-                      <span v-if="c.amount > 0" class="container-amount">{{ c.amount }} mB</span>
+                      <span
+                        v-if="c.amount > 0"
+                        class="container-amount"
+                      >{{ c.amount }} mB</span>
                       <span class="container-arrow-line">→</span>
                     </div>
                     <div
@@ -329,7 +444,7 @@ onMounted(() => {
                         v-if="c.emptyContainerAssetUrl"
                         :src="c.emptyContainerAssetUrl"
                         loading="lazy"
-                      />
+                      >
                       <span class="container-name">{{
                         c.emptyContainerDisplayName ?? c.emptyContainerItemVariantId
                       }}</span>
@@ -338,14 +453,22 @@ onMounted(() => {
                 </div>
               </div>
 
-              <div v-if="!hasAnyExtras" class="ext-hint">{{ $t('common.noExtras') }}</div>
+              <div
+                v-if="!hasAnyExtras"
+                class="ext-hint"
+              >
+                {{ $t('common.noExtras') }}
+              </div>
             </template>
           </el-card>
         </el-col>
       </el-row>
     </div>
 
-    <el-empty v-else-if="!loading" :description="$t('fluid.notFound')" />
+    <el-empty
+      v-else-if="!loading"
+      :description="$t('fluid.notFound')"
+    />
   </div>
 </template>
 
@@ -531,7 +654,7 @@ onMounted(() => {
 }
 .underground-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) max-content max-content;
+  grid-template-columns: minmax(0, 1fr) max-content;
   gap: 8px;
   align-items: center;
   width: 100%;
@@ -549,10 +672,11 @@ onMounted(() => {
   background: var(--el-color-primary-light-9);
 }
 .underground-dimension {
-  width: 20px;
-  height: 20px;
-  display: inline-grid;
-  place-items: center;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
 }
 .underground-dimension img {
   width: 16px;
@@ -561,18 +685,17 @@ onMounted(() => {
   image-rendering: pixelated;
   image-rendering: crisp-edges;
 }
+.underground-dimension-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .underground-stats {
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: max-content;
   gap: 4px;
 }
-.underground-link {
-  color: var(--el-color-primary);
-  font-size: 12px;
-  white-space: nowrap;
-}
-
 .ext-block {
   margin-top: 14px;
 }

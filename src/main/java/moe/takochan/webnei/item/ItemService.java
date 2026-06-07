@@ -1,6 +1,7 @@
 package moe.takochan.webnei.item;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -125,37 +126,93 @@ public class ItemService {
                 assetUrlBuilder.build(dataset, e.getAssetPath(), e.getAssetSha256()),
                 e.getAssetWidth(),
                 e.getAssetHeight(),
-                worldGeneration(datasetId, itemVariantId));
+                worldGeneration(dataset, itemVariantId));
     }
 
-    private List<ItemWorldGenerationRef> worldGeneration(String datasetId, String itemVariantId) {
+    private List<ItemWorldGenerationRef> worldGeneration(DatasetSummary dataset, String itemVariantId) {
+        String datasetId = dataset.datasetId();
         Map<String, ItemWorldGenerationRef> refs = new LinkedHashMap<>();
         Sort layerSort = Sort.by("veinName").ascending().and(Sort.by("layer").ascending());
-        oreVeinLayerRepo.findByDatasetIdAndBlockItemVariantId(datasetId, itemVariantId, layerSort)
-                .forEach(layer -> oreVeinRepo.findById(new GtOreVeinEntity.OreVeinId(datasetId, layer.getVeinName()))
-                        .ifPresent(vein -> refs.putIfAbsent("ore-veins|" + vein.getVeinName(), oreVeinRef(datasetId, vein))));
-        oreVeinLayerVariantRepo.findByDatasetIdAndItemVariantId(datasetId, itemVariantId, layerSort)
-                .forEach(variant -> oreVeinRepo.findById(new GtOreVeinEntity.OreVeinId(datasetId, variant.getVeinName()))
-                        .ifPresent(vein -> refs.putIfAbsent("ore-veins|" + vein.getVeinName(), oreVeinRef(datasetId, vein))));
 
-        smallOreRepo.findByDatasetIdAndSmallOreItemVariantId(datasetId, itemVariantId, Sort.by("materialName").ascending())
-                .forEach(ore -> {
-                    refs.putIfAbsent("small-ores|" + ore.getOreGenName(), smallOreRef(datasetId, ore));
-                    oreVeinLayerRepo.findByDatasetIdAndMaterialName(datasetId, ore.getMaterialName(), layerSort)
-                            .forEach(layer -> oreVeinRepo.findById(new GtOreVeinEntity.OreVeinId(datasetId, layer.getVeinName()))
-                                    .ifPresent(vein -> refs.putIfAbsent("ore-veins|" + vein.getVeinName(), oreVeinRef(datasetId, vein))));
-                });
+        List<GtOreSmallEntity> smallOres = smallOreRepo.findByDatasetIdAndSmallOreItemVariantId(
+                datasetId, itemVariantId, Sort.by("materialName").ascending());
+        List<String> materialNames = smallOres.stream()
+                .map(GtOreSmallEntity::getMaterialName)
+                .distinct()
+                .toList();
+        List<moe.takochan.webnei.gtore.GtOreVeinLayerEntity> materialLayers = materialNames.isEmpty()
+                ? List.of()
+                : oreVeinLayerRepo.findByDatasetIdAndMaterialNameIn(datasetId, materialNames, layerSort);
+        List<moe.takochan.webnei.gtore.GtOreVeinLayerEntity> blockLayers =
+                oreVeinLayerRepo.findByDatasetIdAndBlockItemVariantId(datasetId, itemVariantId, layerSort);
+        List<moe.takochan.webnei.gtore.GtOreVeinLayerVariantEntity> layerVariants =
+                oreVeinLayerVariantRepo.findByDatasetIdAndItemVariantId(datasetId, itemVariantId, layerSort);
+
+        List<String> veinNames = java.util.stream.Stream.of(
+                        blockLayers.stream().map(moe.takochan.webnei.gtore.GtOreVeinLayerEntity::getVeinName),
+                        layerVariants.stream().map(moe.takochan.webnei.gtore.GtOreVeinLayerVariantEntity::getVeinName),
+                        materialLayers.stream().map(moe.takochan.webnei.gtore.GtOreVeinLayerEntity::getVeinName))
+                .flatMap(s -> s)
+                .distinct()
+                .toList();
+        Map<String, GtOreVeinEntity> oreVeins = loadOreVeins(datasetId, veinNames);
 
         Sort bartWorksSort = Sort.by("entryType").ascending().and(Sort.by("dimensionDisplayName").ascending());
-        bartWorksOreRepo.findByDatasetIdAndResultItemVariantId(datasetId, itemVariantId, bartWorksSort)
-                .forEach(ore -> refs.putIfAbsent("bartworks-ores|" + ore.getEntryId(), bartWorksRef(ore)));
-        bartWorksOreLayerRepo.findByDatasetIdAndItemVariantId(datasetId, itemVariantId, Sort.by("entryId").ascending())
-                .forEach(layer -> bartWorksOreRepo.findById(new GtBartWorksOreEntity.BartWorksOreId(datasetId, layer.getEntryId()))
-                        .ifPresent(ore -> refs.putIfAbsent("bartworks-ores|" + ore.getEntryId(), bartWorksRef(ore))));
+        List<GtBartWorksOreEntity> directBartWorksOres = bartWorksOreRepo.findByDatasetIdAndResultItemVariantId(
+                datasetId, itemVariantId, bartWorksSort);
+        List<moe.takochan.webnei.gtore.GtBartWorksOreLayerEntity> bartWorksLayers =
+                bartWorksOreLayerRepo.findByDatasetIdAndItemVariantId(datasetId, itemVariantId, Sort.by("entryId").ascending());
+        Map<String, GtBartWorksOreEntity> bartWorksOres = loadBartWorksOres(
+                datasetId,
+                bartWorksLayers.stream().map(moe.takochan.webnei.gtore.GtBartWorksOreLayerEntity::getEntryId).distinct().toList());
+
+        Map<String, GtDimensionDisplayEntity> dimensions = dimensionDisplayRepo.findByDatasetId(datasetId, Sort.unsorted())
+                .stream()
+                .collect(java.util.stream.Collectors.toMap(GtDimensionDisplayEntity::getDimension, d -> d));
+        List<String> itemVariantIds = java.util.stream.Stream.concat(
+                        dimensions.values().stream().map(GtDimensionDisplayEntity::getIconItemVariantId),
+                        smallOres.stream().map(GtOreSmallEntity::getSmallOreItemVariantId))
+                .filter(id -> id != null && !id.isBlank())
+                .distinct()
+                .toList();
+        Map<String, ItemVariantBrowserEntity> itemVariants = loadItemVariants(datasetId, itemVariantIds);
+
+        blockLayers.forEach(layer -> putOreVeinRef(refs, dataset, oreVeins.get(layer.getVeinName()), dimensions, itemVariants));
+        layerVariants.forEach(variant -> putOreVeinRef(refs, dataset, oreVeins.get(variant.getVeinName()), dimensions, itemVariants));
+        smallOres.forEach(ore -> {
+            refs.putIfAbsent("small-ores|" + ore.getOreGenName(), smallOreRef(dataset, ore, dimensions, itemVariants));
+            materialLayers.stream()
+                    .filter(layer -> layer.getMaterialName().equals(ore.getMaterialName()))
+                    .forEach(layer -> putOreVeinRef(refs, dataset, oreVeins.get(layer.getVeinName()), dimensions, itemVariants));
+        });
+        directBartWorksOres.forEach(ore -> refs.putIfAbsent(
+                "bartworks-ores|" + ore.getEntryId(), bartWorksRef(dataset, ore, dimensions, itemVariants)));
+        bartWorksLayers.forEach(layer -> {
+            GtBartWorksOreEntity ore = bartWorksOres.get(layer.getEntryId());
+            if (ore != null) {
+                refs.putIfAbsent("bartworks-ores|" + ore.getEntryId(), bartWorksRef(dataset, ore, dimensions, itemVariants));
+            }
+        });
         return List.copyOf(refs.values());
     }
 
-    private ItemWorldGenerationRef oreVeinRef(String datasetId, GtOreVeinEntity vein) {
+    private void putOreVeinRef(
+            Map<String, ItemWorldGenerationRef> refs,
+            DatasetSummary dataset,
+            GtOreVeinEntity vein,
+            Map<String, GtDimensionDisplayEntity> dimensions,
+            Map<String, ItemVariantBrowserEntity> itemVariants) {
+        if (vein != null) {
+            refs.putIfAbsent("ore-veins|" + vein.getVeinName(), oreVeinRef(dataset, vein, dimensions, itemVariants));
+        }
+    }
+
+    private ItemWorldGenerationRef oreVeinRef(
+            DatasetSummary dataset,
+            GtOreVeinEntity vein,
+            Map<String, GtDimensionDisplayEntity> dimensions,
+            Map<String, ItemVariantBrowserEntity> itemVariants) {
+        String datasetId = dataset.datasetId();
         return new ItemWorldGenerationRef(
                 "ore-veins",
                 vein.getVeinName(),
@@ -164,26 +221,35 @@ public class ItemService {
                 oreVeinDimensionRepo.findByDatasetIdAndVeinNameAndEnabled(
                                 datasetId, vein.getVeinName(), true, Sort.by("displayAbbr").ascending())
                         .stream()
-                        .map(d -> dimensionRef(datasetId, d.getDimension()))
+                        .map(d -> dimensionRef(dataset, d.getDimension(), d.getDimension(), dimensions, itemVariants))
                         .toList(),
                 "Y " + vein.getHeightMin() + "-" + vein.getHeightMax() + " · 权重 " + vein.getWeight());
     }
 
-    private ItemWorldGenerationRef smallOreRef(String datasetId, GtOreSmallEntity ore) {
+    private ItemWorldGenerationRef smallOreRef(
+            DatasetSummary dataset,
+            GtOreSmallEntity ore,
+            Map<String, GtDimensionDisplayEntity> dimensions,
+            Map<String, ItemVariantBrowserEntity> itemVariants) {
+        String datasetId = dataset.datasetId();
         return new ItemWorldGenerationRef(
                 "small-ores",
                 ore.getOreGenName(),
-                itemDisplayName(datasetId, ore.getSmallOreItemVariantId()),
+                itemDisplayName(ore.getSmallOreItemVariantId(), itemVariants),
                 "贫瘠矿石信息",
                 smallOreDimensionRepo.findByDatasetIdAndOreGenNameAndEnabled(
                                 datasetId, ore.getOreGenName(), true, Sort.by("displayAbbr").ascending())
                         .stream()
-                        .map(d -> dimensionRef(datasetId, d.getDimension()))
+                        .map(d -> dimensionRef(dataset, d.getDimension(), d.getDimension(), dimensions, itemVariants))
                         .toList(),
                 "Y " + ore.getHeightMin() + "-" + ore.getHeightMax() + " · 每区块 " + ore.getAmountPerChunk());
     }
 
-    private ItemWorldGenerationRef bartWorksRef(GtBartWorksOreEntity ore) {
+    private ItemWorldGenerationRef bartWorksRef(
+            DatasetSummary dataset,
+            GtBartWorksOreEntity ore,
+            Map<String, GtDimensionDisplayEntity> dimensions,
+            Map<String, ItemVariantBrowserEntity> itemVariants) {
         String stat = "Y " + ore.getHeightMin() + "-" + ore.getHeightMax() + " · "
                 + ("small".equals(ore.getEntryType()) ? "每区块 " + ore.getAmountPerChunk() : "权重 " + ore.getWeight());
         return new ItemWorldGenerationRef(
@@ -191,28 +257,32 @@ public class ItemService {
                 ore.getEntryId(),
                 ore.getResultDisplayName(),
                 "BartWorks Ores",
-                List.of(dimensionRef(ore.getDatasetId(), ore.getDimension(), ore.getDimensionDisplayName())),
+                List.of(dimensionRef(dataset, ore.getDimension(), ore.getDimensionDisplayName(), dimensions, itemVariants)),
                 stat);
     }
 
-    private GtDimensionRef dimensionRef(String datasetId, String dimension) {
-        return dimensionRef(datasetId, dimension, dimension);
+    private GtDimensionRef dimensionRef(
+            DatasetSummary dataset,
+            String dimension,
+            String fallbackName,
+            Map<String, GtDimensionDisplayEntity> dimensions,
+            Map<String, ItemVariantBrowserEntity> itemVariants) {
+        GtDimensionDisplayEntity d = dimensions.get(dimension);
+        if (d == null) {
+            return new GtDimensionRef(dimension, fallbackName, fallbackName, fallbackName, "", null, Integer.MAX_VALUE);
+        }
+        return new GtDimensionRef(
+                d.getDimension(), d.getFullName(), d.getDisplayName(), d.getDisplayAbbr(),
+                d.getIconItemVariantId(), itemAssetUrl(dataset, d.getIconItemVariantId(), itemVariants), d.getSortOrder());
     }
 
-    private GtDimensionRef dimensionRef(String datasetId, String dimension, String fallbackName) {
-        return dimensionDisplayRepo.findById(new GtDimensionDisplayEntity.DimensionDisplayId(datasetId, dimension))
-                .map(d -> new GtDimensionRef(
-                        d.getDimension(), d.getFullName(), d.getDisplayName(), d.getDisplayAbbr(),
-                        d.getIconItemVariantId(), itemAssetUrl(datasetId, d.getIconItemVariantId()), d.getSortOrder()))
-                .orElse(new GtDimensionRef(dimension, fallbackName, fallbackName, fallbackName, "", null, Integer.MAX_VALUE));
-    }
-
-    private String itemAssetUrl(String datasetId, String itemVariantId) {
+    private String itemAssetUrl(
+            DatasetSummary dataset,
+            String itemVariantId,
+            Map<String, ItemVariantBrowserEntity> itemVariants) {
         if (itemVariantId == null || itemVariantId.isBlank()) return null;
-        DatasetSummary dataset = datasetService.requireById(datasetId);
-        return itemRepo.findById(new ItemVariantBrowserEntity.ItemVariantId(datasetId, itemVariantId))
-                .map(i -> assetUrlBuilder.build(dataset, i.getAssetPath(), i.getAssetSha256()))
-                .orElse(null);
+        ItemVariantBrowserEntity item = itemVariants.get(itemVariantId);
+        return item == null ? null : assetUrlBuilder.build(dataset, item.getAssetPath(), item.getAssetSha256());
     }
 
     public List<ModOptionDto> listMods(String datasetId) {
@@ -276,10 +346,36 @@ public class ItemService {
                 e.getPanelIndex());
     }
 
-    private String itemDisplayName(String datasetId, String itemVariantId) {
-        return itemRepo.findById(new ItemVariantBrowserEntity.ItemVariantId(datasetId, itemVariantId))
-                .map(ItemVariantBrowserEntity::getDisplayName)
-                .orElse(itemVariantId);
+    private Map<String, GtOreVeinEntity> loadOreVeins(String datasetId, List<String> veinNames) {
+        if (veinNames.isEmpty()) return Map.of();
+        Map<String, GtOreVeinEntity> out = new HashMap<>();
+        oreVeinRepo.findAllById(veinNames.stream()
+                        .map(name -> new GtOreVeinEntity.OreVeinId(datasetId, name))
+                        .toList())
+                .forEach(vein -> out.put(vein.getVeinName(), vein));
+        return out;
+    }
+
+    private Map<String, GtBartWorksOreEntity> loadBartWorksOres(String datasetId, List<String> entryIds) {
+        if (entryIds.isEmpty()) return Map.of();
+        Map<String, GtBartWorksOreEntity> out = new HashMap<>();
+        bartWorksOreRepo.findAllById(entryIds.stream()
+                        .map(entryId -> new GtBartWorksOreEntity.BartWorksOreId(datasetId, entryId))
+                        .toList())
+                .forEach(ore -> out.put(ore.getEntryId(), ore));
+        return out;
+    }
+
+    private Map<String, ItemVariantBrowserEntity> loadItemVariants(String datasetId, List<String> itemVariantIds) {
+        if (itemVariantIds.isEmpty()) return Map.of();
+        return itemRepo.findByDatasetIdAndItemVariantIdIn(datasetId, itemVariantIds)
+                .stream()
+                .collect(java.util.stream.Collectors.toMap(ItemVariantBrowserEntity::getItemVariantId, item -> item));
+    }
+
+    private String itemDisplayName(String itemVariantId, Map<String, ItemVariantBrowserEntity> itemVariants) {
+        ItemVariantBrowserEntity item = itemVariants.get(itemVariantId);
+        return item == null ? itemVariantId : item.getDisplayName();
     }
 
     private String modName(String datasetId, String modId) {

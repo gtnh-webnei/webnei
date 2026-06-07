@@ -62,7 +62,6 @@ public class RecipeService {
     private final RecipeSlotBrowserRepository slotRepo;
     private final IngredientEntryRepository ingredientEntryRepo;
     private final RecipeSlotLayoutRepository slotLayoutRepo;
-    private final RecipeCategoryLayoutRepository categoryLayoutRepo;
     private final GregTechRecipeRepository gregTechRecipeRepo;
     private final GregTechRecipeMetadataRepository metadataRepo;
     private final GregTechSpecialItemRepository specialItemRepo;
@@ -85,7 +84,6 @@ public class RecipeService {
                         RecipeSlotBrowserRepository slotRepo,
                         IngredientEntryRepository ingredientEntryRepo,
                         RecipeSlotLayoutRepository slotLayoutRepo,
-                        RecipeCategoryLayoutRepository categoryLayoutRepo,
                         GregTechRecipeRepository gregTechRecipeRepo,
                         GregTechRecipeMetadataRepository metadataRepo,
                         GregTechSpecialItemRepository specialItemRepo,
@@ -107,7 +105,6 @@ public class RecipeService {
         this.slotRepo = slotRepo;
         this.ingredientEntryRepo = ingredientEntryRepo;
         this.slotLayoutRepo = slotLayoutRepo;
-        this.categoryLayoutRepo = categoryLayoutRepo;
         this.gregTechRecipeRepo = gregTechRecipeRepo;
         this.metadataRepo = metadataRepo;
         this.specialItemRepo = specialItemRepo;
@@ -328,7 +325,6 @@ public class RecipeService {
                 .distinct()
                 .toList();
         Map<String, List<SlotLayoutDto>> layoutMap = loadLayouts(datasetId, categoryIds);
-        Map<String, RecipeCategoryLayoutEntity> categoryMeta = loadCategoryLayoutMeta(datasetId, categoryIds);
         List<GregTechSpecialItemEntity> specialRows = specialItemRepo.findByDatasetIdAndRecipeIdIn(
                 datasetId, new ArrayList<>(headers.keySet()), Sort.by("recipeId").ascending().and(Sort.by("listIndex").ascending()));
         Map<String, List<RecipeSlotDto>> slotMap = loadSlots(dataset, new ArrayList<>(headers.keySet()), specialRows, layoutMap);
@@ -338,7 +334,6 @@ public class RecipeService {
         for (String id : recipeIds) {
             RecipeBrowserEntity h = headers.get(id);
             if (h == null) continue;
-            RecipeCategoryLayoutEntity meta = categoryMeta.get(h.getCategoryId());
             out.add(new RecipeDto(
                     id,
                     h.getCategoryId(),
@@ -348,10 +343,6 @@ public class RecipeService {
                     h.getSourceRef(),
                     h.getDescription(),
                     slotMap.getOrDefault(id, List.of()),
-                    layoutMap.getOrDefault(h.getCategoryId(), List.of()),
-                    meta == null ? null : meta.getCanvasWidth(),
-                    meta == null ? null : meta.getCanvasHeight(),
-                    assetUrlBuilder.build(dataset, meta == null ? null : meta.getBackgroundAssetPath(), null),
                     gtMap.get(id)));
         }
         return out;
@@ -529,15 +520,6 @@ public class RecipeService {
         return map;
     }
 
-    private Map<String, RecipeCategoryLayoutEntity> loadCategoryLayoutMeta(String datasetId, List<String> categoryIds) {
-        if (categoryIds.isEmpty()) return Map.of();
-        Map<String, RecipeCategoryLayoutEntity> map = new HashMap<>();
-        for (RecipeCategoryLayoutEntity e : categoryLayoutRepo.findByDatasetIdAndCategoryIdIn(datasetId, categoryIds)) {
-            map.put(e.getCategoryId(), e);
-        }
-        return map;
-    }
-
     private Map<String, GregTechRecipeDto> loadGregTechInfo(
             DatasetSummary dataset, List<String> recipeIds, List<GregTechSpecialItemEntity> specialRows) {
         Map<String, List<GregTechSpecialItemDto>> specialItems = mapGregTechSpecialItems(dataset, specialRows);
@@ -674,14 +656,10 @@ public class RecipeService {
         }
         return new RecipeCategoryDto(
                 e.getCategoryId(),
-                e.getPlugin(),
                 e.getHandlerId(),
                 e.getDisplayName(),
                 e.isShapeless(),
-                e.getIconItemVariantId(),
-                e.getIconDisplayName(),
                 assetUrlBuilder.build(dataset, iconPath, null),
-                e.getIconInfo(),
                 e.getItemInputWidth(),
                 e.getItemInputHeight(),
                 e.getFluidInputWidth(),
@@ -690,28 +668,10 @@ public class RecipeService {
                 e.getItemOutputHeight(),
                 e.getFluidOutputWidth(),
                 e.getFluidOutputHeight(),
-                e.isSupportsRecipeLookup(),
-                e.isSupportsUsageLookup(),
-                e.getDisplayOrder(),
-                e.getCanvasWidth(),
-                e.getCanvasHeight(),
-                assetUrlBuilder.build(dataset, e.getBackgroundAssetPath(), null),
                 e.getRecipeCount(),
                 e.getMachineCount(),
-                e.getModId(),
                 e.getModName(),
-                e.getHandlerClass(),
-                e.getHandlerCanvasWidth(),
-                e.getHandlerCanvasHeight(),
-                e.getHandlerYShift(),
-                e.isHandlerMultipleWidgetsAllowed(),
-                e.getIconImageResource(),
-                e.getIconImageX(),
-                e.getIconImageY(),
-                e.getIconImageWidth(),
-                e.getIconImageHeight(),
-                e.getIconImageTextureWidth(),
-                e.getIconImageTextureHeight());
+                e.getHandlerClass());
     }
 
     private static Pageable pageRequest(PageRequest page, int defaultSize, Sort sort) {

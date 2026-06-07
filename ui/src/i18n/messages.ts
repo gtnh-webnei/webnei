@@ -64,7 +64,6 @@ export interface MessageSchema {
     luminosity: string;
     correspondingBlock: string;
     undergroundResources: string;
-    viewWorldGen: string;
     notFound: string;
     tag: string;
   };

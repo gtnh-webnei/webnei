@@ -2,14 +2,10 @@ package moe.takochan.webnei.recipe.dto;
 
 public record RecipeCategoryDto(
         String categoryId,
-        String plugin,
         String handlerId,
         String displayName,
         boolean shapeless,
-        String iconItemVariantId,
-        String iconDisplayName,
         String iconAssetUrl,
-        String iconInfo,
         int itemInputWidth,
         int itemInputHeight,
         int fluidInputWidth,
@@ -18,27 +14,8 @@ public record RecipeCategoryDto(
         int itemOutputHeight,
         int fluidOutputWidth,
         int fluidOutputHeight,
-        boolean supportsRecipeLookup,
-        boolean supportsUsageLookup,
-        int displayOrder,
-        Integer canvasWidth,
-        Integer canvasHeight,
-        String backgroundAssetUrl,
         long recipeCount,
         long machineCount,
-        // NEI HandlerInfo
-        String modId,
         String modName,
-        String handlerClass,
-        int handlerCanvasWidth,
-        int handlerCanvasHeight,
-        int handlerYShift,
-        boolean handlerMultipleWidgetsAllowed,
-        String iconImageResource,
-        int iconImageX,
-        int iconImageY,
-        int iconImageWidth,
-        int iconImageHeight,
-        int iconImageTextureWidth,
-        int iconImageTextureHeight) {
+        String handlerClass) {
 }

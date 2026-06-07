@@ -4,7 +4,8 @@ import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { storeToRefs } from 'pinia';
 import { useDatasetStore } from '@/stores/dataset';
-import { listRecipeCategories, lookupBreakdown, lookupRecipes } from '@/api/recipes';
+import { useRecipeCategoryStore } from '@/stores/recipeCategories';
+import { lookupBreakdown, lookupRecipes } from '@/api/recipes';
 import { getItemDetail } from '@/api/items';
 import { getFluidDetail } from '@/api/fluids';
 import type { HandlerBreakdown, LookupKind, Recipe, RecipeCategory } from '@/api/recipes.types';
@@ -12,12 +13,14 @@ import RecipePanel from '@/components/RecipePanel.vue';
 import ItemDetailPanel from '@/components/ItemDetailPanel.vue';
 import FluidDetailPanel from '@/components/FluidDetailPanel.vue';
 import CategoryHeaderRows from '@/components/recipe/CategoryHeaderRows.vue';
+import { useEntityNavigation } from '@/composables/useEntityNavigation';
 
 type Tab = 'detail' | 'recipe' | 'usage';
 
 const route = useRoute();
 const router = useRouter();
 const datasetStore = useDatasetStore();
+const recipeCategoryStore = useRecipeCategoryStore();
 const { activeDatasetId } = storeToRefs(datasetStore);
 const { t } = useI18n();
 
@@ -29,6 +32,7 @@ function parseTab(value: unknown): Tab {
 
 const datasetId = computed(() => String(route.params.datasetId ?? activeDatasetId.value ?? ''));
 const target = computed(() => String(route.query.target ?? ''));
+const entityNavigation = useEntityNavigation(router, datasetId);
 const isFluid = computed(() => target.value.length > 0 && !target.value.includes('@'));
 const tab = computed<Tab>(() => parseTab(route.query.kind));
 const lookupTabs = computed<{ label: string; value: Tab }[]>(() => [
@@ -48,7 +52,7 @@ const targetName = ref<string | null>(null);
 const targetIcon = ref<string | null>(null);
 
 const categoryMap = ref<Map<string, RecipeCategory>>(new Map());
-let categoriesPromise: Promise<void> | null = null;
+const categoryMapDatasetId = ref<string | null>(null);
 
 const breakdown = ref<HandlerBreakdown[]>([]);
 const breakdownLoading = ref(false);
@@ -77,21 +81,15 @@ const categoryTabs = computed<CategoryTab[]>(() =>
   ),
 );
 
-function ensureCategories() {
-  if (categoryMap.value.size > 0) return Promise.resolve();
-  if (!categoriesPromise) {
-    categoriesPromise = listRecipeCategories(datasetId.value)
-      .then((list) => {
-        categoryMap.value = new Map(list.map((c) => [c.categoryId, c]));
-      })
-      .catch((e) => {
-        console.warn('listRecipeCategories failed', e);
-      })
-      .finally(() => {
-        categoriesPromise = null;
-      });
+async function ensureCategories() {
+  if (categoryMapDatasetId.value === datasetId.value && categoryMap.value.size > 0) return;
+  try {
+    const categories = await recipeCategoryStore.load(datasetId.value);
+    categoryMap.value = new Map(categories.map((c) => [c.categoryId, c]));
+    categoryMapDatasetId.value = datasetId.value;
+  } catch (e) {
+    console.warn('listRecipeCategories failed', e);
   }
-  return categoriesPromise;
 }
 
 async function fetchTargetMeta() {
@@ -213,26 +211,14 @@ function selectCategory(categoryId: string) {
 }
 
 function onSlotPick(payload: { itemVariantId: string | null; fluidVariantId: string | null }) {
-  const tgt = payload.itemVariantId ?? payload.fluidVariantId;
-  if (!tgt) return;
-  router.replace({
-    name: 'lookup',
-    params: { datasetId: datasetId.value },
-    query: { target: tgt, kind: 'detail' },
-  });
+  entityNavigation.pick(payload, true);
 }
 
 function onSlotLookup(
   next: 'recipe' | 'usage',
   payload: { itemVariantId: string | null; fluidVariantId: string | null },
 ) {
-  const tgt = payload.itemVariantId ?? payload.fluidVariantId;
-  if (!tgt) return;
-  router.push({
-    name: 'lookup',
-    params: { datasetId: datasetId.value },
-    query: { target: tgt, kind: next },
-  });
+  entityNavigation.lookup(next, payload);
 }
 
 onMounted(() => {
@@ -246,13 +232,23 @@ onMounted(() => {
   <div class="lookup">
     <header class="header">
       <div class="target">
-        <img v-if="targetIcon" :src="targetIcon" class="target-icon" :alt="targetName ?? ''" />
+        <img
+          v-if="targetIcon"
+          :src="targetIcon"
+          class="target-icon"
+          :alt="targetName ?? ''"
+        >
         <div class="target-info">
-          <div class="title">{{ targetName ?? target }}</div>
+          <div class="title">
+            {{ targetName ?? target }}
+          </div>
           <code class="target-id">{{ target }}</code>
         </div>
       </div>
-      <nav class="page-tabs lookup-tabs" :aria-label="t('lookup.viewTabsLabel')">
+      <nav
+        class="page-tabs lookup-tabs"
+        :aria-label="t('lookup.viewTabsLabel')"
+      >
         <button
           v-for="item in lookupTabs"
           :key="item.value"
@@ -266,15 +262,32 @@ onMounted(() => {
       </nav>
     </header>
 
-    <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
+    <el-alert
+      v-if="error"
+      :title="error"
+      type="error"
+      :closable="false"
+      show-icon
+    />
 
     <template v-if="tab === 'detail'">
-      <FluidDetailPanel v-if="isFluid" :dataset-id="datasetId" :fluid-variant-id="target" />
-      <ItemDetailPanel v-else :dataset-id="datasetId" :item-variant-id="target" />
+      <FluidDetailPanel
+        v-if="isFluid"
+        :dataset-id="datasetId"
+        :fluid-variant-id="target"
+      />
+      <ItemDetailPanel
+        v-else
+        :dataset-id="datasetId"
+        :item-variant-id="target"
+      />
     </template>
 
     <template v-else>
-      <div v-if="categoryTabs.length > 0" class="handler-tabs">
+      <div
+        v-if="categoryTabs.length > 0"
+        class="handler-tabs"
+      >
         <button
           v-for="c in categoryTabs"
           :key="c.categoryId"
@@ -289,7 +302,7 @@ onMounted(() => {
             :src="c.iconAssetUrl"
             class="handler-icon"
             :alt="c.displayName"
-          />
+          >
           <span class="handler-name">{{ c.displayName }}</span>
           <span class="handler-badge">{{ c.count }}</span>
         </button>
@@ -306,10 +319,21 @@ onMounted(() => {
         @update:active-tier="selectedTier = $event"
       />
 
-      <el-skeleton v-if="loading && recipes.length === 0" :rows="6" animated />
-      <el-empty v-else-if="!loading && recipes.length === 0" :description="t('lookup.noMatch')" />
+      <el-skeleton
+        v-if="loading && recipes.length === 0"
+        :rows="6"
+        animated
+      />
+      <el-empty
+        v-else-if="!loading && recipes.length === 0"
+        :description="t('lookup.noMatch')"
+      />
 
-      <div v-else v-loading="loading" class="recipes">
+      <div
+        v-else
+        v-loading="loading"
+        class="recipes"
+      >
         <RecipePanel
           v-for="r in recipes"
           :key="r.recipeId"

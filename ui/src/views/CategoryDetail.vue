@@ -5,19 +5,23 @@ import { storeToRefs } from 'pinia';
 import { useDebounceFn } from '@vueuse/core';
 import { useI18n } from 'vue-i18n';
 import { useDatasetStore } from '@/stores/dataset';
-import { listRecipeCategories, listRecipesByCategory } from '@/api/recipes';
+import { useRecipeCategoryStore } from '@/stores/recipeCategories';
+import { listRecipesByCategory } from '@/api/recipes';
 import type { Recipe, RecipeCategory } from '@/api/recipes.types';
 import RecipePanel from '@/components/RecipePanel.vue';
 import CategoryHeaderRows from '@/components/recipe/CategoryHeaderRows.vue';
+import { useEntityNavigation } from '@/composables/useEntityNavigation';
 
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const datasetStore = useDatasetStore();
+const recipeCategoryStore = useRecipeCategoryStore();
 const { activeDatasetId } = storeToRefs(datasetStore);
 
 const datasetId = computed(() => String(route.params.datasetId ?? activeDatasetId.value ?? ''));
 const categoryId = computed(() => String(route.params.categoryId ?? ''));
+const entityNavigation = useEntityNavigation(router, datasetId);
 
 const category = ref<RecipeCategory | null>(null);
 const recipes = ref<Recipe[]>([]);
@@ -34,8 +38,7 @@ let requestId = 0;
 async function fetchCategoryMeta() {
   if (!datasetId.value || !categoryId.value) return;
   try {
-    const list = await listRecipeCategories(datasetId.value);
-    category.value = list.find((c) => c.categoryId === categoryId.value) ?? null;
+    category.value = await recipeCategoryStore.findById(datasetId.value, categoryId.value);
   } catch {
     category.value = null;
   }
@@ -100,26 +103,14 @@ watch(pageSize, () => {
 });
 
 function onSlotPick(payload: { itemVariantId: string | null; fluidVariantId: string | null }) {
-  const tgt = payload.itemVariantId ?? payload.fluidVariantId;
-  if (!tgt) return;
-  router.push({
-    name: 'lookup',
-    params: { datasetId: datasetId.value },
-    query: { target: tgt, kind: 'detail' },
-  });
+  entityNavigation.pick(payload);
 }
 
 function onSlotLookup(
   next: 'recipe' | 'usage',
   payload: { itemVariantId: string | null; fluidVariantId: string | null },
 ) {
-  const tgt = payload.itemVariantId ?? payload.fluidVariantId;
-  if (!tgt) return;
-  router.push({
-    name: 'lookup',
-    params: { datasetId: datasetId.value },
-    query: { target: tgt, kind: next },
-  });
+  entityNavigation.lookup(next, payload);
 }
 
 function back() {
@@ -135,7 +126,12 @@ onMounted(() => {
 <template>
   <div class="category-detail">
     <header class="header">
-      <el-button text @click="back">{{ t('common.back') }}</el-button>
+      <el-button
+        text
+        @click="back"
+      >
+        {{ t('common.back') }}
+      </el-button>
     </header>
 
     <section class="hero">
@@ -144,12 +140,18 @@ onMounted(() => {
           v-if="category?.iconAssetUrl"
           :src="category.iconAssetUrl"
           :alt="category.displayName"
-        />
+        >
       </div>
       <div class="title-info">
         <h1>{{ category?.displayName ?? categoryId }}</h1>
         <div class="meta-row">
-          <el-tag v-if="category" size="small" type="info" effect="plain" round>
+          <el-tag
+            v-if="category"
+            size="small"
+            type="info"
+            effect="plain"
+            round
+          >
             {{ category.modName }}
           </el-tag>
         </div>
@@ -178,12 +180,29 @@ onMounted(() => {
       </div>
     </div>
 
-    <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
+    <el-alert
+      v-if="error"
+      :title="error"
+      type="error"
+      :closable="false"
+      show-icon
+    />
 
-    <el-skeleton v-if="loading && recipes.length === 0" :rows="6" animated />
-    <el-empty v-else-if="!loading && recipes.length === 0" :description="t('category.noRecipes')" />
+    <el-skeleton
+      v-if="loading && recipes.length === 0"
+      :rows="6"
+      animated
+    />
+    <el-empty
+      v-else-if="!loading && recipes.length === 0"
+      :description="t('category.noRecipes')"
+    />
 
-    <div v-else v-loading="loading" class="recipes">
+    <div
+      v-else
+      v-loading="loading"
+      class="recipes"
+    >
       <RecipePanel
         v-for="r in recipes"
         :key="r.recipeId"
@@ -195,7 +214,10 @@ onMounted(() => {
       />
     </div>
 
-    <div v-if="total > 0" class="pager">
+    <div
+      v-if="total > 0"
+      class="pager"
+    >
       <el-pagination
         v-model:current-page="page"
         v-model:page-size="pageSize"

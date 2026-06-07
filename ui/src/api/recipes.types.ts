@@ -1,14 +1,3 @@
-export interface SlotLayout {
-  role: string;
-  slotIndex: number;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  slotStyle: string;
-  placement: string | null;
-}
-
 export interface RecipeSlotCandidate {
   itemVariantId: string | null;
   fluidVariantId: string | null;
@@ -104,23 +93,15 @@ export interface Recipe {
   sourceRef: string;
   description: string;
   slots: RecipeSlot[];
-  layout: SlotLayout[];
-  canvasWidth: number | null;
-  canvasHeight: number | null;
-  backgroundAssetUrl: string | null;
   gregtech: GregTechRecipeInfo | null;
 }
 
 export interface RecipeCategory {
   categoryId: string;
-  plugin: string;
   handlerId: string;
   displayName: string;
   shapeless: boolean;
-  iconItemVariantId: string;
-  iconDisplayName: string | null;
   iconAssetUrl: string | null;
-  iconInfo: string;
   itemInputWidth: number;
   itemInputHeight: number;
   fluidInputWidth: number;
@@ -129,29 +110,10 @@ export interface RecipeCategory {
   itemOutputHeight: number;
   fluidOutputWidth: number;
   fluidOutputHeight: number;
-  supportsRecipeLookup: boolean;
-  supportsUsageLookup: boolean;
-  displayOrder: number;
-  canvasWidth: number | null;
-  canvasHeight: number | null;
-  backgroundAssetUrl: string | null;
   recipeCount: number;
   machineCount: number;
-  // NEI HandlerInfo
-  modId: string;
   modName: string;
   handlerClass: string;
-  handlerCanvasWidth: number;
-  handlerCanvasHeight: number;
-  handlerYShift: number;
-  handlerMultipleWidgetsAllowed: boolean;
-  iconImageResource: string;
-  iconImageX: number;
-  iconImageY: number;
-  iconImageWidth: number;
-  iconImageHeight: number;
-  iconImageTextureWidth: number;
-  iconImageTextureHeight: number;
 }
 
 export type LookupKind = 'recipe' | 'usage';

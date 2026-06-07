@@ -7,7 +7,7 @@ export interface NeiPanelEntry {
   modName: string;
   registryName: string;
   damage: number;
-  nbtHash: string;
+  nbtHash: string | null;
   displayName: string;
   assetUrl: string | null;
   panelIndex: number;
@@ -32,11 +32,11 @@ export interface ItemDetail {
   maxStackSize: number;
   maxDamage: number;
   damage: number;
-  nbtHash: string;
-  nbtText: string;
+  nbtHash: string | null;
+  nbtText: string | null;
   displayName: string;
   tooltipText: string;
-  chemicalExpression: string;
+  chemicalExpression: string | null;
   assetUrl: string | null;
   assetWidth: number | null;
   assetHeight: number | null;

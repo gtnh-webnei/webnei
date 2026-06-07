@@ -4,18 +4,22 @@ import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { storeToRefs } from 'pinia';
 import { useDatasetStore } from '@/stores/dataset';
-import { getRecipeDetail, listRecipeCategories } from '@/api/recipes';
+import { useRecipeCategoryStore } from '@/stores/recipeCategories';
+import { getRecipeDetail } from '@/api/recipes';
 import type { Recipe, RecipeCategory } from '@/api/recipes.types';
 import RecipePanel from '@/components/RecipePanel.vue';
+import { useEntityNavigation } from '@/composables/useEntityNavigation';
 
 const route = useRoute();
 const router = useRouter();
 const datasetStore = useDatasetStore();
+const recipeCategoryStore = useRecipeCategoryStore();
 const { activeDatasetId } = storeToRefs(datasetStore);
 const { t } = useI18n();
 
 const datasetId = computed(() => String(route.params.datasetId ?? activeDatasetId.value ?? ''));
 const recipeId = computed(() => String(route.params.recipeId ?? ''));
+const entityNavigation = useEntityNavigation(router, datasetId);
 
 const recipe = ref<Recipe | null>(null);
 const category = ref<RecipeCategory | null>(null);
@@ -29,8 +33,7 @@ async function fetchRecipe() {
   try {
     const r = await getRecipeDetail(datasetId.value, recipeId.value);
     recipe.value = r;
-    const categories = await listRecipeCategories(datasetId.value);
-    category.value = categories.find((c) => c.categoryId === r.categoryId) ?? null;
+    category.value = await recipeCategoryStore.findById(datasetId.value, r.categoryId);
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e);
     recipe.value = null;
@@ -41,26 +44,14 @@ async function fetchRecipe() {
 }
 
 function onSlotPick(payload: { itemVariantId: string | null; fluidVariantId: string | null }) {
-  const tgt = payload.itemVariantId ?? payload.fluidVariantId;
-  if (!tgt) return;
-  router.push({
-    name: 'lookup',
-    params: { datasetId: datasetId.value },
-    query: { target: tgt, kind: 'detail' },
-  });
+  entityNavigation.pick(payload);
 }
 
 function onSlotLookup(
   next: 'recipe' | 'usage',
   payload: { itemVariantId: string | null; fluidVariantId: string | null },
 ) {
-  const tgt = payload.itemVariantId ?? payload.fluidVariantId;
-  if (!tgt) return;
-  router.push({
-    name: 'lookup',
-    params: { datasetId: datasetId.value },
-    query: { target: tgt, kind: next },
-  });
+  entityNavigation.lookup(next, payload);
 }
 
 function back() {
@@ -74,22 +65,44 @@ onMounted(fetchRecipe);
 <template>
   <div class="recipe-detail">
     <header class="header">
-      <el-button text @click="back">{{ t('common.back') }}</el-button>
-      <span v-if="recipe" class="title">{{ recipe.categoryDisplayName }}</span>
+      <el-button
+        text
+        @click="back"
+      >
+        {{ t('common.back') }}
+      </el-button>
+      <span
+        v-if="recipe"
+        class="title"
+      >{{ recipe.categoryDisplayName }}</span>
     </header>
 
-    <el-skeleton v-if="loading && !recipe" :rows="4" animated />
-    <el-alert v-else-if="error" type="error" :title="error" :closable="false" show-icon />
+    <el-skeleton
+      v-if="loading && !recipe"
+      :rows="4"
+      animated
+    />
+    <el-alert
+      v-else-if="error"
+      type="error"
+      :title="error"
+      :closable="false"
+      show-icon
+    />
 
     <template v-else-if="recipe">
       <section class="meta">
         <dl class="meta-list">
           <dt>{{ t('recipe.recipeId') }}</dt>
-          <dd class="mono">{{ recipe.recipeId }}</dd>
+          <dd class="mono">
+            {{ recipe.recipeId }}
+          </dd>
           <dt>{{ t('recipe.sourcePlugin') }}</dt>
           <dd>{{ recipe.sourcePlugin || t('recipe.placeholder') }}</dd>
           <dt>{{ t('recipe.sourceRef') }}</dt>
-          <dd class="mono">{{ recipe.sourceRef || t('recipe.placeholder') }}</dd>
+          <dd class="mono">
+            {{ recipe.sourceRef || t('recipe.placeholder') }}
+          </dd>
           <template v-if="recipe.description">
             <dt>{{ t('recipe.description') }}</dt>
             <dd>{{ recipe.description }}</dd>
@@ -107,7 +120,10 @@ onMounted(fetchRecipe);
       </section>
     </template>
 
-    <el-empty v-else :description="t('recipe.notFound')" />
+    <el-empty
+      v-else
+      :description="t('recipe.notFound')"
+    />
   </div>
 </template>
 
