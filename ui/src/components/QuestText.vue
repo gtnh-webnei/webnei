@@ -41,7 +41,10 @@ const CLOSE_RE = /^\[\/([a-z0-9]+)\]$/i;
 
 function safeUrl(raw: string): string {
   const trimmed = raw.trim();
-  return /^(https?:|mailto:)/i.test(trimmed) ? trimmed : '';
+  if (!trimmed) return '';
+  if (/^https?:/i.test(trimmed)) return trimmed;
+  if (/^[a-z][a-z0-9+.-]*:/i.test(trimmed)) return '';
+  return `https://${trimmed}`;
 }
 
 function tokenize(text: string): Token[] {
@@ -57,19 +60,19 @@ function tokenize(text: string): Token[] {
     const closeMatch = tok.match(CLOSE_RE);
     const openMatch = tok.match(OPEN_RE);
     if (closeMatch) {
-      const name = closeMatch[1].toLowerCase();
+      const name = closeMatch[1];
       if (ALLOWED_TAGS.has(name)) {
         tokens.push({ kind: 'close', name });
       } else {
         tokens.push({ kind: 'text', value: tok });
       }
     } else if (openMatch) {
-      const name = openMatch[1].toLowerCase();
+      const name = openMatch[1];
       if (ALLOWED_TAGS.has(name)) {
         const params: Record<string, string> = {};
         const paramsStr = openMatch[2] ?? '';
         for (const it of paramsStr.matchAll(/\s+([a-z0-9]+)=([^\s\]]+)/gi)) {
-          params[it[1].toLowerCase()] = it[2];
+          params[it[1]] = it[2];
         }
         tokens.push({ kind: 'open', name, params });
       } else {
@@ -156,9 +159,6 @@ function parse(tokens: Token[], start: number, parentTag: string | null): ParseR
       if (token.name === parentTag) {
         return { nodes, text, next: i + 1 };
       }
-      const literal = `[/${token.name}]`;
-      nodes.push(...textNodes(literal));
-      text += literal;
       i++;
     } else {
       const child = parse(tokens, i + 1, token.name);
@@ -187,6 +187,7 @@ function parse(tokens: Token[], start: number, parentTag: string | null): ParseR
 }
 .quest-text :deep(.bb-quest) {
   color: var(--el-color-success);
+  text-decoration: underline;
 }
 .quest-text :deep(.bb-url) {
   color: var(--el-color-primary);
