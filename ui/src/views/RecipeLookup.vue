@@ -407,13 +407,9 @@ onMounted(() => {
   word-break: break-all;
 }
 .handler-tabs {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: max-content;
+  display: flex;
+  flex-wrap: wrap;
   gap: 8px;
-  min-width: 0;
-  overflow-x: auto;
-  overflow-y: hidden;
   padding-bottom: 8px;
   border-bottom: 1px solid var(--el-border-color-lighter);
 }

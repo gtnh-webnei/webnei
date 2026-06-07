@@ -26,15 +26,17 @@ public class RecipeController {
     private static final int DEFAULT_LOOKUP_PAGE_SIZE = 12;
     private static final int MAX_LOOKUP_PAGE_SIZE = 48;
 
+    private final RecipeCategoryService recipeCategoryService;
     private final RecipeService recipeService;
 
-    public RecipeController(RecipeService recipeService) {
+    public RecipeController(RecipeCategoryService recipeCategoryService, RecipeService recipeService) {
+        this.recipeCategoryService = recipeCategoryService;
         this.recipeService = recipeService;
     }
 
     @GetMapping("/recipe-categories")
     public List<RecipeCategoryDto> listCategories(@PathVariable String datasetId) {
-        return recipeService.listCategories(datasetId);
+        return recipeCategoryService.listCategories(datasetId);
     }
 
     @GetMapping("/recipe-categories/page")
@@ -45,13 +47,13 @@ public class RecipeController {
             @RequestParam(defaultValue = "false") boolean hideEmpty,
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size) {
-        return recipeService.listCategoriesPage(
+        return recipeCategoryService.listCategoriesPage(
                 datasetId, q, modId, hideEmpty, PageRequest.of(page, size, DEFAULT_CATEGORY_PAGE_SIZE, MAX_CATEGORY_PAGE_SIZE));
     }
 
     @GetMapping("/recipe-categories/mods")
     public List<ModOptionDto> listCategoryMods(@PathVariable String datasetId) {
-        return recipeService.listCategoryMods(datasetId);
+        return recipeCategoryService.listCategoryMods(datasetId);
     }
 
     @GetMapping("/recipes/lookup")
@@ -98,7 +100,7 @@ public class RecipeController {
     @GetMapping("/categories/{categoryId}/machines")
     public List<CategoryMachineDto> listCategoryMachines(
             @PathVariable String datasetId, @PathVariable String categoryId) {
-        return recipeService.listCategoryMachines(datasetId, categoryId);
+        return recipeCategoryService.listCategoryMachines(datasetId, categoryId);
     }
 
     @GetMapping("/categories/{categoryId}/voltage-tiers")
@@ -108,6 +110,6 @@ public class RecipeController {
             @RequestParam(required = false) String target,
             @RequestParam(required = false) String kind,
             @RequestParam(required = false) String q) {
-        return recipeService.listCategoryVoltageTiers(datasetId, categoryId, target, kind, q);
+        return recipeCategoryService.listCategoryVoltageTiers(datasetId, categoryId, target, kind, q);
     }
 }

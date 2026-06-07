@@ -17,7 +17,6 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 import moe.takochan.webnei.asset.AssetUrlBuilder;
-import moe.takochan.webnei.common.ModOptionDto;
 import moe.takochan.webnei.common.NotFoundException;
 import moe.takochan.webnei.common.PageRequest;
 import moe.takochan.webnei.common.PageResponse;
@@ -30,13 +29,10 @@ import moe.takochan.webnei.item.ItemModOptionRepository;
 import moe.takochan.webnei.item.ItemVariantBrowserEntity;
 import moe.takochan.webnei.item.ItemVariantRepository;
 import moe.takochan.webnei.recipe.dto.CategoryBreakdownDto;
-import moe.takochan.webnei.recipe.dto.CategoryMachineDto;
-import moe.takochan.webnei.recipe.dto.CategoryVoltageTierDto;
 import moe.takochan.webnei.recipe.dto.GregTechRecipeDto;
 import moe.takochan.webnei.recipe.dto.GregTechSpecialItemDto;
 import moe.takochan.webnei.recipe.dto.HandlerBreakdownDto;
 import moe.takochan.webnei.recipe.dto.MetadataValueDto;
-import moe.takochan.webnei.recipe.dto.RecipeCategoryDto;
 import moe.takochan.webnei.recipe.dto.RecipeDto;
 import moe.takochan.webnei.recipe.dto.RecipeSlotCandidateDto;
 import moe.takochan.webnei.recipe.dto.RecipeSlotDto;
@@ -52,12 +48,8 @@ import org.springframework.stereotype.Service;
 public class RecipeService {
 
     private final DatasetService datasetService;
-    private final RecipeCategoryBrowserRepository categoryRepo;
     private final RecipeBrowserRepository recipeRepo;
     private final RecipeLookupBrowserRepository lookupRepo;
-    private final RecipeCategoryMachineBrowserRepository machineRepo;
-    private final RecipeCategoryVoltageTierRepository voltageTierRepo;
-    private final RecipeLookupVoltageTierRepository lookupVoltageTierRepo;
     private final RecipeLookupBreakdownRepository lookupBreakdownRepo;
     private final RecipeSlotBrowserRepository slotRepo;
     private final IngredientEntryRepository ingredientEntryRepo;
@@ -74,12 +66,8 @@ public class RecipeService {
     private final ObjectMapper objectMapper;
 
     public RecipeService(DatasetService datasetService,
-                        RecipeCategoryBrowserRepository categoryRepo,
                         RecipeBrowserRepository recipeRepo,
                         RecipeLookupBrowserRepository lookupRepo,
-                        RecipeCategoryMachineBrowserRepository machineRepo,
-                        RecipeCategoryVoltageTierRepository voltageTierRepo,
-                        RecipeLookupVoltageTierRepository lookupVoltageTierRepo,
                         RecipeLookupBreakdownRepository lookupBreakdownRepo,
                         RecipeSlotBrowserRepository slotRepo,
                         IngredientEntryRepository ingredientEntryRepo,
@@ -95,12 +83,8 @@ public class RecipeService {
                         AssetUrlBuilder assetUrlBuilder,
                         ObjectMapper objectMapper) {
         this.datasetService = datasetService;
-        this.categoryRepo = categoryRepo;
         this.recipeRepo = recipeRepo;
         this.lookupRepo = lookupRepo;
-        this.machineRepo = machineRepo;
-        this.voltageTierRepo = voltageTierRepo;
-        this.lookupVoltageTierRepo = lookupVoltageTierRepo;
         this.lookupBreakdownRepo = lookupBreakdownRepo;
         this.slotRepo = slotRepo;
         this.ingredientEntryRepo = ingredientEntryRepo;
@@ -115,54 +99,6 @@ public class RecipeService {
         this.textureRepo = textureRepo;
         this.assetUrlBuilder = assetUrlBuilder;
         this.objectMapper = objectMapper;
-    }
-
-    public List<RecipeCategoryDto> listCategories(String datasetId) {
-        DatasetSummary dataset = datasetService.requireById(datasetId);
-        List<RecipeCategoryBrowserEntity> entities = categoryRepo.findAll(
-                hasDatasetId(datasetId),
-                Sort.by("displayOrder").ascending().and(Sort.by("categoryId").ascending()));
-        return toDtoList(entities, dataset);
-    }
-
-    public PageResponse<RecipeCategoryDto> listCategoriesPage(
-            String datasetId, String query, String modId, boolean hideEmpty, PageRequest page) {
-        DatasetSummary dataset = datasetService.requireById(datasetId);
-
-        Specification<RecipeCategoryBrowserEntity> spec = hasDatasetId(datasetId);
-        if (modId != null && !modId.isBlank()) {
-            spec = spec.and(modIdEq(modId));
-        }
-        if (hideEmpty) {
-            spec = spec.and(recipeCountGt0());
-        }
-        if (query != null && !query.isBlank()) {
-            spec = spec.and(categorySearch(query));
-        }
-
-        PageRequest checkedPage = Objects.requireNonNull(page, "page");
-        Pageable pageable = org.springframework.data.domain.PageRequest.of(
-                checkedPage.page(), checkedPage.size(),
-                Sort.by("displayOrder").ascending()
-                        .and(Sort.by("categoryId").ascending()));
-
-        Page<RecipeCategoryBrowserEntity> result = categoryRepo.findAll(spec, pageable);
-        List<RecipeCategoryDto> items = toDtoList(result.getContent(), dataset);
-        return new PageResponse<>(items, checkedPage.page(), checkedPage.size(), result.getTotalElements());
-    }
-
-    public List<ModOptionDto> listCategoryMods(String datasetId) {
-        datasetService.requireById(datasetId);
-        Map<String, String> mods = new HashMap<>();
-        for (RecipeCategoryBrowserEntity e : categoryRepo.findAll(hasDatasetId(datasetId))) {
-            if (e.getModId() != null && !e.getModId().isBlank()) {
-                mods.putIfAbsent(e.getModId(), e.getModName() == null || e.getModName().isBlank() ? e.getModId() : e.getModName());
-            }
-        }
-        return mods.entrySet().stream()
-                .map(e -> new ModOptionDto(e.getKey(), e.getValue()))
-                .sorted(Comparator.comparing(ModOptionDto::name).thenComparing(ModOptionDto::modId))
-                .toList();
     }
 
     public RecipeDto detail(String datasetId, String recipeId) {
@@ -260,46 +196,6 @@ public class RecipeService {
         List<String> recipeIds = result.stream().map(RecipeBrowserEntity::getRecipeId).toList();
         List<RecipeDto> recipes = loadRecipes(dataset, recipeIds);
         return new PageResponse<>(recipes, page.page(), page.size(), result.getTotalElements());
-    }
-
-    public List<CategoryMachineDto> listCategoryMachines(String datasetId, String categoryId) {
-        DatasetSummary dataset = datasetService.requireById(datasetId);
-        return machineRepo.findByDatasetIdAndCategoryId(
-                        datasetId,
-                        categoryId,
-                        Sort.by("displayOrder").ascending().and(Sort.by("itemVariantId").ascending()))
-                .stream()
-                .map(e -> new CategoryMachineDto(
-                        e.getItemVariantId(),
-                        e.getDisplayName(),
-                        assetUrlBuilder.build(dataset, e.getAssetPath(), null),
-                        e.getRole(),
-                        e.getDisplayOrder()))
-                .toList();
-    }
-
-    public List<CategoryVoltageTierDto> listCategoryVoltageTiers(
-            String datasetId, String categoryId, String target, String kind, String query) {
-        datasetService.requireById(datasetId);
-        boolean hasLookup = target != null && !target.isBlank() && kind != null && !kind.isBlank();
-        if (hasLookup) {
-            return lookupVoltageTierRepo.findByDatasetIdAndCategoryIdAndTargetIdAndLookupKindOrderByMinVoltageAsc(
-                            datasetId, categoryId, target, kind)
-                    .stream()
-                    .map(e -> new CategoryVoltageTierDto(e.getVoltageTier(), e.getRecipeCount()))
-                    .toList();
-        }
-        if (query != null && !query.isBlank()) {
-            return gregTechRecipeRepo.findVoltageTiersByCategoryAndSearch(
-                            datasetId, categoryId, "%" + query.trim().toLowerCase() + "%")
-                    .stream()
-                    .map(row -> new CategoryVoltageTierDto((String) row[0], (Long) row[1]))
-                    .toList();
-        }
-        return voltageTierRepo.findByDatasetIdAndCategoryIdOrderByMinVoltageAsc(datasetId, categoryId)
-                .stream()
-                .map(e -> new CategoryVoltageTierDto(e.getVoltageTier(), e.getRecipeCount()))
-                .toList();
     }
 
     private Optional<RecipeDto> loadRecipe(DatasetSummary dataset, String recipeId) {
@@ -603,26 +499,6 @@ public class RecipeService {
         return s == null || s.isEmpty() ? null : s;
     }
 
-    private List<RecipeCategoryDto> toDtoList(List<RecipeCategoryBrowserEntity> entities, DatasetSummary dataset) {
-        Map<String, String> iconFallback = resolveIconFallbacks(entities, dataset.datasetId());
-        List<RecipeCategoryDto> dtos = new ArrayList<>(entities.size());
-        for (RecipeCategoryBrowserEntity e : entities) {
-            dtos.add(toDto(e, dataset, iconFallback));
-        }
-        return dtos;
-    }
-
-    private Map<String, String> resolveIconFallbacks(List<RecipeCategoryBrowserEntity> entities, String datasetId) {
-        List<String> resources = entities.stream()
-                .filter(e -> e.getIconAssetPath() == null)
-                .map(RecipeCategoryBrowserEntity::getIconImageResource)
-                .filter(Objects::nonNull)
-                .filter(s -> !s.isBlank())
-                .distinct()
-                .toList();
-        return loadTextureFallbacks(datasetId, resources);
-    }
-
     private Map<String, String> resolveBreakdownIconFallbacks(List<RecipeLookupBreakdownEntity> rows, String datasetId) {
         List<String> resources = rows.stream()
                 .filter(e -> e.getIconAssetPath() == null)
@@ -647,59 +523,9 @@ public class RecipeService {
         return iconAssetPath != null ? iconAssetPath : iconFallback.get(iconImageResource);
     }
 
-    private RecipeCategoryDto toDto(RecipeCategoryBrowserEntity e, DatasetSummary dataset,
-                                    Map<String, String> iconFallback) {
-        String iconPath = e.getIconAssetPath();
-        if (iconPath == null && e.getIconImageResource() != null) {
-            iconPath = iconFallback.get(e.getIconImageResource());
-        }
-        return new RecipeCategoryDto(
-                e.getCategoryId(),
-                e.getHandlerId(),
-                e.getDisplayName(),
-                e.isShapeless(),
-                assetUrlBuilder.build(dataset, iconPath, null),
-                e.getItemInputWidth(),
-                e.getItemInputHeight(),
-                e.getFluidInputWidth(),
-                e.getFluidInputHeight(),
-                e.getItemOutputWidth(),
-                e.getItemOutputHeight(),
-                e.getFluidOutputWidth(),
-                e.getFluidOutputHeight(),
-                e.getRecipeCount(),
-                e.getMachineCount(),
-                e.getModName(),
-                e.getHandlerClass());
-    }
-
     private static Pageable pageRequest(PageRequest page, Sort sort) {
         PageRequest checkedPage = Objects.requireNonNull(page, "page");
         return org.springframework.data.domain.PageRequest.of(checkedPage.page(), checkedPage.size(), sort);
-    }
-
-    private static Specification<RecipeCategoryBrowserEntity> hasDatasetId(String datasetId) {
-        return (root, query, cb) -> cb.equal(root.get("datasetId"), datasetId);
-    }
-
-    private static Specification<RecipeCategoryBrowserEntity> modIdEq(String modId) {
-        return (root, query, cb) -> cb.equal(root.get("modId"), modId);
-    }
-
-    private static Specification<RecipeCategoryBrowserEntity> recipeCountGt0() {
-        return (root, query, cb) -> cb.gt(root.get("recipeCount"), 0L);
-    }
-
-    private static Specification<RecipeCategoryBrowserEntity> categorySearch(String q) {
-        String pattern = "%" + q.toLowerCase() + "%";
-        return (root, cq, cb) -> {
-            Predicate[] conditions = {
-                    cb.like(cb.lower(root.get("displayName")), pattern),
-                    cb.like(cb.lower(root.get("categoryId")), pattern),
-                    cb.like(cb.lower(root.get("handlerId")), pattern)
-            };
-            return cb.or(conditions);
-        };
     }
 
     private static Specification<RecipeBrowserEntity> recipeCategorySpec(
