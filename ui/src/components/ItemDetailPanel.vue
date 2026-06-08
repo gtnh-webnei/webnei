@@ -96,10 +96,17 @@ onMounted(() => {
   >
     <template v-if="detail">
       <el-row :gutter="16">
-        <el-col :xs="24" :md="14">
+        <el-col
+          :xs="24"
+          :md="14"
+        >
           <ItemAttributesCard :detail="detail" />
 
-          <el-card v-if="detail.tooltipText" shadow="never" class="tooltip-text-card">
+          <el-card
+            v-if="detail.tooltipText"
+            shadow="never"
+            class="tooltip-text-card"
+          >
             <MinecraftTooltipText :text="detail.tooltipText" />
           </el-card>
 
@@ -111,7 +118,10 @@ onMounted(() => {
           />
         </el-col>
 
-        <el-col :xs="24" :md="10">
+        <el-col
+          :xs="24"
+          :md="10"
+        >
           <template v-if="extras">
             <ItemRelatedFluidsBlock
               v-if="extras.relatedFluids.length"
@@ -129,8 +139,14 @@ onMounted(() => {
           />
 
           <template v-if="extras">
-            <ItemOreDictBlock v-if="extras.oreDictNames.length" :names="extras.oreDictNames" />
-            <ItemAspectsBlock v-if="extras.aspects.length" :aspects="extras.aspects" />
+            <ItemOreDictBlock
+              v-if="extras.oreDictNames.length"
+              :names="extras.oreDictNames"
+            />
+            <ItemAspectsBlock
+              v-if="extras.aspects.length"
+              :aspects="extras.aspects"
+            />
           </template>
 
           <ItemWorldGenerationCard

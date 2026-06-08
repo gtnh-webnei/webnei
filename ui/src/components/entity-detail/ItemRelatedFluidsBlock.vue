@@ -13,27 +13,15 @@ const emit = defineEmits<{
   (e: 'pickFluid', fluid: InteractiveFluidRefFluid): void;
   (e: 'lookupFluid', kind: 'recipe' | 'usage', fluid: InteractiveFluidRefFluid): void;
 }>();
-
-function fluidRef(fluid: ItemRelatedFluidEntry): InteractiveFluidRefFluid {
-  return {
-    fluidVariantId: fluid.fluidVariantId,
-    fluidId: fluid.fluidId,
-    displayName: fluid.fluidDisplayName,
-    assetUrl: fluid.fluidAssetUrl,
-    gaseous: fluid.fluidGaseous,
-    temperature: fluid.fluidTemperature,
-    modName: fluid.fluidModName,
-  };
-}
 </script>
 
 <template>
   <DetailSectionCard :title="$t('item.relatedFluids')">
     <div class="related-fluid-list">
       <InteractiveFluidRef
-        v-for="fluid in fluids"
-        :key="fluid.fluidVariantId"
-        :fluid="fluidRef(fluid)"
+        v-for="entry in fluids"
+        :key="entry.fluid.fluidVariantId"
+        :fluid="entry.fluid"
         variant="row"
         @pick="emit('pickFluid', $event)"
         @lookup="(kind, target) => emit('lookupFluid', kind, target)"

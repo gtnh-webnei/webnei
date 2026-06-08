@@ -1,6 +1,6 @@
-package moe.takochan.webnei.gtore;
+package moe.takochan.webnei.common;
 
-public record GtItemRef(
+public record ItemRef(
         String itemVariantId,
         String displayName,
         String tooltipText,

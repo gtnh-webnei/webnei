@@ -1,26 +1,11 @@
+import type { FluidRef, ItemRef } from './entityRefs.types';
+
 export interface ItemRelatedFluidEntry {
-  fluidVariantId: string;
-  fluidId: string;
-  fluidModId: string | null;
-  fluidModName: string | null;
-  fluidDisplayName: string | null;
-  fluidGaseous: boolean | null;
-  fluidTemperature: number | null;
-  fluidAssetUrl: string | null;
+  fluid: FluidRef;
 }
 
 export interface FluidContainerEntry {
-  fluidVariantId: string;
-  fluidId: string;
-  fluidModId: string | null;
-  fluidModName: string | null;
-  fluidDisplayName: string | null;
-  fluidGaseous: boolean | null;
-  fluidTemperature: number | null;
-  fluidAssetUrl: string | null;
-  containerItemVariantId: string;
-  containerDisplayName: string | null;
-  containerAssetUrl: string | null;
+  container: ItemRef;
   amount: number;
 }
 
@@ -35,10 +20,7 @@ export interface AspectEntry {
 }
 
 export interface FluidBlockEntry {
-  blockItemVariantId: string;
-  blockDisplayName: string | null;
-  blockAssetUrl: string | null;
-  blockTooltipText: string | null;
+  item: ItemRef;
 }
 
 export interface ItemExtras {

@@ -8,12 +8,9 @@ import { useDatasetStore } from '@/stores/dataset';
 import { useEntityNavigation } from '@/composables/useEntityNavigation';
 import AppTooltip from '@/components/AppTooltip.vue';
 import SlotCell from '@/components/SlotCell.vue';
-import InteractiveItemRef, {
-  type InteractiveItemRefItem,
-} from '@/components/InteractiveItemRef.vue';
-import InteractiveFluidRef, {
-  type InteractiveFluidRefFluid,
-} from '@/components/InteractiveFluidRef.vue';
+import type { FluidRef, ItemRef } from '@/api/entityRefs.types';
+import InteractiveItemRef from '@/components/InteractiveItemRef.vue';
+import InteractiveFluidRef from '@/components/InteractiveFluidRef.vue';
 import {
   getGtBartWorksOreDetail,
   getGtOreVeinDetail,
@@ -328,16 +325,16 @@ function lookupSlot(
 ) {
   entityNavigation.lookup(kind, payload);
 }
-function pickItem(item: InteractiveItemRefItem) {
+function pickItem(item: ItemRef) {
   entityNavigation.pick(item.itemVariantId);
 }
-function lookupItem(kind: 'recipe' | 'usage', item: InteractiveItemRefItem) {
+function lookupItem(kind: 'recipe' | 'usage', item: ItemRef) {
   entityNavigation.lookup(kind, item.itemVariantId);
 }
-function pickFluid(fluid: InteractiveFluidRefFluid) {
+function pickFluid(fluid: FluidRef) {
   entityNavigation.pick(fluid.fluidVariantId);
 }
-function lookupFluid(kind: 'recipe' | 'usage', fluid: InteractiveFluidRefFluid) {
+function lookupFluid(kind: 'recipe' | 'usage', fluid: FluidRef) {
   entityNavigation.lookup(kind, fluid.fluidVariantId);
 }
 </script>
@@ -589,7 +586,7 @@ function lookupFluid(kind: 'recipe' | 'usage', fluid: InteractiveFluidRefFluid) 
                   <img
                     v-if="layer.item.assetUrl"
                     :src="layer.item.assetUrl"
-                    :alt="layer.item.displayName"
+                    :alt="layer.item.displayName ?? layer.item.itemVariantId"
                   >
                 </span>
                 <span>{{ layerLabel(layer.layer) }}</span>

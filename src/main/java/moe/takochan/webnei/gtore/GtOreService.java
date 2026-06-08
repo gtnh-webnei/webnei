@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Optional;
 
 import moe.takochan.webnei.asset.AssetUrlBuilder;
+import moe.takochan.webnei.common.FluidRef;
+import moe.takochan.webnei.common.ItemRef;
 import moe.takochan.webnei.common.NotFoundException;
 import moe.takochan.webnei.dataset.DatasetSummary;
 import moe.takochan.webnei.fluid.FluidModOptionEntity;
@@ -116,7 +118,7 @@ public class GtOreService {
         String datasetId = dataset.datasetId();
         GtOreSmallEntity ore = oreSmallRepository.findById(new GtOreSmallEntity.OreSmallId(datasetId, oreGenName))
                 .orElseThrow(() -> new NotFoundException("GT small ore not found: " + oreGenName));
-        List<GtItemRef> drops = oreSmallDropRepository.findByDatasetIdAndOreGenName(
+        List<ItemRef> drops = oreSmallDropRepository.findByDatasetIdAndOreGenName(
                         datasetId, oreGenName, Sort.by("dropIndex").ascending())
                 .stream()
                 .map(d -> itemRef(dataset, d.getItemVariantId()))
@@ -372,23 +374,23 @@ public class GtOreService {
                 .orElse(new GtDimensionRef(dimension, dimension, dimension, dimension, "", null, Integer.MAX_VALUE));
     }
 
-    private GtItemRef itemRef(DatasetSummary dataset, String itemVariantId) {
+    private ItemRef itemRef(DatasetSummary dataset, String itemVariantId) {
         if (itemVariantId == null || itemVariantId.isBlank()) {
-            return new GtItemRef("", "", null, null);
+            return new ItemRef("", "", null, null);
         }
         return itemVariantRepository.findById(new ItemVariantBrowserEntity.ItemVariantId(dataset.datasetId(), itemVariantId))
-                .map(i -> new GtItemRef(
+                .map(i -> new ItemRef(
                         i.getItemVariantId(), i.getDisplayName(), i.getTooltipText(),
                         assetUrlBuilder.build(dataset, i.getAssetPath(), i.getAssetSha256())))
-                .orElse(new GtItemRef(itemVariantId, itemVariantId, null, null));
+                .orElse(new ItemRef(itemVariantId, itemVariantId, null, null));
     }
 
-    private GtFluidRef fluidRef(DatasetSummary dataset, String fluidVariantId) {
+    private FluidRef fluidRef(DatasetSummary dataset, String fluidVariantId) {
         if (fluidVariantId == null || fluidVariantId.isBlank()) {
-            return new GtFluidRef("", "", null, null, "", null, null, null);
+            return new FluidRef("", "", null, null, "", null, null, null);
         }
         return fluidVariantRepository.findById(new FluidVariantBrowserEntity.FluidVariantId(dataset.datasetId(), fluidVariantId))
-                .map(f -> new GtFluidRef(
+                .map(f -> new FluidRef(
                         f.getFluidVariantId(),
                         f.getFluidId(),
                         f.getModId(),
@@ -399,7 +401,7 @@ public class GtOreService {
                         f.isGaseous(),
                         f.getTemperature(),
                         assetUrlBuilder.build(dataset, f.getAssetPath(), null)))
-                .orElse(new GtFluidRef(fluidVariantId, "", null, null, fluidVariantId, null, null, null));
+                .orElse(new FluidRef(fluidVariantId, "", null, null, fluidVariantId, null, null, null));
     }
 
     private static <T> Specification<T> hasDatasetId(String datasetId) {

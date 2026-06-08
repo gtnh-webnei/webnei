@@ -1,15 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import type { ItemRef } from '@/api/entityRefs.types';
 import BaseInteractiveRef from './BaseInteractiveRef.vue';
 import ItemTooltipContent from './ItemTooltipContent.vue';
 
-export interface InteractiveItemRefItem {
-  itemVariantId: string;
-  displayName?: string | null;
-  tooltipText?: string | null;
-  assetUrl?: string | null;
-}
+export type InteractiveItemRefItem = ItemRef;
 
 const props = withDefaults(
   defineProps<{
@@ -61,6 +57,9 @@ function lookup(kind: 'recipe' | 'usage') {
         :item="item"
         :context="{ hint: t('common.pickHintSlot') }"
       />
+    </template>
+    <template #suffix>
+      <slot name="suffix" />
     </template>
   </BaseInteractiveRef>
 </template>

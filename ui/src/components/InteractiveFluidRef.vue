@@ -1,18 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import type { FluidRef } from '@/api/entityRefs.types';
 import BaseInteractiveRef from './BaseInteractiveRef.vue';
 import FluidTooltipContent from './FluidTooltipContent.vue';
 
-export interface InteractiveFluidRefFluid {
-  fluidVariantId: string;
-  fluidId?: string | null;
-  displayName?: string | null;
-  assetUrl?: string | null;
-  gaseous?: boolean | null;
-  temperature?: number | null;
-  modName?: string | null;
-}
+export type InteractiveFluidRefFluid = FluidRef;
 
 const props = withDefaults(
   defineProps<{

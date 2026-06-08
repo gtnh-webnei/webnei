@@ -68,6 +68,7 @@ function onAuxClick(e: MouseEvent) {
       >{{
         displayName
       }}</span>
+      <slot name="suffix" />
     </button>
   </AppTooltip>
 </template>
@@ -135,7 +136,7 @@ function onAuxClick(e: MouseEvent) {
   width: 100%;
   min-width: 0;
   display: grid;
-  grid-template-columns: 34px minmax(0, 1fr);
+  grid-template-columns: 34px minmax(0, 1fr) auto;
   gap: 8px;
   align-items: center;
   padding: 6px;

@@ -1,16 +1,8 @@
 package moe.takochan.webnei.extras;
 
+import moe.takochan.webnei.common.ItemRef;
+
 public record FluidContainerEntry(
-        String fluidVariantId,
-        String fluidId,
-        String fluidModId,
-        String fluidModName,
-        String fluidDisplayName,
-        Boolean fluidGaseous,
-        Integer fluidTemperature,
-        String fluidAssetUrl,
-        String containerItemVariantId,
-        String containerDisplayName,
-        String containerAssetUrl,
+        ItemRef container,
         int amount) {
 }

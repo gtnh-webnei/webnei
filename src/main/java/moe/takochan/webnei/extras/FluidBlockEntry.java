@@ -1,8 +1,6 @@
 package moe.takochan.webnei.extras;
 
-public record FluidBlockEntry(
-        String blockItemVariantId,
-        String blockDisplayName,
-        String blockAssetUrl,
-        String blockTooltipText) {
+import moe.takochan.webnei.common.ItemRef;
+
+public record FluidBlockEntry(ItemRef item) {
 }

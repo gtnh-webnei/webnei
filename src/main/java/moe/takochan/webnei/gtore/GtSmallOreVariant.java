@@ -1,7 +1,9 @@
 package moe.takochan.webnei.gtore;
 
+import moe.takochan.webnei.common.ItemRef;
+
 public record GtSmallOreVariant(
         int variantIndex,
-        GtItemRef smallOreItem,
-        GtItemRef dustItem) {
+        ItemRef smallOreItem,
+        ItemRef dustItem) {
 }

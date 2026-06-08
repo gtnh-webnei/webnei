@@ -2,10 +2,12 @@ package moe.takochan.webnei.gtore;
 
 import java.util.List;
 
+import moe.takochan.webnei.common.ItemRef;
+
 public record GtBartWorksOreDetail(
         String entryType,
         String dimensionDisplayName,
-        GtItemRef resultItem,
+        ItemRef resultItem,
         int heightMin,
         int heightMax,
         int weight,

@@ -1,20 +1,7 @@
-export interface GtItemRef {
-  itemVariantId: string;
-  displayName: string;
-  tooltipText: string | null;
-  assetUrl: string | null;
-}
+import type { FluidRef, ItemRef } from './entityRefs.types';
 
-export interface GtFluidRef {
-  fluidVariantId: string;
-  fluidId: string;
-  modId: string | null;
-  modName: string | null;
-  displayName: string;
-  gaseous: boolean | null;
-  temperature: number | null;
-  assetUrl: string | null;
-}
+export type GtItemRef = ItemRef;
+export type GtFluidRef = FluidRef;
 
 export interface GtDimensionRef {
   dimension: string;

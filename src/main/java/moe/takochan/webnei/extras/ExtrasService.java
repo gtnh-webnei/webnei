@@ -8,6 +8,8 @@ import java.util.stream.Collectors;
 import jakarta.persistence.criteria.Predicate;
 
 import moe.takochan.webnei.asset.AssetUrlBuilder;
+import moe.takochan.webnei.common.FluidRef;
+import moe.takochan.webnei.common.ItemRef;
 import moe.takochan.webnei.dataset.DatasetSummary;
 import moe.takochan.webnei.fluid.FluidModOptionEntity;
 import moe.takochan.webnei.fluid.FluidModOptionRepository;
@@ -108,49 +110,24 @@ public class ExtrasService {
             String fluidVariantId,
             FluidVariantBrowserEntity fluid,
             Map<String, String> modNames) {
-        return new ItemRelatedFluidEntry(
-                fluidVariantId,
-                fluid != null ? fluid.getFluidId() : "",
-                fluid != null ? fluid.getModId() : null,
-                fluid != null ? modNames.getOrDefault(fluid.getModId(), fluid.getModId()) : null,
-                fluid != null ? fluid.getDisplayName() : fluidVariantId,
-                fluid != null ? fluid.isGaseous() : null,
-                fluid != null ? fluid.getTemperature() : null,
-                fluid != null ? assetUrlBuilder.build(dataset, fluid.getAssetPath(), null) : null);
+        return new ItemRelatedFluidEntry(toFluidRef(dataset, fluidVariantId, fluid, modNames));
     }
 
     private List<FluidContainerEntry> toContainers(List<FluidContainerBrowserEntity> rows, DatasetSummary dataset) {
-        List<FluidVariantBrowserEntity.FluidVariantId> fluidIds = rows.stream()
-                .map(e -> new FluidVariantBrowserEntity.FluidVariantId(dataset.datasetId(), e.getFluidVariantId()))
-                .distinct()
-                .toList();
-        Map<String, FluidVariantBrowserEntity> fluids = fluidVariantRepo.findAllById(fluidIds).stream()
-                .collect(Collectors.toMap(FluidVariantBrowserEntity::getFluidVariantId, Function.identity()));
-        Map<String, String> modNames = fluidModOptionRepo.findByDatasetIdOrderByNameAscModIdAsc(dataset.datasetId())
-                .stream()
-                .collect(Collectors.toMap(FluidModOptionEntity::getModId, FluidModOptionEntity::getName));
         return rows.stream()
-                .map(e -> toContainer(e, dataset, fluids.get(e.getFluidVariantId()), modNames))
+                .map(e -> toContainer(e, dataset))
                 .toList();
     }
 
     private FluidContainerEntry toContainer(
             FluidContainerBrowserEntity e,
-            DatasetSummary dataset,
-            FluidVariantBrowserEntity fluid,
-            Map<String, String> modNames) {
+            DatasetSummary dataset) {
         return new FluidContainerEntry(
-                e.getFluidVariantId(),
-                fluid != null ? fluid.getFluidId() : "",
-                fluid != null ? fluid.getModId() : null,
-                fluid != null ? modNames.getOrDefault(fluid.getModId(), fluid.getModId()) : null,
-                e.getFluidDisplayName(),
-                fluid != null ? fluid.isGaseous() : null,
-                fluid != null ? fluid.getTemperature() : null,
-                fluid != null ? assetUrlBuilder.build(dataset, fluid.getAssetPath(), null) : null,
-                e.getContainerItemVariantId(),
-                e.getContainerDisplayName(),
-                assetUrlBuilder.build(dataset, e.getContainerAssetPath(), e.getContainerAssetSha256()),
+                toItemRef(
+                        e.getContainerItemVariantId(),
+                        e.getContainerDisplayName(),
+                        null,
+                        assetUrlBuilder.build(dataset, e.getContainerAssetPath(), e.getContainerAssetSha256())),
                 e.getAmount());
     }
 
@@ -162,10 +139,31 @@ public class ExtrasService {
     }
 
     private FluidBlockEntry toBlock(FluidBlockBrowserEntity e, DatasetSummary dataset) {
-        return new FluidBlockEntry(
-                e.getBlockItemVariantId(), e.getBlockDisplayName(),
-                assetUrlBuilder.build(dataset, e.getBlockAssetPath(), e.getBlockAssetSha256()),
-                e.getBlockTooltipText());
+        return new FluidBlockEntry(toItemRef(
+                e.getBlockItemVariantId(),
+                e.getBlockDisplayName(),
+                e.getBlockTooltipText(),
+                assetUrlBuilder.build(dataset, e.getBlockAssetPath(), e.getBlockAssetSha256())));
+    }
+
+    private ItemRef toItemRef(String itemVariantId, String displayName, String tooltipText, String assetUrl) {
+        return new ItemRef(itemVariantId, displayName, tooltipText, assetUrl);
+    }
+
+    private FluidRef toFluidRef(
+            DatasetSummary dataset,
+            String fluidVariantId,
+            FluidVariantBrowserEntity fluid,
+            Map<String, String> modNames) {
+        return new FluidRef(
+                fluidVariantId,
+                fluid != null ? fluid.getFluidId() : "",
+                fluid != null ? fluid.getModId() : null,
+                fluid != null ? modNames.getOrDefault(fluid.getModId(), fluid.getModId()) : null,
+                fluid != null ? fluid.getDisplayName() : fluidVariantId,
+                fluid != null ? fluid.isGaseous() : null,
+                fluid != null ? fluid.getTemperature() : null,
+                fluid != null ? assetUrlBuilder.build(dataset, fluid.getAssetPath(), null) : null);
     }
 
     private static Specification<FluidContainerBrowserEntity> containerForItem(String datasetId, String itemVariantId) {

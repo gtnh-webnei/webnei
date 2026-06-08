@@ -1,6 +1,6 @@
-package moe.takochan.webnei.gtore;
+package moe.takochan.webnei.common;
 
-public record GtFluidRef(
+public record FluidRef(
         String fluidVariantId,
         String fluidId,
         String modId,
