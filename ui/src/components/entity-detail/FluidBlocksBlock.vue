@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { FluidBlockEntry } from '@/api/extras.types';
-import ExtrasBlock from './ExtrasBlock.vue';
+import DetailSectionCard from './DetailSectionCard.vue';
 
 defineProps<{
   blocks: FluidBlockEntry[];
@@ -12,10 +12,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <ExtrasBlock
-    :title="$t('fluid.correspondingBlock')"
-    :count="blocks.length"
-  >
+  <DetailSectionCard :title="$t('fluid.correspondingBlock')">
     <div class="block-list">
       <div
         v-for="b in blocks"
@@ -32,7 +29,7 @@ const emit = defineEmits<{
         <span class="block-name">{{ b.blockDisplayName ?? b.blockItemVariantId }}</span>
       </div>
     </div>
-  </ExtrasBlock>
+  </DetailSectionCard>
 </template>
 
 <style scoped>

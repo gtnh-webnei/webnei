@@ -9,7 +9,6 @@ import type { FluidDetail } from '@/api/fluids.types';
 import type { FluidExtras } from '@/api/extras.types';
 import DetailTextCard from './entity-detail/DetailTextCard.vue';
 import EntityDetailLayout from './entity-detail/EntityDetailLayout.vue';
-import EntityExtrasCard from './entity-detail/EntityExtrasCard.vue';
 import FluidAttributesCard from './entity-detail/FluidAttributesCard.vue';
 import FluidBlocksBlock from './entity-detail/FluidBlocksBlock.vue';
 import FluidContainersBlock from './entity-detail/FluidContainersBlock.vue';
@@ -33,13 +32,6 @@ const loading = ref(false);
 const error = ref<string | null>(null);
 
 const extras = ref<FluidExtras | null>(null);
-const extrasLoading = ref(false);
-const extrasError = ref<string | null>(null);
-
-const hasAnyExtras = computed(() => {
-  if (!extras.value) return false;
-  return extras.value.containers.length > 0 || extras.value.blocks.length > 0;
-});
 
 const gaseousLabel = computed(() => t(detail.value?.gaseous ? 'fluid.gaseous' : 'fluid.liquid'));
 
@@ -59,15 +51,11 @@ async function load() {
 
 async function loadExtras() {
   if (!props.datasetId || !props.fluidVariantId) return;
-  extrasLoading.value = true;
-  extrasError.value = null;
   extras.value = null;
   try {
     extras.value = await extrasStore.loadFluid(props.datasetId, props.fluidVariantId);
-  } catch (e) {
-    extrasError.value = e instanceof Error ? e.message : String(e);
-  } finally {
-    extrasLoading.value = false;
+  } catch {
+    extras.value = null;
   }
 }
 
@@ -106,14 +94,8 @@ onMounted(() => {
   >
     <template v-if="detail">
       <el-row :gutter="16">
-        <el-col
-          :xs="24"
-          :md="14"
-        >
-          <FluidAttributesCard
-            :detail="detail"
-            :state-label="gaseousLabel"
-          />
+        <el-col :xs="24" :md="14">
+          <FluidAttributesCard :detail="detail" :state-label="gaseousLabel" />
 
           <DetailTextCard
             v-if="detail.nbtText"
@@ -123,10 +105,15 @@ onMounted(() => {
           />
         </el-col>
 
-        <el-col
-          :xs="24"
-          :md="10"
-        >
+        <el-col :xs="24" :md="10">
+          <template v-if="extras">
+            <FluidBlocksBlock
+              v-if="extras.blocks.length"
+              :blocks="extras.blocks"
+              @open-item="goToItem"
+            />
+          </template>
+
           <DetailTextCard
             v-if="detail.chemicalExpression"
             :title="$t('common.chemicalExpression')"
@@ -140,24 +127,13 @@ onMounted(() => {
             @open="goToUndergroundResource"
           />
 
-          <EntityExtrasCard
-            :loading="extrasLoading"
-            :error="extrasError"
-            :empty="!hasAnyExtras"
-          >
-            <template v-if="extras">
-              <FluidBlocksBlock
-                v-if="extras.blocks.length"
-                :blocks="extras.blocks"
-                @open-item="goToItem"
-              />
-              <FluidContainersBlock
-                v-if="extras.containers.length"
-                :containers="extras.containers"
-                @open-item="goToItem"
-              />
-            </template>
-          </EntityExtrasCard>
+          <template v-if="extras">
+            <FluidContainersBlock
+              v-if="extras.containers.length"
+              :containers="extras.containers"
+              @open-item="goToItem"
+            />
+          </template>
         </el-col>
       </el-row>
     </template>

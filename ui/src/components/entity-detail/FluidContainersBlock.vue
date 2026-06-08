@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { FluidContainerEntry } from '@/api/extras.types';
-import ExtrasBlock from './ExtrasBlock.vue';
+import DetailSectionCard from './DetailSectionCard.vue';
 
 defineProps<{
   containers: FluidContainerEntry[];
@@ -12,10 +12,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <ExtrasBlock
-    :title="$t('common.fluidContainer')"
-    :count="containers.length"
-  >
+  <DetailSectionCard :title="$t('common.fluidContainer')">
     <div class="container-list">
       <div
         v-for="(c, idx) in containers"
@@ -59,7 +56,7 @@ const emit = defineEmits<{
         </div>
       </div>
     </div>
-  </ExtrasBlock>
+  </DetailSectionCard>
 </template>
 
 <style scoped>

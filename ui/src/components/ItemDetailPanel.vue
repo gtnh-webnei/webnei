@@ -10,7 +10,6 @@ import MinecraftTooltipText from './MinecraftTooltipText.vue';
 import type { InteractiveFluidRefFluid } from './InteractiveFluidRef.vue';
 import DetailTextCard from './entity-detail/DetailTextCard.vue';
 import EntityDetailLayout from './entity-detail/EntityDetailLayout.vue';
-import EntityExtrasCard from './entity-detail/EntityExtrasCard.vue';
 import ItemAspectsBlock from './entity-detail/ItemAspectsBlock.vue';
 import ItemAttributesCard from './entity-detail/ItemAttributesCard.vue';
 import ItemFluidContainersBlock from './entity-detail/ItemFluidContainersBlock.vue';
@@ -33,17 +32,6 @@ const loading = ref(false);
 const error = ref<string | null>(null);
 
 const extras = ref<ItemExtras | null>(null);
-const extrasLoading = ref(false);
-const extrasError = ref<string | null>(null);
-
-const hasAnyExtras = computed(() => {
-  if (!extras.value) return false;
-  return (
-    extras.value.oreDictNames.length > 0 ||
-    extras.value.fluidContainers.length > 0 ||
-    extras.value.aspects.length > 0
-  );
-});
 
 async function load() {
   if (!props.datasetId || !props.itemVariantId) return;
@@ -61,15 +49,11 @@ async function load() {
 
 async function loadExtras() {
   if (!props.datasetId || !props.itemVariantId) return;
-  extrasLoading.value = true;
-  extrasError.value = null;
   extras.value = null;
   try {
     extras.value = await extrasStore.loadItem(props.datasetId, props.itemVariantId);
-  } catch (e) {
-    extrasError.value = e instanceof Error ? e.message : String(e);
-  } finally {
-    extrasLoading.value = false;
+  } catch {
+    extras.value = null;
   }
 }
 
@@ -156,37 +140,34 @@ onMounted(() => {
             code
           />
 
+          <template v-if="extras">
+            <ItemOreDictBlock
+              v-if="extras.oreDictNames.length"
+              :names="extras.oreDictNames"
+            />
+            <ItemAspectsBlock
+              v-if="extras.aspects.length"
+              :aspects="extras.aspects"
+            />
+          </template>
+
           <ItemWorldGenerationCard
             v-if="detail.worldGeneration.length"
             :resources="detail.worldGeneration"
             @open="goToWorldGeneration"
           />
 
-          <EntityExtrasCard
-            :loading="extrasLoading"
-            :error="extrasError"
-            :empty="!hasAnyExtras"
-          >
-            <template v-if="extras">
-              <ItemOreDictBlock
-                v-if="extras.oreDictNames.length"
-                :names="extras.oreDictNames"
-              />
-              <ItemFluidContainersBlock
-                v-if="extras.fluidContainers.length"
-                :containers="extras.fluidContainers"
-                :total="extras.fluidContainersTotal"
-                @open-item="goToItem"
-                @pick-fluid="pickFluid"
-                @lookup-fluid="lookupFluid"
-                @see-all="goToContainers"
-              />
-              <ItemAspectsBlock
-                v-if="extras.aspects.length"
-                :aspects="extras.aspects"
-              />
-            </template>
-          </EntityExtrasCard>
+          <template v-if="extras">
+            <ItemFluidContainersBlock
+              v-if="extras.fluidContainers.length"
+              :containers="extras.fluidContainers"
+              :total="extras.fluidContainersTotal"
+              @open-item="goToItem"
+              @pick-fluid="pickFluid"
+              @lookup-fluid="lookupFluid"
+              @see-all="goToContainers"
+            />
+          </template>
         </el-col>
       </el-row>
     </template>

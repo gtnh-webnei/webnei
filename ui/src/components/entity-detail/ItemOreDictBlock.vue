@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ExtrasBlock from './ExtrasBlock.vue';
+import DetailSectionCard from './DetailSectionCard.vue';
 
 defineProps<{
   names: string[];
@@ -7,10 +7,7 @@ defineProps<{
 </script>
 
 <template>
-  <ExtrasBlock
-    :title="$t('item.oreDictEntries')"
-    :count="names.length"
-  >
+  <DetailSectionCard :title="$t('item.oreDictEntries')">
     <div class="ore-tags">
       <el-tag
         v-for="name in names"
@@ -23,7 +20,7 @@ defineProps<{
         {{ name }}
       </el-tag>
     </div>
-  </ExtrasBlock>
+  </DetailSectionCard>
 </template>
 
 <style scoped>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { AspectEntry } from '@/api/extras.types';
-import ExtrasBlock from './ExtrasBlock.vue';
+import DetailSectionCard from './DetailSectionCard.vue';
 
 defineProps<{
   aspects: AspectEntry[];
@@ -8,10 +8,7 @@ defineProps<{
 </script>
 
 <template>
-  <ExtrasBlock
-    :title="$t('item.thaumcraftAspects')"
-    :count="aspects.length"
-  >
+  <DetailSectionCard :title="$t('item.thaumcraftAspects')">
     <div class="aspect-list">
       <div
         v-for="a in aspects"
@@ -45,7 +42,7 @@ defineProps<{
         </div>
       </div>
     </div>
-  </ExtrasBlock>
+  </DetailSectionCard>
 </template>
 
 <style scoped>

@@ -3,7 +3,7 @@ import type { FluidContainerEntry } from '@/api/extras.types';
 import InteractiveFluidRef, {
   type InteractiveFluidRefFluid,
 } from '@/components/InteractiveFluidRef.vue';
-import ExtrasBlock from './ExtrasBlock.vue';
+import DetailSectionCard from './DetailSectionCard.vue';
 
 defineProps<{
   containers: FluidContainerEntry[];
@@ -31,10 +31,7 @@ function fluidRefFromContainer(container: FluidContainerEntry): InteractiveFluid
 </script>
 
 <template>
-  <ExtrasBlock
-    :title="$t('common.fluidContainer')"
-    :count="containers.length === total ? total : `${containers.length} / ${total}`"
-  >
+  <DetailSectionCard :title="$t('common.fluidContainer')">
     <div class="container-list">
       <div
         v-for="(c, idx) in containers"
@@ -92,7 +89,7 @@ function fluidRefFromContainer(container: FluidContainerEntry): InteractiveFluid
         {{ $t('item.viewAllContainers', { total }) }}
       </button>
     </div>
-  </ExtrasBlock>
+  </DetailSectionCard>
 </template>
 
 <style scoped>
