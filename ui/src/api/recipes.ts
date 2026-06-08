@@ -5,6 +5,7 @@ import type {
   CategoryVoltageTier,
   HandlerBreakdown,
   LookupKind,
+  LookupTargetHeader,
   Recipe,
   RecipeCategory,
 } from './recipes.types';
@@ -74,6 +75,17 @@ export async function lookupBreakdown(
   const { data } = await http.get<HandlerBreakdown[]>(
     `/datasets/${encodeURIComponent(datasetId)}/recipes/lookup/breakdown`,
     { params: { target, kind } },
+  );
+  return data;
+}
+
+export async function getLookupTargetHeader(
+  datasetId: string,
+  target: string,
+): Promise<LookupTargetHeader> {
+  const { data } = await http.get<LookupTargetHeader>(
+    `/datasets/${encodeURIComponent(datasetId)}/recipes/lookup/target`,
+    { params: { target } },
   );
   return data;
 }

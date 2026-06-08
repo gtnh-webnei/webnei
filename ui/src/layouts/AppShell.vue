@@ -44,16 +44,20 @@ const activeNav = computed(() => {
 function routeViewKey(viewRoute: RouteLocationNormalizedLoaded): string {
   return String(viewRoute.name ?? viewRoute.path);
 }
+
+function nonCachedRouteViewKey(viewRoute: RouteLocationNormalizedLoaded): string {
+  if (viewRoute.name === 'lookup') {
+    return `${String(viewRoute.name)}:${String(viewRoute.params.datasetId ?? '')}:${String(viewRoute.query.target ?? '')}`;
+  }
+  return viewRoute.fullPath;
+}
 </script>
 
 <template>
   <el-container class="app-shell">
     <el-header class="app-header">
       <div class="brand">
-        <router-link
-          to="/"
-          class="brand-link"
-        >
+        <router-link to="/" class="brand-link">
           {{ t('dataset.brandName') }}
         </router-link>
       </div>
@@ -64,29 +68,16 @@ function routeViewKey(viewRoute: RouteLocationNormalizedLoaded): string {
         router
         class="nav-menu"
       >
-        <template
-          v-for="item in nav"
-          :key="item.to ?? item.index"
-        >
-          <el-sub-menu
-            v-if="item.children"
-            :index="item.index"
-          >
+        <template v-for="item in nav" :key="item.to ?? item.index">
+          <el-sub-menu v-if="item.children" :index="item.index">
             <template #title>
               {{ item.label }}
             </template>
-            <el-menu-item
-              v-for="child in item.children"
-              :key="child.to"
-              :index="child.to"
-            >
+            <el-menu-item v-for="child in item.children" :key="child.to" :index="child.to">
               {{ child.label }}
             </el-menu-item>
           </el-sub-menu>
-          <el-menu-item
-            v-else
-            :index="item.to"
-          >
+          <el-menu-item v-else :index="item.to">
             {{ item.label }}
           </el-menu-item>
         </template>
@@ -95,10 +86,7 @@ function routeViewKey(viewRoute: RouteLocationNormalizedLoaded): string {
       <DatasetSwitcher />
       <ThemeSwitcher />
     </el-header>
-    <el-main
-      class="app-main"
-      :class="{ 'is-full-height': fullHeight }"
-    >
+    <el-main class="app-main" :class="{ 'is-full-height': fullHeight }">
       <div :class="fullHeight ? 'page-full' : 'page'">
         <router-view v-slot="{ Component, route: viewRoute }">
           <keep-alive :max="32">
@@ -111,7 +99,7 @@ function routeViewKey(viewRoute: RouteLocationNormalizedLoaded): string {
           <component
             :is="Component"
             v-if="!viewRoute.meta.keepAlive"
-            :key="viewRoute.fullPath"
+            :key="nonCachedRouteViewKey(viewRoute)"
           />
         </router-view>
       </div>

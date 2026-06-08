@@ -5,10 +5,14 @@ import { useI18n } from 'vue-i18n';
 import { storeToRefs } from 'pinia';
 import { useDatasetStore } from '@/stores/dataset';
 import { useRecipeCategoryStore } from '@/stores/recipeCategories';
-import { lookupBreakdown, lookupRecipes } from '@/api/recipes';
-import { getItemDetail } from '@/api/items';
-import { getFluidDetail } from '@/api/fluids';
-import type { HandlerBreakdown, LookupKind, Recipe, RecipeCategory } from '@/api/recipes.types';
+import { getLookupTargetHeader, lookupBreakdown, lookupRecipes } from '@/api/recipes';
+import type {
+  HandlerBreakdown,
+  LookupKind,
+  LookupTargetType,
+  Recipe,
+  RecipeCategory,
+} from '@/api/recipes.types';
 import RecipePanel from '@/components/RecipePanel.vue';
 import ItemDetailPanel from '@/components/ItemDetailPanel.vue';
 import FluidDetailPanel from '@/components/FluidDetailPanel.vue';
@@ -34,7 +38,8 @@ function parseTab(value: unknown): Tab {
 const datasetId = computed(() => String(route.params.datasetId ?? activeDatasetId.value ?? ''));
 const target = computed(() => String(route.query.target ?? ''));
 const entityNavigation = useEntityNavigation(router, datasetId);
-const isFluid = computed(() => target.value.length > 0 && !target.value.includes('@'));
+const targetType = ref<LookupTargetType | null>(null);
+const isFluid = computed(() => targetType.value === 'fluid');
 const tab = computed<Tab>(() => parseTab(route.query.kind));
 const lookupTabs = computed<{ label: string; value: Tab }[]>(() => [
   { label: t('lookup.detailTab'), value: 'detail' },
@@ -97,29 +102,27 @@ async function ensureCategories() {
 }
 
 async function fetchTargetMeta() {
+  targetType.value = null;
   targetName.value = null;
   targetIcon.value = null;
   targetModName.value = null;
   targetGaseous.value = false;
   targetImageFailed.value = false;
-  if (!target.value) return;
-  if (isFluid.value) {
-    try {
-      const f = await getFluidDetail(datasetId.value, target.value);
-      targetName.value = f.displayName || f.registryName;
-      targetIcon.value = f.assetUrl;
-      targetModName.value = f.modName;
-      targetGaseous.value = f.gaseous;
-      return;
-    } catch {
-      // fall through
-    }
-  }
+  if (!datasetId.value || !target.value) return;
   try {
-    const detail = await getItemDetail(datasetId.value, target.value);
-    targetName.value = detail.displayName || detail.registryName;
-    targetIcon.value = detail.assetUrl;
-    targetModName.value = detail.modName;
+    const header = await getLookupTargetHeader(datasetId.value, target.value);
+    targetType.value = header.targetType;
+    if (header.targetType === 'fluid' && header.fluid) {
+      targetName.value = header.fluid.displayName;
+      targetIcon.value = header.fluid.assetUrl;
+      targetModName.value = header.fluid.modName;
+      targetGaseous.value = header.fluid.gaseous ?? false;
+      return;
+    }
+    if (header.item) {
+      targetName.value = header.item.displayName;
+      targetIcon.value = header.item.assetUrl;
+    }
   } catch {
     // ignore
   }
@@ -187,11 +190,11 @@ watch(tab, () => {
   fetchBreakdown();
   fetchRecipes();
 });
-watch(target, () => {
+watch([datasetId, target], async () => {
   page.value = 1;
   selectedCategoryId.value = null;
   selectedTier.value = null;
-  fetchTargetMeta();
+  await fetchTargetMeta();
   fetchBreakdown();
   fetchRecipes();
 });
@@ -231,8 +234,8 @@ function onSlotLookup(
   entityNavigation.lookup(next, payload);
 }
 
-onMounted(() => {
-  fetchTargetMeta();
+onMounted(async () => {
+  await fetchTargetMeta();
   fetchBreakdown();
   fetchRecipes();
 });
@@ -256,33 +259,16 @@ onMounted(() => {
       :image-alt="targetName ?? target"
       @image-error="targetImageFailed = true"
     >
-      <template
-        v-if="isFluid"
-        #tags
-      >
-        <el-tag
-          size="small"
-          type="primary"
-          effect="plain"
-          round
-        >
+      <template v-if="isFluid" #tags>
+        <el-tag size="small" type="primary" effect="plain" round>
           {{ t('fluid.tag') }}
         </el-tag>
-        <el-tag
-          v-if="targetGaseous"
-          size="small"
-          type="warning"
-          effect="plain"
-          round
-        >
+        <el-tag v-if="targetGaseous" size="small" type="warning" effect="plain" round>
           {{ t('fluid.gaseous') }}
         </el-tag>
       </template>
       <template #tabs>
-        <nav
-          class="page-tabs lookup-tabs"
-          :aria-label="t('lookup.viewTabsLabel')"
-        >
+        <nav class="page-tabs lookup-tabs" :aria-label="t('lookup.viewTabsLabel')">
           <button
             v-for="item in lookupTabs"
             :key="item.value"
@@ -297,32 +283,19 @@ onMounted(() => {
       </template>
     </DetailHeroCard>
 
-    <el-alert
-      v-if="error"
-      :title="error"
-      type="error"
-      :closable="false"
-      show-icon
-    />
+    <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
 
-    <template v-if="tab === 'detail'">
+    <template v-if="tab === 'detail' && targetType">
       <FluidDetailPanel
-        v-if="isFluid"
+        v-if="targetType === 'fluid'"
         :dataset-id="datasetId"
         :fluid-variant-id="target"
       />
-      <ItemDetailPanel
-        v-else
-        :dataset-id="datasetId"
-        :item-variant-id="target"
-      />
+      <ItemDetailPanel v-else :dataset-id="datasetId" :item-variant-id="target" />
     </template>
 
-    <template v-else>
-      <div
-        v-if="categoryTabs.length > 0"
-        class="handler-tabs"
-      >
+    <template v-if="tab !== 'detail'">
+      <div v-if="categoryTabs.length > 0" class="handler-tabs">
         <button
           v-for="c in categoryTabs"
           :key="c.categoryId"
@@ -337,7 +310,7 @@ onMounted(() => {
             :src="c.iconAssetUrl"
             class="handler-icon"
             :alt="c.displayName"
-          >
+          />
           <span class="handler-name">{{ c.displayName }}</span>
           <span class="handler-badge">{{ c.count }}</span>
         </button>
@@ -354,21 +327,10 @@ onMounted(() => {
         @update:active-tier="selectedTier = $event"
       />
 
-      <el-skeleton
-        v-if="loading && recipes.length === 0"
-        :rows="6"
-        animated
-      />
-      <el-empty
-        v-else-if="!loading && recipes.length === 0"
-        :description="t('lookup.noMatch')"
-      />
+      <el-skeleton v-if="loading && recipes.length === 0" :rows="6" animated />
+      <el-empty v-else-if="!loading && recipes.length === 0" :description="t('lookup.noMatch')" />
 
-      <div
-        v-else
-        v-loading="loading"
-        class="recipes"
-      >
+      <div v-else v-loading="loading" class="recipes">
         <RecipePanel
           v-for="r in recipes"
           :key="r.recipeId"

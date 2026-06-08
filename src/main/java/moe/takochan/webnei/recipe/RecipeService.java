@@ -17,6 +17,8 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 import moe.takochan.webnei.asset.AssetUrlBuilder;
+import moe.takochan.webnei.common.FluidRef;
+import moe.takochan.webnei.common.ItemRef;
 import moe.takochan.webnei.common.NotFoundException;
 import moe.takochan.webnei.common.PageRequest;
 import moe.takochan.webnei.common.PageResponse;
@@ -31,6 +33,7 @@ import moe.takochan.webnei.recipe.dto.CategoryBreakdownDto;
 import moe.takochan.webnei.recipe.dto.GregTechRecipeDto;
 import moe.takochan.webnei.recipe.dto.GregTechSpecialItemDto;
 import moe.takochan.webnei.recipe.dto.HandlerBreakdownDto;
+import moe.takochan.webnei.recipe.dto.LookupTargetHeaderDto;
 import moe.takochan.webnei.recipe.dto.MetadataValueDto;
 import moe.takochan.webnei.recipe.dto.RecipeDto;
 import moe.takochan.webnei.recipe.dto.RecipeSlotCandidateDto;
@@ -100,6 +103,20 @@ public class RecipeService {
     public RecipeDto detail(DatasetSummary dataset, String recipeId) {
         return loadRecipe(dataset, recipeId)
                 .orElseThrow(() -> new NotFoundException("Recipe not found: " + recipeId));
+    }
+
+    public LookupTargetHeaderDto lookupTargetHeader(DatasetSummary dataset, String target) {
+        if (target == null || target.isBlank()) {
+            throw new IllegalArgumentException("target is required");
+        }
+        if (target.contains("@")) {
+            ItemVariantBrowserEntity item = itemVariantRepo.findById(new ItemVariantBrowserEntity.ItemVariantId(dataset.datasetId(), target))
+                    .orElseThrow(() -> new NotFoundException("Item not found: " + target));
+            return new LookupTargetHeaderDto("item", toItemRef(dataset, item), null);
+        }
+        FluidVariantBrowserEntity fluid = fluidVariantRepo.findById(new FluidVariantBrowserEntity.FluidVariantId(dataset.datasetId(), target))
+                .orElseThrow(() -> new NotFoundException("Fluid not found: " + target));
+        return new LookupTargetHeaderDto("fluid", null, toFluidRef(dataset, fluid));
     }
 
     public PageResponse<RecipeDto> lookup(
@@ -470,6 +487,30 @@ public class RecipeService {
         } catch (JacksonException ex) {
             throw new IllegalStateException("Failed to parse gregtech_recipe_metadata.value_json for recipe=" + recipeId + ", key=" + key, ex);
         }
+    }
+
+    private ItemRef toItemRef(DatasetSummary dataset, ItemVariantBrowserEntity item) {
+        return new ItemRef(
+                item.getItemVariantId(),
+                item.getDisplayName(),
+                item.getTooltipText(),
+                assetUrlBuilder.build(dataset, item.getAssetPath(), item.getAssetSha256()));
+    }
+
+    private FluidRef toFluidRef(DatasetSummary dataset, FluidVariantBrowserEntity fluid) {
+        String modId = fluid.getModId();
+        String modName = fluidModOptionRepo.findByDatasetIdAndModId(dataset.datasetId(), modId)
+                .map(e -> e.getName())
+                .orElse(modId);
+        return new FluidRef(
+                fluid.getFluidVariantId(),
+                fluid.getFluidId(),
+                modId,
+                modName,
+                fluid.getDisplayName(),
+                fluid.isGaseous(),
+                fluid.getTemperature(),
+                assetUrlBuilder.build(dataset, fluid.getAssetPath(), null));
     }
 
     private Map<String, ItemVariantBrowserEntity> loadItemRefs(String datasetId, List<String> itemVariantIds) {

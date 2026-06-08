@@ -9,6 +9,7 @@ import moe.takochan.webnei.dataset.DatasetResolver;
 import moe.takochan.webnei.recipe.dto.CategoryMachineDto;
 import moe.takochan.webnei.recipe.dto.CategoryVoltageTierDto;
 import moe.takochan.webnei.recipe.dto.HandlerBreakdownDto;
+import moe.takochan.webnei.recipe.dto.LookupTargetHeaderDto;
 import moe.takochan.webnei.recipe.dto.RecipeCategoryDto;
 import moe.takochan.webnei.recipe.dto.RecipeDto;
 
@@ -81,6 +82,13 @@ public class RecipeController {
             @RequestParam String target,
             @RequestParam(defaultValue = "recipe") String kind) {
         return recipeService.lookupBreakdown(datasetResolver.resolve(datasetId), new RecipeLookupQuery(target, kind));
+    }
+
+    @GetMapping("/recipes/lookup/target")
+    public LookupTargetHeaderDto lookupTargetHeader(
+            @PathVariable String datasetId,
+            @RequestParam String target) {
+        return recipeService.lookupTargetHeader(datasetResolver.resolve(datasetId), target);
     }
 
     @GetMapping("/recipes/{recipeId}")
