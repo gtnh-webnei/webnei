@@ -6,7 +6,5 @@ public record ItemExtras(
         List<String> oreDictNames,
         List<FluidContainerEntry> fluidContainers,
         long fluidContainersTotal,
-        List<AspectEntry> aspects,
-        long asInputRecipeCount,
-        long asOutputRecipeCount) {
+        List<AspectEntry> aspects) {
 }

@@ -4,7 +4,5 @@ import java.util.List;
 
 public record FluidExtras(
         List<FluidContainerEntry> containers,
-        List<FluidBlockEntry> blocks,
-        long asInputRecipeCount,
-        long asOutputRecipeCount) {
+        List<FluidBlockEntry> blocks) {
 }

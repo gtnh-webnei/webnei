@@ -30,7 +30,6 @@ public class ExtrasService {
     private final FluidModOptionRepository fluidModOptionRepo;
     private final ItemAspectBrowserRepository aspectRepo;
     private final FluidBlockBrowserRepository blockRepo;
-    private final RecipeLookupCountRepository recipeLookupCountRepo;
     private final AssetUrlBuilder assetUrlBuilder;
 
     public ExtrasService(ItemOreDictionaryNameRepository oreDictRepo,
@@ -39,7 +38,6 @@ public class ExtrasService {
                          FluidModOptionRepository fluidModOptionRepo,
                          ItemAspectBrowserRepository aspectRepo,
                          FluidBlockBrowserRepository blockRepo,
-                         RecipeLookupCountRepository recipeLookupCountRepo,
                          AssetUrlBuilder assetUrlBuilder) {
         this.oreDictRepo = oreDictRepo;
         this.containerRepo = containerRepo;
@@ -47,7 +45,6 @@ public class ExtrasService {
         this.fluidModOptionRepo = fluidModOptionRepo;
         this.aspectRepo = aspectRepo;
         this.blockRepo = blockRepo;
-        this.recipeLookupCountRepo = recipeLookupCountRepo;
         this.assetUrlBuilder = assetUrlBuilder;
     }
 
@@ -68,15 +65,12 @@ public class ExtrasService {
                 .stream()
                 .map(e -> toAspect(e, dataset))
                 .toList();
-        Map<String, Long> counts = recipeCounts(datasetId, "item", itemVariantId);
 
         return new ItemExtras(
                 oreNames,
                 containers,
                 containerTotal,
-                aspects,
-                counts.getOrDefault("usage", 0L),
-                counts.getOrDefault("recipe", 0L));
+                aspects);
     }
 
     public List<FluidContainerEntry> allContainersForItem(DatasetSummary dataset, String itemVariantId) {
@@ -94,13 +88,10 @@ public class ExtrasService {
                 .stream()
                 .map(e -> toBlock(e, dataset))
                 .toList();
-        Map<String, Long> counts = recipeCounts(datasetId, "fluid", fluidVariantId);
 
         return new FluidExtras(
                 containers,
-                blocks,
-                counts.getOrDefault("usage", 0L),
-                counts.getOrDefault("recipe", 0L));
+                blocks);
     }
 
     private List<FluidContainerEntry> listContainersForItem(
@@ -120,12 +111,6 @@ public class ExtrasService {
 
     private long countContainersForItem(String datasetId, String itemVariantId) {
         return containerRepo.count(containerForItem(datasetId, itemVariantId));
-    }
-
-    private Map<String, Long> recipeCounts(String datasetId, String targetDomain, String targetId) {
-        return recipeLookupCountRepo.findByDatasetIdAndTargetDomainAndTargetId(datasetId, targetDomain, targetId)
-                .stream()
-                .collect(Collectors.toMap(RecipeLookupCountEntity::getLookupKind, RecipeLookupCountEntity::getRecipeCount));
     }
 
     private List<FluidContainerEntry> toContainers(List<FluidContainerBrowserEntity> rows, DatasetSummary dataset) {

@@ -37,13 +37,9 @@ export interface ItemExtras {
   fluidContainers: FluidContainerEntry[];
   fluidContainersTotal: number;
   aspects: AspectEntry[];
-  asInputRecipeCount: number;
-  asOutputRecipeCount: number;
 }
 
 export interface FluidExtras {
   containers: FluidContainerEntry[];
   blocks: FluidBlockEntry[];
-  asInputRecipeCount: number;
-  asOutputRecipeCount: number;
 }

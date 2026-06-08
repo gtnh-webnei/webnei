@@ -7,7 +7,6 @@ import { useEntityNavigation } from '@/composables/useEntityNavigation';
 import { getFluidDetail } from '@/api/fluids';
 import type { FluidDetail } from '@/api/fluids.types';
 import type { FluidExtras } from '@/api/extras.types';
-import DetailHeroCard from './entity-detail/DetailHeroCard.vue';
 import DetailTextCard from './entity-detail/DetailTextCard.vue';
 import EntityDetailLayout from './entity-detail/EntityDetailLayout.vue';
 import EntityExtrasCard from './entity-detail/EntityExtrasCard.vue';
@@ -32,7 +31,6 @@ const { t } = useI18n();
 const detail = ref<FluidDetail | null>(null);
 const loading = ref(false);
 const error = ref<string | null>(null);
-const heroImgFailed = ref(false);
 
 const extras = ref<FluidExtras | null>(null);
 const extrasLoading = ref(false);
@@ -45,16 +43,11 @@ const hasAnyExtras = computed(() => {
 
 const gaseousLabel = computed(() => t(detail.value?.gaseous ? 'fluid.gaseous' : 'fluid.liquid'));
 
-const gaseousShortLabel = computed(() =>
-  detail.value?.gaseous ? t('fluid.gaseous').charAt(0) : t('fluid.liquid').charAt(0),
-);
-
 async function load() {
   if (!props.datasetId || !props.fluidVariantId) return;
   loading.value = true;
   error.value = null;
   detail.value = null;
-  heroImgFailed.value = false;
   try {
     detail.value = await getFluidDetail(props.datasetId, props.fluidVariantId);
   } catch (e) {
@@ -112,37 +105,6 @@ onMounted(() => {
     :skeleton-rows="6"
   >
     <template v-if="detail">
-      <DetailHeroCard
-        :title="detail.displayName || detail.registryName"
-        :subtitle="detail.modName"
-        :asset-url="detail.assetUrl && !heroImgFailed ? detail.assetUrl : null"
-        :fallback-text="gaseousShortLabel"
-        :fallback-class="detail.gaseous ? 'gaseous' : undefined"
-        :icon-class="detail.gaseous ? 'gaseous' : 'fluid'"
-        :image-alt="detail.displayName"
-        @image-error="heroImgFailed = true"
-      >
-        <template #tags>
-          <el-tag
-            size="small"
-            type="primary"
-            effect="plain"
-            round
-          >
-            {{ $t('fluid.tag') }}
-          </el-tag>
-          <el-tag
-            v-if="detail.gaseous"
-            size="small"
-            type="warning"
-            effect="plain"
-            round
-          >
-            {{ $t('fluid.gaseous') }}
-          </el-tag>
-        </template>
-      </DetailHeroCard>
-
       <el-row :gutter="16">
         <el-col
           :xs="24"

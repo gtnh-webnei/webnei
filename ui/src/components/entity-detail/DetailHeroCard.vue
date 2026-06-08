@@ -35,21 +35,24 @@ const emit = defineEmits<{
         {{ fallbackText }}
       </div>
     </div>
-    <div class="detail-hero-title-block">
-      <h1 class="detail-hero-title">
-        {{ title }}
-      </h1>
-      <div class="detail-hero-subtitle">
-        <el-tag
-          size="default"
-          type="info"
-          effect="light"
-          round
-        >
-          {{ subtitle }}
-        </el-tag>
-        <slot name="tags" />
+    <div class="detail-hero-main">
+      <div class="detail-hero-title-block">
+        <h1 class="detail-hero-title">
+          {{ title }}
+        </h1>
+        <div class="detail-hero-subtitle">
+          <el-tag
+            size="default"
+            type="info"
+            effect="light"
+            round
+          >
+            {{ subtitle }}
+          </el-tag>
+          <slot name="tags" />
+        </div>
       </div>
+      <slot name="tabs" />
     </div>
   </header>
 </template>
@@ -89,8 +92,15 @@ const emit = defineEmits<{
   object-fit: contain;
   image-rendering: pixelated;
 }
-.detail-hero-title-block {
+.detail-hero-main {
   flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  gap: 12px;
+  align-items: center;
+}
+.detail-hero-title-block {
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -115,5 +125,10 @@ const emit = defineEmits<{
 }
 .detail-hero-fallback.gaseous {
   color: rgba(245, 158, 11, 0.95);
+}
+@media (max-width: 760px) {
+  .detail-hero-main {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 </style>

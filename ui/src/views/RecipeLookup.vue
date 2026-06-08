@@ -13,6 +13,7 @@ import RecipePanel from '@/components/RecipePanel.vue';
 import ItemDetailPanel from '@/components/ItemDetailPanel.vue';
 import FluidDetailPanel from '@/components/FluidDetailPanel.vue';
 import CategoryHeaderRows from '@/components/recipe/CategoryHeaderRows.vue';
+import DetailHeroCard from '@/components/entity-detail/DetailHeroCard.vue';
 import { useEntityNavigation } from '@/composables/useEntityNavigation';
 
 type Tab = 'detail' | 'recipe' | 'usage';
@@ -50,6 +51,9 @@ const error = ref<string | null>(null);
 
 const targetName = ref<string | null>(null);
 const targetIcon = ref<string | null>(null);
+const targetModName = ref<string | null>(null);
+const targetGaseous = ref(false);
+const targetImageFailed = ref(false);
 
 const categoryMap = ref<Map<string, RecipeCategory>>(new Map());
 const categoryMapDatasetId = ref<string | null>(null);
@@ -95,12 +99,17 @@ async function ensureCategories() {
 async function fetchTargetMeta() {
   targetName.value = null;
   targetIcon.value = null;
+  targetModName.value = null;
+  targetGaseous.value = false;
+  targetImageFailed.value = false;
   if (!target.value) return;
   if (isFluid.value) {
     try {
       const f = await getFluidDetail(datasetId.value, target.value);
       targetName.value = f.displayName || f.registryName;
       targetIcon.value = f.assetUrl;
+      targetModName.value = f.modName;
+      targetGaseous.value = f.gaseous;
       return;
     } catch {
       // fall through
@@ -110,6 +119,7 @@ async function fetchTargetMeta() {
     const detail = await getItemDetail(datasetId.value, target.value);
     targetName.value = detail.displayName || detail.registryName;
     targetIcon.value = detail.assetUrl;
+    targetModName.value = detail.modName;
   } catch {
     // ignore
   }
@@ -230,37 +240,62 @@ onMounted(() => {
 
 <template>
   <div class="lookup">
-    <header class="header">
-      <div class="target">
-        <img
-          v-if="targetIcon"
-          :src="targetIcon"
-          class="target-icon"
-          :alt="targetName ?? ''"
-        >
-        <div class="target-info">
-          <div class="title">
-            {{ targetName ?? target }}
-          </div>
-          <code class="target-id">{{ target }}</code>
-        </div>
-      </div>
-      <nav
-        class="page-tabs lookup-tabs"
-        :aria-label="t('lookup.viewTabsLabel')"
+    <DetailHeroCard
+      :title="targetName ?? target"
+      :subtitle="targetModName ?? ''"
+      :asset-url="targetIcon && !targetImageFailed ? targetIcon : null"
+      :fallback-text="
+        isFluid
+          ? targetGaseous
+            ? t('fluid.gaseous').charAt(0)
+            : t('fluid.liquid').charAt(0)
+          : undefined
+      "
+      :fallback-class="targetGaseous ? 'gaseous' : undefined"
+      :icon-class="isFluid ? (targetGaseous ? 'gaseous' : 'fluid') : undefined"
+      :image-alt="targetName ?? target"
+      @image-error="targetImageFailed = true"
+    >
+      <template
+        v-if="isFluid"
+        #tags
       >
-        <button
-          v-for="item in lookupTabs"
-          :key="item.value"
-          type="button"
-          class="page-tab"
-          :class="{ active: tab === item.value }"
-          @click="setTab(item.value)"
+        <el-tag
+          size="small"
+          type="primary"
+          effect="plain"
+          round
         >
-          {{ item.label }}
-        </button>
-      </nav>
-    </header>
+          {{ t('fluid.tag') }}
+        </el-tag>
+        <el-tag
+          v-if="targetGaseous"
+          size="small"
+          type="warning"
+          effect="plain"
+          round
+        >
+          {{ t('fluid.gaseous') }}
+        </el-tag>
+      </template>
+      <template #tabs>
+        <nav
+          class="page-tabs lookup-tabs"
+          :aria-label="t('lookup.viewTabsLabel')"
+        >
+          <button
+            v-for="item in lookupTabs"
+            :key="item.value"
+            type="button"
+            class="page-tab"
+            :class="{ active: tab === item.value }"
+            @click="setTab(item.value)"
+          >
+            {{ item.label }}
+          </button>
+        </nav>
+      </template>
+    </DetailHeroCard>
 
     <el-alert
       v-if="error"
@@ -365,46 +400,9 @@ onMounted(() => {
   flex-direction: column;
   gap: 16px;
 }
-.header {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) max-content;
-  align-items: center;
-  gap: 16px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--el-border-color-lighter);
-}
 .lookup-tabs {
   min-width: 0;
   justify-content: end;
-}
-.target {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-.target-icon {
-  width: 48px;
-  height: 48px;
-  image-rendering: pixelated;
-  background: var(--el-fill-color-light);
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: 4px;
-}
-.target-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-.title {
-  font-size: 16px;
-  font-weight: 600;
-}
-.target-id {
-  font-size: 11px;
-  color: var(--el-text-color-secondary);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  word-break: break-all;
 }
 .handler-tabs {
   display: flex;
@@ -474,9 +472,6 @@ onMounted(() => {
   padding-top: 8px;
 }
 @media (max-width: 760px) {
-  .header {
-    grid-template-columns: minmax(0, 1fr);
-  }
   .lookup-tabs {
     justify-content: start;
   }
