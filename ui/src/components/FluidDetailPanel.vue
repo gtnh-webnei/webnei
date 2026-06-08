@@ -60,11 +60,11 @@ async function loadExtras() {
 }
 
 function goToItem(itemVariantId: string) {
-  entityNavigation.pick(itemVariantId, true);
+  entityNavigation.pick(itemVariantId);
 }
 
 function lookupItem(kind: 'recipe' | 'usage', itemVariantId: string) {
-  entityNavigation.lookup(kind, itemVariantId, true);
+  entityNavigation.lookup(kind, itemVariantId);
 }
 
 function goToUndergroundResource(fluidId: string, dimension: string) {
@@ -98,14 +98,8 @@ onMounted(() => {
   >
     <template v-if="detail">
       <el-row :gutter="16">
-        <el-col
-          :xs="24"
-          :md="14"
-        >
-          <FluidAttributesCard
-            :detail="detail"
-            :state-label="gaseousLabel"
-          />
+        <el-col :xs="24" :md="14">
+          <FluidAttributesCard :detail="detail" :state-label="gaseousLabel" />
 
           <DetailTextCard
             v-if="detail.nbtText"
@@ -115,10 +109,7 @@ onMounted(() => {
           />
         </el-col>
 
-        <el-col
-          :xs="24"
-          :md="10"
-        >
+        <el-col :xs="24" :md="10">
           <template v-if="extras">
             <FluidBlocksBlock
               v-if="extras.blocks.length"
