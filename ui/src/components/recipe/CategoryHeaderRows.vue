@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { listCategoryMachines, listCategoryVoltageTiers } from '@/api/recipes';
+import { useEntityNavigation } from '@/composables/useEntityNavigation';
 import type { CategoryMachine, CategoryVoltageTier, LookupKind } from '@/api/recipes.types';
 import AppTooltip from '@/components/AppTooltip.vue';
 
@@ -26,6 +27,10 @@ const emit = defineEmits<{
 }>();
 
 const router = useRouter();
+const entityNavigation = useEntityNavigation(
+  router,
+  computed(() => props.datasetId),
+);
 
 const machines = ref<CategoryMachine[]>([]);
 const tiers = ref<CategoryVoltageTier[]>([]);
@@ -87,11 +92,7 @@ function selectTier(tier: string | null) {
 }
 
 function openMachine(m: CategoryMachine) {
-  router.push({
-    name: 'lookup',
-    params: { datasetId: props.datasetId },
-    query: { target: m.itemVariantId, kind: 'detail' },
-  });
+  entityNavigation.pick(m.itemVariantId);
 }
 
 watch(

@@ -3,6 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { getMobDetail } from '@/api/mobs';
+import { useEntityNavigation } from '@/composables/useEntityNavigation';
 import type { MobDetail, MobDropRow } from '@/api/mobs.types';
 
 const { t } = useI18n();
@@ -12,6 +13,7 @@ const router = useRouter();
 
 const datasetId = computed(() => String(route.params.datasetId ?? ''));
 const mobVariantId = computed(() => String(route.params.mobVariantId ?? ''));
+const entityNavigation = useEntityNavigation(router, datasetId);
 
 const detail = ref<MobDetail | null>(null);
 const loading = ref(false);
@@ -32,11 +34,7 @@ async function load() {
 }
 
 function goItem(itemVariantId: string) {
-  router.push({
-    name: 'lookup',
-    params: { datasetId: datasetId.value },
-    query: { target: itemVariantId, kind: 'detail' },
-  });
+  entityNavigation.pick(itemVariantId);
 }
 
 function back() {

@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { getItemContainers } from '@/api/extras';
 import { getItemDetail } from '@/api/items';
+import { useEntityNavigation } from '@/composables/useEntityNavigation';
 import type { FluidContainerEntry } from '@/api/extras.types';
 import type { ItemDetail } from '@/api/items.types';
 import InteractiveFluidRef, {
@@ -16,6 +17,7 @@ const router = useRouter();
 
 const datasetId = computed(() => String(route.params.datasetId ?? ''));
 const itemVariantId = computed(() => String(route.params.itemVariantId ?? ''));
+const entityNavigation = useEntityNavigation(router, datasetId);
 
 const item = ref<ItemDetail | null>(null);
 const containers = ref<FluidContainerEntry[]>([]);
@@ -56,11 +58,7 @@ async function load() {
 }
 
 function goToItem(variantId: string) {
-  router.push({
-    name: 'lookup',
-    params: { datasetId: datasetId.value },
-    query: { target: variantId, kind: 'detail' },
-  });
+  entityNavigation.pick(variantId);
 }
 
 function fluidRefFromContainer(container: FluidContainerEntry): InteractiveFluidRefFluid {
@@ -76,21 +74,11 @@ function fluidRefFromContainer(container: FluidContainerEntry): InteractiveFluid
 }
 
 function pickFluid(fluid: InteractiveFluidRefFluid) {
-  if (!fluid.fluidVariantId) return;
-  router.push({
-    name: 'lookup',
-    params: { datasetId: datasetId.value },
-    query: { target: fluid.fluidVariantId, kind: 'detail' },
-  });
+  entityNavigation.pick(fluid.fluidVariantId);
 }
 
 function lookupFluid(kind: 'recipe' | 'usage', fluid: InteractiveFluidRefFluid) {
-  if (!fluid.fluidVariantId) return;
-  router.push({
-    name: 'lookup',
-    params: { datasetId: datasetId.value },
-    query: { target: fluid.fluidVariantId, kind },
-  });
+  entityNavigation.lookup(kind, fluid.fluidVariantId);
 }
 
 function back() {

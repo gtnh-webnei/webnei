@@ -5,6 +5,7 @@ import { useDebounceFn } from '@vueuse/core';
 import { storeToRefs } from 'pinia';
 import { useI18n } from 'vue-i18n';
 import { useDatasetStore } from '@/stores/dataset';
+import { useEntityNavigation } from '@/composables/useEntityNavigation';
 import AppTooltip from '@/components/AppTooltip.vue';
 import SlotCell from '@/components/SlotCell.vue';
 import InteractiveItemRef, {
@@ -61,6 +62,7 @@ type Summary =
 type Detail = GtOreVeinDetail | GtSmallOreDetail | GtUndergroundFluidDetail | GtBartWorksOreDetail;
 
 const datasetId = computed(() => String(route.params.datasetId ?? activeDatasetId.value ?? ''));
+const entityNavigation = useEntityNavigation(router, datasetId);
 const activeSection = computed<GtSection>(() => {
   const raw = String(route.params.section ?? 'ore-veins');
   return sections.value.some((s) => s.key === raw) ? (raw as GtSection) : 'ore-veins';
@@ -318,57 +320,25 @@ function slotFromItem(item: GtItemRef): RecipeSlot {
   };
 }
 function pickSlot(payload: { itemVariantId: string | null; fluidVariantId: string | null }) {
-  const target = payload.itemVariantId ?? payload.fluidVariantId;
-  if (!target) return;
-  router.push({
-    name: 'lookup',
-    params: { datasetId: datasetId.value },
-    query: { target, kind: 'detail' },
-  });
+  entityNavigation.pick(payload);
 }
 function lookupSlot(
   kind: 'recipe' | 'usage',
   payload: { itemVariantId: string | null; fluidVariantId: string | null },
 ) {
-  const target = payload.itemVariantId ?? payload.fluidVariantId;
-  if (!target) return;
-  router.push({
-    name: 'lookup',
-    params: { datasetId: datasetId.value },
-    query: { target, kind },
-  });
+  entityNavigation.lookup(kind, payload);
 }
 function pickItem(item: InteractiveItemRefItem) {
-  if (!item.itemVariantId) return;
-  router.push({
-    name: 'lookup',
-    params: { datasetId: datasetId.value },
-    query: { target: item.itemVariantId, kind: 'detail' },
-  });
+  entityNavigation.pick(item.itemVariantId);
 }
 function lookupItem(kind: 'recipe' | 'usage', item: InteractiveItemRefItem) {
-  if (!item.itemVariantId) return;
-  router.push({
-    name: 'lookup',
-    params: { datasetId: datasetId.value },
-    query: { target: item.itemVariantId, kind },
-  });
+  entityNavigation.lookup(kind, item.itemVariantId);
 }
 function pickFluid(fluid: InteractiveFluidRefFluid) {
-  if (!fluid.fluidVariantId) return;
-  router.push({
-    name: 'lookup',
-    params: { datasetId: datasetId.value },
-    query: { target: fluid.fluidVariantId, kind: 'detail' },
-  });
+  entityNavigation.pick(fluid.fluidVariantId);
 }
 function lookupFluid(kind: 'recipe' | 'usage', fluid: InteractiveFluidRefFluid) {
-  if (!fluid.fluidVariantId) return;
-  router.push({
-    name: 'lookup',
-    params: { datasetId: datasetId.value },
-    query: { target: fluid.fluidVariantId, kind },
-  });
+  entityNavigation.lookup(kind, fluid.fluidVariantId);
 }
 </script>
 
@@ -549,18 +519,14 @@ function lookupFluid(kind: 'recipe' | 'usage', fluid: InteractiveFluidRefFluid) 
                   effect="plain"
                   round
                 >
-                  {{
-                    t('gtResource.undergroundFluidTag')
-                  }}
+                  {{ t('gtResource.undergroundFluidTag') }}
                 </el-tag>
                 <el-tag
                   v-if="currentDetailKind() === 'bartworks-ore'"
                   effect="plain"
                   round
                 >
-                  {{
-                    t('gtResource.bartWorksTag')
-                  }}
+                  {{ t('gtResource.bartWorksTag') }}
                 </el-tag>
               </div>
               <dl

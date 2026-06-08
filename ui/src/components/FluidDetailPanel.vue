@@ -3,6 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useExtrasStore } from '@/stores/extras';
+import { useEntityNavigation } from '@/composables/useEntityNavigation';
 import { getFluidDetail } from '@/api/fluids';
 import type { FluidDetail } from '@/api/fluids.types';
 import type { FluidExtras } from '@/api/extras.types';
@@ -14,6 +15,10 @@ const props = defineProps<{
 }>();
 
 const router = useRouter();
+const entityNavigation = useEntityNavigation(
+  router,
+  computed(() => props.datasetId),
+);
 const extrasStore = useExtrasStore();
 const { t } = useI18n();
 
@@ -76,19 +81,11 @@ async function loadExtras() {
 }
 
 function goLookup(kind: 'recipe' | 'usage') {
-  router.replace({
-    name: 'lookup',
-    params: { datasetId: props.datasetId },
-    query: { target: props.fluidVariantId, kind },
-  });
+  entityNavigation.lookup(kind, props.fluidVariantId, true);
 }
 
 function goToItem(itemVariantId: string) {
-  router.replace({
-    name: 'lookup',
-    params: { datasetId: props.datasetId },
-    query: { target: itemVariantId, kind: 'detail' },
-  });
+  entityNavigation.pick(itemVariantId, true);
 }
 
 function goToUndergroundResource(fluidId: string, dimension: string) {
@@ -179,9 +176,7 @@ onMounted(() => {
               effect="plain"
               round
             >
-              {{
-                $t('fluid.gaseous')
-              }}
+              {{ $t('fluid.gaseous') }}
             </el-tag>
           </div>
           <div class="actions">
@@ -189,9 +184,7 @@ onMounted(() => {
               type="primary"
               @click="goLookup('recipe')"
             >
-              {{
-                $t('common.viewRecipe')
-              }}
+              {{ $t('common.viewRecipe') }}
             </el-button>
             <el-button @click="goLookup('usage')">
               {{ $t('common.viewUsage') }}

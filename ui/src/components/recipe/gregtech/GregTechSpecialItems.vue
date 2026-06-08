@@ -2,6 +2,7 @@
 import { useRouter, useRoute } from 'vue-router';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useEntityNavigation } from '@/composables/useEntityNavigation';
 import type { GregTechSpecialItem } from '@/api/recipes.types';
 
 defineProps<{
@@ -11,15 +12,11 @@ defineProps<{
 const router = useRouter();
 const route = useRoute();
 const datasetId = computed(() => String(route.params.datasetId ?? ''));
+const entityNavigation = useEntityNavigation(router, datasetId);
 const { t } = useI18n();
 
 function onClick(item: GregTechSpecialItem) {
-  if (!datasetId.value) return;
-  router.replace({
-    name: 'lookup',
-    params: { datasetId: datasetId.value },
-    query: { target: item.itemVariantId, kind: 'detail' },
-  });
+  entityNavigation.pick(item.itemVariantId, true);
 }
 </script>
 

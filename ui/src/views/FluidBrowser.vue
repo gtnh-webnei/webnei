@@ -6,6 +6,7 @@ import { storeToRefs } from 'pinia';
 import { useDatasetStore } from '@/stores/dataset';
 import { listFluidMods, listFluids } from '@/api/fluids';
 import type { FluidSummary } from '@/api/fluids.types';
+import { useEntityNavigation } from '@/composables/useEntityNavigation';
 import { usePagedBrowser } from '@/composables/usePagedBrowser';
 import BrowserToolbar from '@/components/BrowserToolbar.vue';
 import FluidCard from '@/components/FluidCard.vue';
@@ -28,13 +29,10 @@ const browser = usePagedBrowser<FluidSummary>({
   optionsFetcher: listFluidMods,
 });
 const { q, secondary, page, pageSize, items, total, loading, error, secondaryOptions } = browser;
+const entityNavigation = useEntityNavigation(router, datasetId);
 
 function openDetail(fluid: FluidSummary) {
-  router.push({
-    name: 'lookup',
-    params: { datasetId: datasetId.value },
-    query: { target: fluid.fluidVariantId, kind: 'detail' },
-  });
+  entityNavigation.pick(fluid.fluidVariantId);
 }
 </script>
 

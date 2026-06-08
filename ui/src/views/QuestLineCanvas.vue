@@ -7,6 +7,7 @@ import { Graph } from '@antv/g6';
 import { getQuestDetail, getQuestLineDetail } from '@/api/quests';
 import { useThemeStore } from '@/stores/theme';
 import QuestText from '@/components/QuestText.vue';
+import { useEntityNavigation } from '@/composables/useEntityNavigation';
 import type { QuestDetail, QuestLineDetail } from '@/api/quests.types';
 
 const route = useRoute();
@@ -46,6 +47,7 @@ const palette = computed(() => {
 
 const datasetId = computed(() => String(route.params.datasetId ?? ''));
 const lineId = computed(() => String(route.query.id ?? ''));
+const entityNavigation = useEntityNavigation(router, datasetId);
 
 const lineDetail = ref<QuestLineDetail | null>(null);
 const loading = ref(false);
@@ -292,11 +294,7 @@ async function openQuest(questId: string) {
 }
 
 function goToItem(itemVariantId: string) {
-  router.push({
-    name: 'lookup',
-    params: { datasetId: datasetId.value },
-    query: { target: itemVariantId, kind: 'detail' },
-  });
+  entityNavigation.pick(itemVariantId);
 }
 
 function back() {

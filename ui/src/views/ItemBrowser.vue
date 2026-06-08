@@ -6,6 +6,7 @@ import { storeToRefs } from 'pinia';
 import { useDatasetStore } from '@/stores/dataset';
 import { listItems, listMods } from '@/api/items';
 import type { NeiPanelEntry } from '@/api/items.types';
+import { useEntityNavigation } from '@/composables/useEntityNavigation';
 import { usePagedBrowser } from '@/composables/usePagedBrowser';
 import BrowserToolbar from '@/components/BrowserToolbar.vue';
 import ItemCard from '@/components/ItemCard.vue';
@@ -27,13 +28,10 @@ const browser = usePagedBrowser<NeiPanelEntry>({
   optionsFetcher: listMods,
 });
 const { q, secondary, page, pageSize, items, total, loading, error, secondaryOptions } = browser;
+const entityNavigation = useEntityNavigation(router, datasetId);
 
 function openDetail(item: NeiPanelEntry) {
-  router.push({
-    name: 'lookup',
-    params: { datasetId: datasetId.value },
-    query: { target: item.itemVariantId, kind: 'detail' },
-  });
+  entityNavigation.pick(item.itemVariantId);
 }
 </script>
 

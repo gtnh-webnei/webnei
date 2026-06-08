@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import { useDatasetStore } from '@/stores/dataset';
 import { useExtrasStore } from '@/stores/extras';
+import { useEntityNavigation } from '@/composables/useEntityNavigation';
 import { getItemDetail } from '@/api/items';
 import type { ItemDetail } from '@/api/items.types';
 import type { FluidContainerEntry, ItemExtras } from '@/api/extras.types';
@@ -16,6 +17,10 @@ const props = defineProps<{
 }>();
 
 const router = useRouter();
+const entityNavigation = useEntityNavigation(
+  router,
+  computed(() => props.datasetId),
+);
 const datasetStore = useDatasetStore();
 const { activeDatasetId } = storeToRefs(datasetStore);
 void activeDatasetId;
@@ -68,19 +73,11 @@ async function loadExtras() {
 }
 
 function goLookup(kind: 'recipe' | 'usage', target?: string) {
-  router.replace({
-    name: 'lookup',
-    params: { datasetId: props.datasetId },
-    query: { target: target ?? props.itemVariantId, kind },
-  });
+  entityNavigation.lookup(kind, target ?? props.itemVariantId, true);
 }
 
 function goToItem(itemVariantId: string) {
-  router.replace({
-    name: 'lookup',
-    params: { datasetId: props.datasetId },
-    query: { target: itemVariantId, kind: 'detail' },
-  });
+  entityNavigation.pick(itemVariantId, true);
 }
 
 function fluidRefFromContainer(container: FluidContainerEntry): InteractiveFluidRefFluid {
@@ -96,21 +93,11 @@ function fluidRefFromContainer(container: FluidContainerEntry): InteractiveFluid
 }
 
 function pickFluid(fluid: InteractiveFluidRefFluid) {
-  if (!fluid.fluidVariantId) return;
-  router.replace({
-    name: 'lookup',
-    params: { datasetId: props.datasetId },
-    query: { target: fluid.fluidVariantId, kind: 'detail' },
-  });
+  entityNavigation.pick(fluid.fluidVariantId, true);
 }
 
 function lookupFluid(kind: 'recipe' | 'usage', fluid: InteractiveFluidRefFluid) {
-  if (!fluid.fluidVariantId) return;
-  router.replace({
-    name: 'lookup',
-    params: { datasetId: props.datasetId },
-    query: { target: fluid.fluidVariantId, kind },
-  });
+  entityNavigation.lookup(kind, fluid.fluidVariantId, true);
 }
 
 function goToContainers() {
