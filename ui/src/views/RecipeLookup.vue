@@ -112,17 +112,10 @@ async function fetchTargetMeta() {
   try {
     const header = await getLookupTargetHeader(datasetId.value, target.value);
     targetType.value = header.targetType;
-    if (header.targetType === 'fluid' && header.fluid) {
-      targetName.value = header.fluid.displayName;
-      targetIcon.value = header.fluid.assetUrl;
-      targetModName.value = header.fluid.modName;
-      targetGaseous.value = header.fluid.gaseous ?? false;
-      return;
-    }
-    if (header.item) {
-      targetName.value = header.item.displayName;
-      targetIcon.value = header.item.assetUrl;
-    }
+    targetName.value = header.displayName;
+    targetIcon.value = header.assetUrl;
+    targetModName.value = header.modName ?? header.modId;
+    targetGaseous.value = header.gaseous ?? false;
   } catch {
     // ignore
   }

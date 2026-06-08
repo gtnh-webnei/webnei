@@ -17,8 +17,6 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 import moe.takochan.webnei.asset.AssetUrlBuilder;
-import moe.takochan.webnei.common.FluidRef;
-import moe.takochan.webnei.common.ItemRef;
 import moe.takochan.webnei.common.NotFoundException;
 import moe.takochan.webnei.common.PageRequest;
 import moe.takochan.webnei.common.PageResponse;
@@ -112,11 +110,27 @@ public class RecipeService {
         if (target.contains("@")) {
             ItemVariantBrowserEntity item = itemVariantRepo.findById(new ItemVariantBrowserEntity.ItemVariantId(dataset.datasetId(), target))
                     .orElseThrow(() -> new NotFoundException("Item not found: " + target));
-            return new LookupTargetHeaderDto("item", toItemRef(dataset, item), null);
+            return new LookupTargetHeaderDto(
+                    "item",
+                    item.getItemVariantId(),
+                    item.getDisplayName(),
+                    assetUrlBuilder.build(dataset, item.getAssetPath(), item.getAssetSha256()),
+                    item.getModId(),
+                    modName(dataset.datasetId(), item.getModId()),
+                    null);
         }
         FluidVariantBrowserEntity fluid = fluidVariantRepo.findById(new FluidVariantBrowserEntity.FluidVariantId(dataset.datasetId(), target))
                 .orElseThrow(() -> new NotFoundException("Fluid not found: " + target));
-        return new LookupTargetHeaderDto("fluid", null, toFluidRef(dataset, fluid));
+        return new LookupTargetHeaderDto(
+                "fluid",
+                fluid.getFluidVariantId(),
+                fluid.getDisplayName(),
+                assetUrlBuilder.build(dataset, fluid.getAssetPath(), null),
+                fluid.getModId(),
+                fluidModOptionRepo.findByDatasetIdAndModId(dataset.datasetId(), fluid.getModId())
+                        .map(e -> e.getName())
+                        .orElse(fluid.getModId()),
+                fluid.isGaseous());
     }
 
     public PageResponse<RecipeDto> lookup(
@@ -489,28 +503,11 @@ public class RecipeService {
         }
     }
 
-    private ItemRef toItemRef(DatasetSummary dataset, ItemVariantBrowserEntity item) {
-        return new ItemRef(
-                item.getItemVariantId(),
-                item.getDisplayName(),
-                item.getTooltipText(),
-                assetUrlBuilder.build(dataset, item.getAssetPath(), item.getAssetSha256()));
-    }
-
-    private FluidRef toFluidRef(DatasetSummary dataset, FluidVariantBrowserEntity fluid) {
-        String modId = fluid.getModId();
-        String modName = fluidModOptionRepo.findByDatasetIdAndModId(dataset.datasetId(), modId)
+    private String modName(String datasetId, String modId) {
+        if (modId == null || modId.isBlank()) return null;
+        return itemModOptionRepo.findByDatasetIdAndModId(datasetId, modId)
                 .map(e -> e.getName())
                 .orElse(modId);
-        return new FluidRef(
-                fluid.getFluidVariantId(),
-                fluid.getFluidId(),
-                modId,
-                modName,
-                fluid.getDisplayName(),
-                fluid.isGaseous(),
-                fluid.getTemperature(),
-                assetUrlBuilder.build(dataset, fluid.getAssetPath(), null));
     }
 
     private Map<String, ItemVariantBrowserEntity> loadItemRefs(String datasetId, List<String> itemVariantIds) {

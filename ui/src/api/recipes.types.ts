@@ -1,5 +1,3 @@
-import type { FluidRef, ItemRef } from './entityRefs.types';
-
 export interface RecipeSlotCandidate {
   itemVariantId: string | null;
   fluidVariantId: string | null;
@@ -124,8 +122,12 @@ export type LookupTargetType = 'item' | 'fluid';
 
 export interface LookupTargetHeader {
   targetType: LookupTargetType;
-  item: ItemRef | null;
-  fluid: FluidRef | null;
+  targetId: string;
+  displayName: string | null;
+  assetUrl: string | null;
+  modId: string | null;
+  modName: string | null;
+  gaseous: boolean | null;
 }
 
 export interface CategoryBreakdown {
