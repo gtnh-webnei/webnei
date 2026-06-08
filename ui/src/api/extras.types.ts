@@ -1,3 +1,14 @@
+export interface ItemRelatedFluidEntry {
+  fluidVariantId: string;
+  fluidId: string;
+  fluidModId: string | null;
+  fluidModName: string | null;
+  fluidDisplayName: string | null;
+  fluidGaseous: boolean | null;
+  fluidTemperature: number | null;
+  fluidAssetUrl: string | null;
+}
+
 export interface FluidContainerEntry {
   fluidVariantId: string;
   fluidId: string;
@@ -35,8 +46,7 @@ export interface FluidBlockEntry {
 
 export interface ItemExtras {
   oreDictNames: string[];
-  fluidContainers: FluidContainerEntry[];
-  fluidContainersTotal: number;
+  relatedFluids: ItemRelatedFluidEntry[];
   aspects: AspectEntry[];
 }
 

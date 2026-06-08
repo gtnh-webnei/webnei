@@ -1,24 +1,11 @@
-import { http } from './client'
-import type { FluidContainerEntry, FluidExtras, ItemExtras } from './extras.types'
+import { http } from './client';
+import type { FluidExtras, ItemExtras } from './extras.types';
 
-export async function getItemExtras(
-  datasetId: string,
-  itemVariantId: string,
-): Promise<ItemExtras> {
+export async function getItemExtras(datasetId: string, itemVariantId: string): Promise<ItemExtras> {
   const { data } = await http.get<ItemExtras>(
     `/datasets/${encodeURIComponent(datasetId)}/items/${encodeURIComponent(itemVariantId)}/extras`,
-  )
-  return data
-}
-
-export async function getItemContainers(
-  datasetId: string,
-  itemVariantId: string,
-): Promise<FluidContainerEntry[]> {
-  const { data } = await http.get<FluidContainerEntry[]>(
-    `/datasets/${encodeURIComponent(datasetId)}/items/${encodeURIComponent(itemVariantId)}/containers`,
-  )
-  return data
+  );
+  return data;
 }
 
 export async function getFluidExtras(
@@ -27,6 +14,6 @@ export async function getFluidExtras(
 ): Promise<FluidExtras> {
   const { data } = await http.get<FluidExtras>(
     `/datasets/${encodeURIComponent(datasetId)}/fluids/${encodeURIComponent(fluidVariantId)}/extras`,
-  )
-  return data
+  );
+  return data;
 }

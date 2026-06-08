@@ -12,8 +12,8 @@ import DetailTextCard from './entity-detail/DetailTextCard.vue';
 import EntityDetailLayout from './entity-detail/EntityDetailLayout.vue';
 import ItemAspectsBlock from './entity-detail/ItemAspectsBlock.vue';
 import ItemAttributesCard from './entity-detail/ItemAttributesCard.vue';
-import ItemFluidContainersBlock from './entity-detail/ItemFluidContainersBlock.vue';
 import ItemOreDictBlock from './entity-detail/ItemOreDictBlock.vue';
+import ItemRelatedFluidsBlock from './entity-detail/ItemRelatedFluidsBlock.vue';
 import ItemWorldGenerationCard from './entity-detail/ItemWorldGenerationCard.vue';
 
 const props = defineProps<{
@@ -57,23 +57,12 @@ async function loadExtras() {
   }
 }
 
-function goToItem(itemVariantId: string) {
-  entityNavigation.pick(itemVariantId, true);
-}
-
 function pickFluid(fluid: InteractiveFluidRefFluid) {
   entityNavigation.pick(fluid.fluidVariantId, true);
 }
 
 function lookupFluid(kind: 'recipe' | 'usage', fluid: InteractiveFluidRefFluid) {
   entityNavigation.lookup(kind, fluid.fluidVariantId, true);
-}
-
-function goToContainers() {
-  router.push({
-    name: 'item-containers',
-    params: { datasetId: props.datasetId, itemVariantId: props.itemVariantId },
-  });
 }
 
 function goToWorldGeneration(section: string, key: string) {
@@ -158,14 +147,11 @@ onMounted(() => {
           />
 
           <template v-if="extras">
-            <ItemFluidContainersBlock
-              v-if="extras.fluidContainers.length"
-              :containers="extras.fluidContainers"
-              :total="extras.fluidContainersTotal"
-              @open-item="goToItem"
+            <ItemRelatedFluidsBlock
+              v-if="extras.relatedFluids.length"
+              :fluids="extras.relatedFluids"
               @pick-fluid="pickFluid"
               @lookup-fluid="lookupFluid"
-              @see-all="goToContainers"
             />
           </template>
         </el-col>

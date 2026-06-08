@@ -78,8 +78,7 @@ export interface MessageSchema {
     maxStackSize: string;
     noIcon: string;
     oreDictEntries: string;
-    viewAllContainers: string;
-    containersSuffix: string;
+    relatedFluids: string;
     thaumcraftAspects: string;
     primal: string;
     worldGeneration: string;

@@ -4,7 +4,6 @@ import java.util.List;
 
 public record ItemExtras(
         List<String> oreDictNames,
-        List<FluidContainerEntry> fluidContainers,
-        long fluidContainersTotal,
+        List<ItemRelatedFluidEntry> relatedFluids,
         List<AspectEntry> aspects) {
 }

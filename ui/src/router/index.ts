@@ -2,7 +2,6 @@ import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import AppShell from '@/layouts/AppShell.vue';
 import DatasetIndex from '@/views/DatasetIndex.vue';
 import ItemBrowser from '@/views/ItemBrowser.vue';
-import ItemContainersView from '@/views/ItemContainersView.vue';
 import FluidBrowser from '@/views/FluidBrowser.vue';
 import ModBrowser from '@/views/ModBrowser.vue';
 import RecipeLookup from '@/views/RecipeLookup.vue';
@@ -26,11 +25,6 @@ const routes: RouteRecordRaw[] = [
         name: 'items',
         component: ItemBrowser,
         meta: { keepAlive: true },
-      },
-      {
-        path: 'datasets/:datasetId/items/:itemVariantId/containers',
-        name: 'item-containers',
-        component: ItemContainersView,
       },
       {
         path: 'datasets/:datasetId/mods',
