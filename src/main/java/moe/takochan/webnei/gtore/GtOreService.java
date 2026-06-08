@@ -8,18 +8,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import moe.takochan.webnei.asset.AssetUrlBuilder;
+import moe.takochan.webnei.common.EntityRefService;
 import moe.takochan.webnei.common.FluidRef;
 import moe.takochan.webnei.common.ItemRef;
 import moe.takochan.webnei.common.NotFoundException;
 import moe.takochan.webnei.dataset.DatasetSummary;
-import moe.takochan.webnei.fluid.FluidModOptionEntity;
-import moe.takochan.webnei.fluid.FluidModOptionRepository;
-import moe.takochan.webnei.fluid.FluidVariantBrowserEntity;
-import moe.takochan.webnei.fluid.FluidVariantRepository;
-import moe.takochan.webnei.item.ItemVariantBrowserEntity;
-import moe.takochan.webnei.item.ItemVariantRepository;
-
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -27,10 +20,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class GtOreService {
 
-    private final AssetUrlBuilder assetUrlBuilder;
-    private final ItemVariantRepository itemVariantRepository;
-    private final FluidVariantRepository fluidVariantRepository;
-    private final FluidModOptionRepository fluidModOptionRepository;
+    private final EntityRefService entityRefService;
     private final GtDimensionDisplayRepository dimensionRepository;
     private final GtOreVeinRepository oreVeinRepository;
     private final GtOreVeinLayerRepository oreVeinLayerRepository;
@@ -44,10 +34,7 @@ public class GtOreService {
     private final GtBartWorksOreLayerRepository bartWorksOreLayerRepository;
 
     public GtOreService(
-            AssetUrlBuilder assetUrlBuilder,
-            ItemVariantRepository itemVariantRepository,
-            FluidVariantRepository fluidVariantRepository,
-            FluidModOptionRepository fluidModOptionRepository,
+            EntityRefService entityRefService,
             GtDimensionDisplayRepository dimensionRepository,
             GtOreVeinRepository oreVeinRepository,
             GtOreVeinLayerRepository oreVeinLayerRepository,
@@ -59,10 +46,7 @@ public class GtOreService {
             GtUndergroundFluidBrowserRepository undergroundFluidBrowserRepository,
             GtBartWorksOreRepository bartWorksOreRepository,
             GtBartWorksOreLayerRepository bartWorksOreLayerRepository) {
-        this.assetUrlBuilder = assetUrlBuilder;
-        this.itemVariantRepository = itemVariantRepository;
-        this.fluidVariantRepository = fluidVariantRepository;
-        this.fluidModOptionRepository = fluidModOptionRepository;
+        this.entityRefService = entityRefService;
         this.dimensionRepository = dimensionRepository;
         this.oreVeinRepository = oreVeinRepository;
         this.oreVeinLayerRepository = oreVeinLayerRepository;
@@ -375,33 +359,11 @@ public class GtOreService {
     }
 
     private ItemRef itemRef(DatasetSummary dataset, String itemVariantId) {
-        if (itemVariantId == null || itemVariantId.isBlank()) {
-            return new ItemRef("", "", null, null);
-        }
-        return itemVariantRepository.findById(new ItemVariantBrowserEntity.ItemVariantId(dataset.datasetId(), itemVariantId))
-                .map(i -> new ItemRef(
-                        i.getItemVariantId(), i.getDisplayName(), i.getTooltipText(),
-                        assetUrlBuilder.build(dataset, i.getAssetPath(), i.getAssetSha256())))
-                .orElse(new ItemRef(itemVariantId, itemVariantId, null, null));
+        return entityRefService.itemRef(dataset, itemVariantId);
     }
 
     private FluidRef fluidRef(DatasetSummary dataset, String fluidVariantId) {
-        if (fluidVariantId == null || fluidVariantId.isBlank()) {
-            return new FluidRef("", "", null, null, "", null, null, null);
-        }
-        return fluidVariantRepository.findById(new FluidVariantBrowserEntity.FluidVariantId(dataset.datasetId(), fluidVariantId))
-                .map(f -> new FluidRef(
-                        f.getFluidVariantId(),
-                        f.getFluidId(),
-                        f.getModId(),
-                        fluidModOptionRepository.findByDatasetIdAndModId(dataset.datasetId(), f.getModId())
-                                .map(FluidModOptionEntity::getName)
-                                .orElse(f.getModId()),
-                        f.getDisplayName(),
-                        f.isGaseous(),
-                        f.getTemperature(),
-                        assetUrlBuilder.build(dataset, f.getAssetPath(), null)))
-                .orElse(new FluidRef(fluidVariantId, "", null, null, fluidVariantId, null, null, null));
+        return entityRefService.fluidRef(dataset, fluidVariantId);
     }
 
     private static <T> Specification<T> hasDatasetId(String datasetId) {

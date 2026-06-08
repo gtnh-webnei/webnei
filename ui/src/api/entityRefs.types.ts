@@ -1,5 +1,7 @@
 export interface ItemRef {
   itemVariantId: string;
+  modId: string | null;
+  modName: string | null;
   displayName: string | null;
   tooltipText: string | null;
   assetUrl: string | null;

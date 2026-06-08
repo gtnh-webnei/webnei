@@ -2,19 +2,14 @@ package moe.takochan.webnei.extras;
 
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import jakarta.persistence.criteria.Predicate;
 
 import moe.takochan.webnei.asset.AssetUrlBuilder;
+import moe.takochan.webnei.common.EntityRefService;
 import moe.takochan.webnei.common.FluidRef;
 import moe.takochan.webnei.common.ItemRef;
 import moe.takochan.webnei.dataset.DatasetSummary;
-import moe.takochan.webnei.fluid.FluidModOptionEntity;
-import moe.takochan.webnei.fluid.FluidModOptionRepository;
-import moe.takochan.webnei.fluid.FluidVariantBrowserEntity;
-import moe.takochan.webnei.fluid.FluidVariantRepository;
 
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -25,26 +20,23 @@ public class ExtrasService {
 
     private final ItemOreDictionaryNameRepository oreDictRepo;
     private final FluidContainerBrowserRepository containerRepo;
-    private final FluidVariantRepository fluidVariantRepo;
-    private final FluidModOptionRepository fluidModOptionRepo;
     private final ItemAspectBrowserRepository aspectRepo;
     private final FluidBlockBrowserRepository blockRepo;
     private final AssetUrlBuilder assetUrlBuilder;
+    private final EntityRefService entityRefService;
 
     public ExtrasService(ItemOreDictionaryNameRepository oreDictRepo,
                          FluidContainerBrowserRepository containerRepo,
-                         FluidVariantRepository fluidVariantRepo,
-                         FluidModOptionRepository fluidModOptionRepo,
                          ItemAspectBrowserRepository aspectRepo,
                          FluidBlockBrowserRepository blockRepo,
-                         AssetUrlBuilder assetUrlBuilder) {
+                         AssetUrlBuilder assetUrlBuilder,
+                         EntityRefService entityRefService) {
         this.oreDictRepo = oreDictRepo;
         this.containerRepo = containerRepo;
-        this.fluidVariantRepo = fluidVariantRepo;
-        this.fluidModOptionRepo = fluidModOptionRepo;
         this.aspectRepo = aspectRepo;
         this.blockRepo = blockRepo;
         this.assetUrlBuilder = assetUrlBuilder;
+        this.entityRefService = entityRefService;
     }
 
     public ItemExtras itemExtras(DatasetSummary dataset, String itemVariantId) {
@@ -73,11 +65,18 @@ public class ExtrasService {
         List<FluidContainerBrowserEntity> containerRows = containerRepo.findByDatasetIdAndFluidVariantId(
                 datasetId, fluidVariantId,
                 Sort.by("amount").ascending().and(Sort.by("containerItemVariantId").ascending()));
-        List<FluidContainerEntry> containers = toContainers(containerRows, dataset);
-        List<FluidBlockEntry> blocks = blockRepo.findByDatasetIdAndFluidVariantId(
-                        datasetId, fluidVariantId, Sort.by("blockItemVariantId").ascending())
-                .stream()
-                .map(e -> toBlock(e, dataset))
+        Map<String, ItemRef> containerRefs = entityRefService.itemRefs(dataset, containerRows.stream()
+                .map(FluidContainerBrowserEntity::getContainerItemVariantId)
+                .toList());
+        List<FluidContainerEntry> containers = toContainers(containerRows, containerRefs);
+
+        List<FluidBlockBrowserEntity> blockRows = blockRepo.findByDatasetIdAndFluidVariantId(
+                datasetId, fluidVariantId, Sort.by("blockItemVariantId").ascending());
+        Map<String, ItemRef> blockRefs = entityRefService.itemRefs(dataset, blockRows.stream()
+                .map(FluidBlockBrowserEntity::getBlockItemVariantId)
+                .toList());
+        List<FluidBlockEntry> blocks = blockRows.stream()
+                .map(e -> toBlock(e, blockRefs))
                 .toList();
 
         return new FluidExtras(
@@ -89,45 +88,25 @@ public class ExtrasService {
         Specification<FluidContainerBrowserEntity> spec = containerForItem(dataset.datasetId(), itemVariantId);
         Sort sort = Sort.by("fluidVariantId").ascending();
         List<FluidContainerBrowserEntity> rows = containerRepo.findAll(spec, sort);
-        List<FluidVariantBrowserEntity.FluidVariantId> fluidIds = rows.stream()
-                .map(e -> new FluidVariantBrowserEntity.FluidVariantId(dataset.datasetId(), e.getFluidVariantId()))
-                .distinct()
-                .toList();
-        Map<String, FluidVariantBrowserEntity> fluids = fluidVariantRepo.findAllById(fluidIds).stream()
-                .collect(Collectors.toMap(FluidVariantBrowserEntity::getFluidVariantId, Function.identity()));
-        Map<String, String> modNames = fluidModOptionRepo.findByDatasetIdOrderByNameAscModIdAsc(dataset.datasetId())
-                .stream()
-                .collect(Collectors.toMap(FluidModOptionEntity::getModId, FluidModOptionEntity::getName));
-        return rows.stream()
+        List<String> fluidIds = rows.stream()
                 .map(FluidContainerBrowserEntity::getFluidVariantId)
                 .distinct()
-                .map(fluidVariantId -> toRelatedFluid(dataset, fluidVariantId, fluids.get(fluidVariantId), modNames))
+                .toList();
+        Map<String, FluidRef> fluids = entityRefService.fluidRefs(dataset, fluidIds);
+        return fluidIds.stream()
+                .map(fluidVariantId -> new ItemRelatedFluidEntry(fluids.getOrDefault(fluidVariantId, entityRefService.fluidRef(dataset, fluidVariantId))))
                 .toList();
     }
 
-    private ItemRelatedFluidEntry toRelatedFluid(
-            DatasetSummary dataset,
-            String fluidVariantId,
-            FluidVariantBrowserEntity fluid,
-            Map<String, String> modNames) {
-        return new ItemRelatedFluidEntry(toFluidRef(dataset, fluidVariantId, fluid, modNames));
-    }
-
-    private List<FluidContainerEntry> toContainers(List<FluidContainerBrowserEntity> rows, DatasetSummary dataset) {
+    private List<FluidContainerEntry> toContainers(List<FluidContainerBrowserEntity> rows, Map<String, ItemRef> containerRefs) {
         return rows.stream()
-                .map(e -> toContainer(e, dataset))
+                .map(e -> toContainer(e, containerRefs))
                 .toList();
     }
 
-    private FluidContainerEntry toContainer(
-            FluidContainerBrowserEntity e,
-            DatasetSummary dataset) {
+    private FluidContainerEntry toContainer(FluidContainerBrowserEntity e, Map<String, ItemRef> containerRefs) {
         return new FluidContainerEntry(
-                toItemRef(
-                        e.getContainerItemVariantId(),
-                        e.getContainerDisplayName(),
-                        null,
-                        assetUrlBuilder.build(dataset, e.getContainerAssetPath(), e.getContainerAssetSha256())),
+                containerRefs.getOrDefault(e.getContainerItemVariantId(), fallbackItemRef(e.getContainerItemVariantId(), e.getContainerDisplayName())),
                 e.getAmount());
     }
 
@@ -138,32 +117,13 @@ public class ExtrasService {
                 assetUrlBuilder.build(dataset, e.getIconAssetPath(), e.getIconAssetSha256()));
     }
 
-    private FluidBlockEntry toBlock(FluidBlockBrowserEntity e, DatasetSummary dataset) {
-        return new FluidBlockEntry(toItemRef(
-                e.getBlockItemVariantId(),
-                e.getBlockDisplayName(),
-                e.getBlockTooltipText(),
-                assetUrlBuilder.build(dataset, e.getBlockAssetPath(), e.getBlockAssetSha256())));
+    private FluidBlockEntry toBlock(FluidBlockBrowserEntity e, Map<String, ItemRef> blockRefs) {
+        return new FluidBlockEntry(
+                blockRefs.getOrDefault(e.getBlockItemVariantId(), fallbackItemRef(e.getBlockItemVariantId(), e.getBlockDisplayName())));
     }
 
-    private ItemRef toItemRef(String itemVariantId, String displayName, String tooltipText, String assetUrl) {
-        return new ItemRef(itemVariantId, displayName, tooltipText, assetUrl);
-    }
-
-    private FluidRef toFluidRef(
-            DatasetSummary dataset,
-            String fluidVariantId,
-            FluidVariantBrowserEntity fluid,
-            Map<String, String> modNames) {
-        return new FluidRef(
-                fluidVariantId,
-                fluid != null ? fluid.getFluidId() : "",
-                fluid != null ? fluid.getModId() : null,
-                fluid != null ? modNames.getOrDefault(fluid.getModId(), fluid.getModId()) : null,
-                fluid != null ? fluid.getDisplayName() : fluidVariantId,
-                fluid != null ? fluid.isGaseous() : null,
-                fluid != null ? fluid.getTemperature() : null,
-                fluid != null ? assetUrlBuilder.build(dataset, fluid.getAssetPath(), null) : null);
+    private static ItemRef fallbackItemRef(String itemVariantId, String displayName) {
+        return new ItemRef(itemVariantId, null, null, displayName, null, null);
     }
 
     private static Specification<FluidContainerBrowserEntity> containerForItem(String datasetId, String itemVariantId) {

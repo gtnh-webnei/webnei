@@ -1,8 +1,5 @@
 import type { FluidRef, ItemRef } from './entityRefs.types';
 
-export type GtItemRef = ItemRef;
-export type GtFluidRef = FluidRef;
-
 export interface GtDimensionRef {
   dimension: string;
   fullName: string;
@@ -16,7 +13,7 @@ export interface GtDimensionRef {
 export interface GtOreVeinSummary {
   veinName: string;
   displayName: string;
-  primaryItem: GtItemRef | null;
+  primaryItem: ItemRef | null;
   dimensions: GtDimensionRef[];
 }
 
@@ -24,8 +21,8 @@ export interface GtOreVeinLayer {
   layer: string;
   materialName: string;
   oreMeta: number;
-  item: GtItemRef;
-  variants: GtItemRef[];
+  item: ItemRef;
+  variants: ItemRef[];
 }
 
 export interface GtOreVeinDetail {
@@ -41,23 +38,23 @@ export interface GtOreVeinDetail {
 
 export interface GtSmallOreSummary {
   oreGenName: string;
-  smallOreItem: GtItemRef;
+  smallOreItem: ItemRef;
   dimensions: GtDimensionRef[];
 }
 
 export interface GtSmallOreVariant {
   variantIndex: number;
-  smallOreItem: GtItemRef;
-  dustItem: GtItemRef;
+  smallOreItem: ItemRef;
+  dustItem: ItemRef;
 }
 
 export interface GtSmallOreDetail {
   amountPerChunk: number;
   heightMin: number;
   heightMax: number;
-  smallOreItem: GtItemRef;
-  dustItem: GtItemRef;
-  drops: GtItemRef[];
+  smallOreItem: ItemRef;
+  dustItem: ItemRef;
+  drops: ItemRef[];
   dimensions: GtDimensionRef[];
 }
 
@@ -71,13 +68,13 @@ export interface GtUndergroundFluidEntry {
 
 export interface GtUndergroundFluidSummary {
   fluidId: string;
-  fluid: GtFluidRef;
+  fluid: FluidRef;
   dimensions: GtDimensionRef[];
   entries: GtUndergroundFluidEntry[];
 }
 
 export interface GtUndergroundFluidDetail {
-  fluid: GtFluidRef;
+  fluid: FluidRef;
   dimensions: GtDimensionRef[];
   entries: GtUndergroundFluidEntry[];
 }
@@ -87,7 +84,7 @@ export interface GtBartWorksOreSummary {
   entryType: string;
   dimension: string;
   dimensionDisplayName: string;
-  resultItem: GtItemRef;
+  resultItem: ItemRef;
 }
 
 export interface GtBartWorksOreLayer {
@@ -95,13 +92,13 @@ export interface GtBartWorksOreLayer {
   layerIndex: number;
   oreMeta: number;
   bartworksOre: boolean;
-  item: GtItemRef;
+  item: ItemRef;
 }
 
 export interface GtBartWorksOreDetail {
   entryType: string;
   dimensionDisplayName: string;
-  resultItem: GtItemRef;
+  resultItem: ItemRef;
   heightMin: number;
   heightMax: number;
   weight: number;
