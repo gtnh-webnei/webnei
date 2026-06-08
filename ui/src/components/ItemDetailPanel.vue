@@ -8,7 +8,6 @@ import type { ItemDetail } from '@/api/items.types';
 import type { ItemExtras } from '@/api/extras.types';
 import MinecraftTooltipText from './MinecraftTooltipText.vue';
 import type { InteractiveFluidRefFluid } from './InteractiveFluidRef.vue';
-import DetailSectionCard from './entity-detail/DetailSectionCard.vue';
 import DetailTextCard from './entity-detail/DetailTextCard.vue';
 import EntityDetailLayout from './entity-detail/EntityDetailLayout.vue';
 import EntityExtrasCard from './entity-detail/EntityExtrasCard.vue';
@@ -130,12 +129,13 @@ onMounted(() => {
         >
           <ItemAttributesCard :detail="detail" />
 
-          <DetailSectionCard
+          <el-card
             v-if="detail.tooltipText"
-            :title="$t('common.tooltip')"
+            shadow="never"
+            class="tooltip-text-card"
           >
             <MinecraftTooltipText :text="detail.tooltipText" />
-          </DetailSectionCard>
+          </el-card>
 
           <DetailTextCard
             v-if="detail.nbtText"
@@ -192,3 +192,9 @@ onMounted(() => {
     </template>
   </EntityDetailLayout>
 </template>
+
+<style scoped>
+.tooltip-text-card {
+  margin-bottom: 16px;
+}
+</style>
