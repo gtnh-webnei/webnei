@@ -78,7 +78,6 @@ public class FluidService {
         FluidVariantBrowserEntity e = fluidRepo.findById(new FluidVariantBrowserEntity.FluidVariantId(datasetId, fluidVariantId))
                 .orElseThrow(() -> new NotFoundException("Fluid variant not found: " + fluidVariantId));
         return new FluidDetail(
-                e.getFluidVariantId(),
                 e.getFluidId(),
                 e.getModId(),
                 modName(datasetId, e.getModId()),
@@ -91,7 +90,6 @@ public class FluidService {
                 e.getViscosity(),
                 e.getLuminosity(),
                 e.getRuntimeFluidId(),
-                e.getNbtHash(),
                 e.getNbtText(),
                 e.getChemicalExpression(),
                 assetUrlBuilder.build(dataset, e.getAssetPath(), null),
@@ -110,7 +108,6 @@ public class FluidService {
                 e.getFluidVariantId(), e.getFluidId(), e.getModId(), modNames.getOrDefault(e.getModId(), e.getModId()),
                 e.getRegistryName(), e.getDisplayName(), e.isGaseous(),
                 e.getDensity(), e.getTemperature(), e.getViscosity(), e.getLuminosity(),
-                e.getNbtHash(),
                 assetUrlBuilder.build(dataset, e.getAssetPath(), null));
     }
 

@@ -3,7 +3,6 @@ package moe.takochan.webnei.item;
 import java.util.List;
 
 public record ItemDetailDto(
-        String itemVariantId,
         String itemId,
         String modId,
         String modName,
@@ -12,7 +11,6 @@ public record ItemDetailDto(
         int maxStackSize,
         int maxDamage,
         int damage,
-        String nbtHash,
         String nbtText,
         String chemicalExpression,
         String displayName,

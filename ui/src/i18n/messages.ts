@@ -27,7 +27,6 @@ export interface MessageSchema {
     allMod: string;
     tooltip: string;
     nbt: string;
-    nbtHash: string;
     damageMeta: string;
     amount: string;
     probability: string;

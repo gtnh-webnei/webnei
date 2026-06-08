@@ -28,7 +28,6 @@ const zh_CN: MessageSchema = {
     allMod: '全部 Mod',
     tooltip: 'Tooltip',
     nbt: 'NBT',
-    nbtHash: 'NBT Hash',
     damageMeta: 'Damage / Meta',
     amount: '数量',
     probability: '概率',

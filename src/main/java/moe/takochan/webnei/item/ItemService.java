@@ -66,7 +66,6 @@ public class ItemService {
         ItemVariantBrowserEntity e = itemRepo.findById(new ItemVariantBrowserEntity.ItemVariantId(datasetId, itemVariantId))
                 .orElseThrow(() -> new NotFoundException("Item variant not found: " + itemVariantId));
         return new ItemDetailDto(
-                e.getItemVariantId(),
                 e.getItemId(),
                 e.getModId(),
                 modName(datasetId, e.getModId()),
@@ -75,7 +74,6 @@ public class ItemService {
                 e.getMaxStackSize(),
                 e.getMaxDamage(),
                 e.getDamage(),
-                e.getNbtHash(),
                 e.getNbtText(),
                 e.getChemicalExpression(),
                 e.getDisplayName(),
@@ -140,7 +138,6 @@ public class ItemService {
                 modNames.getOrDefault(iv.getModId(), iv.getModId()),
                 iv.getRegistryName(),
                 iv.getDamage(),
-                iv.getNbtHash(),
                 iv.getDisplayName(),
                 assetUrlBuilder.build(dataset, iv.getAssetPath(), iv.getAssetSha256()),
                 e.getPanelIndex());

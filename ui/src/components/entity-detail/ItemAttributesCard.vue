@@ -15,9 +15,6 @@ defineProps<{
       size="default"
       class="attribute-descriptions"
     >
-      <el-descriptions-item :label="$t('common.variantId')">
-        <code>{{ detail.itemVariantId }}</code>
-      </el-descriptions-item>
       <el-descriptions-item :label="$t('item.itemId')">
         <code>{{ detail.itemId }}</code>
       </el-descriptions-item>
@@ -36,12 +33,6 @@ defineProps<{
       <el-descriptions-item :label="$t('item.maxStackSize')">
         {{ detail.maxStackSize }}
       </el-descriptions-item>
-      <el-descriptions-item
-        v-if="detail.nbtHash"
-        :label="$t('common.nbtHash')"
-      >
-        <code class="small">{{ detail.nbtHash }}</code>
-      </el-descriptions-item>
     </el-descriptions>
   </DetailSectionCard>
 </template>
@@ -58,8 +49,5 @@ code {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 12px;
   word-break: break-all;
-}
-code.small {
-  color: var(--el-text-color-secondary);
 }
 </style>

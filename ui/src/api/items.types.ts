@@ -7,7 +7,6 @@ export interface NeiPanelEntry {
   modName: string;
   registryName: string;
   damage: number;
-  nbtHash: string | null;
   displayName: string;
   assetUrl: string | null;
   panelIndex: number;
@@ -23,7 +22,6 @@ export interface ItemWorldGenerationRef {
 }
 
 export interface ItemDetail {
-  itemVariantId: string;
   itemId: string;
   modId: string;
   modName: string;
@@ -32,7 +30,6 @@ export interface ItemDetail {
   maxStackSize: number;
   maxDamage: number;
   damage: number;
-  nbtHash: string | null;
   nbtText: string | null;
   displayName: string;
   tooltipText: string;

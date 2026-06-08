@@ -12,7 +12,6 @@ export interface FluidSummary {
   temperature: number;
   viscosity: number;
   luminosity: number;
-  nbtHash: string | null;
   assetUrl: string | null;
 }
 
@@ -25,7 +24,7 @@ export interface FluidUndergroundResource {
   maxAmount: number;
 }
 
-export interface FluidDetail extends FluidSummary {
+export interface FluidDetail extends Omit<FluidSummary, 'fluidVariantId'> {
   unlocalizedName: string;
   runtimeFluidId: number;
   chemicalExpression: string | null;

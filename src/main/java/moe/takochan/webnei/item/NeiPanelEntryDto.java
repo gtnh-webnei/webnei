@@ -7,7 +7,6 @@ public record NeiPanelEntryDto(
         String modName,
         String registryName,
         int damage,
-        String nbtHash,
         String displayName,
         String assetUrl,
         int panelIndex) {

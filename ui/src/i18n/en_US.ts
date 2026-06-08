@@ -28,7 +28,6 @@ const en_US: MessageSchema = {
     allMod: 'All Mods',
     tooltip: 'Tooltip',
     nbt: 'NBT',
-    nbtHash: 'NBT Hash',
     damageMeta: 'Damage / Meta',
     amount: 'Amount',
     probability: 'Probability',

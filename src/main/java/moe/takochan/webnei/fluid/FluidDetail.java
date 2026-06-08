@@ -3,7 +3,6 @@ package moe.takochan.webnei.fluid;
 import java.util.List;
 
 public record FluidDetail(
-        String fluidVariantId,
         String fluidId,
         String modId,
         String modName,
@@ -16,7 +15,6 @@ public record FluidDetail(
         int viscosity,
         int luminosity,
         int runtimeFluidId,
-        String nbtHash,
         String nbtText,
         String chemicalExpression,
         String assetUrl,

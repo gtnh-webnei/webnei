@@ -12,6 +12,5 @@ public record FluidSummary(
         int temperature,
         int viscosity,
         int luminosity,
-        String nbtHash,
         String assetUrl) {
 }
