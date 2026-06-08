@@ -161,7 +161,8 @@ public class ExtrasService {
     private FluidBlockEntry toBlock(FluidBlockBrowserEntity e, DatasetSummary dataset) {
         return new FluidBlockEntry(
                 e.getBlockItemVariantId(), e.getBlockDisplayName(),
-                assetUrlBuilder.build(dataset, e.getBlockAssetPath(), e.getBlockAssetSha256()));
+                assetUrlBuilder.build(dataset, e.getBlockAssetPath(), e.getBlockAssetSha256()),
+                e.getBlockTooltipText());
     }
 
     private static Specification<FluidContainerBrowserEntity> containerForItem(String datasetId, String itemVariantId) {

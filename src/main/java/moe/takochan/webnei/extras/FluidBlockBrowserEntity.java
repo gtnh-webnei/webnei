@@ -35,6 +35,9 @@ public class FluidBlockBrowserEntity {
     @Column(name = "block_asset_sha256")
     private String blockAssetSha256;
 
+    @Column(name = "block_tooltip_text")
+    private String blockTooltipText;
+
     protected FluidBlockBrowserEntity() {}
 
     public String getDatasetId() { return datasetId; }
@@ -43,6 +46,7 @@ public class FluidBlockBrowserEntity {
     public String getBlockDisplayName() { return blockDisplayName; }
     public String getBlockAssetPath() { return blockAssetPath; }
     public String getBlockAssetSha256() { return blockAssetSha256; }
+    public String getBlockTooltipText() { return blockTooltipText; }
 
     public static class FluidBlockId {
         private String datasetId;

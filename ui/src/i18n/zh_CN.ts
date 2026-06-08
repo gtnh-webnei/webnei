@@ -60,7 +60,7 @@ const zh_CN: MessageSchema = {
     density: '密度',
     viscosity: '黏度',
     luminosity: '亮度',
-    correspondingBlock: '对应方块',
+    correspondingBlock: '对应物品',
     undergroundResources: '地下流体',
     notFound: '未找到流体',
     tag: '流体',

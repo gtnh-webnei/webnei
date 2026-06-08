@@ -30,6 +30,7 @@ export interface FluidBlockEntry {
   blockItemVariantId: string;
   blockDisplayName: string | null;
   blockAssetUrl: string | null;
+  blockTooltipText: string | null;
 }
 
 export interface ItemExtras {
