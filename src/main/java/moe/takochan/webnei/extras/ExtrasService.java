@@ -151,9 +151,6 @@ public class ExtrasService {
                 e.getContainerItemVariantId(),
                 e.getContainerDisplayName(),
                 assetUrlBuilder.build(dataset, e.getContainerAssetPath(), e.getContainerAssetSha256()),
-                e.getEmptyContainerItemVariantId(),
-                e.getEmptyContainerDisplayName(),
-                assetUrlBuilder.build(dataset, e.getEmptyContainerAssetPath(), e.getEmptyContainerAssetSha256()),
                 e.getAmount());
     }
 

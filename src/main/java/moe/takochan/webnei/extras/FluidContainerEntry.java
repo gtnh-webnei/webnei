@@ -12,8 +12,5 @@ public record FluidContainerEntry(
         String containerItemVariantId,
         String containerDisplayName,
         String containerAssetUrl,
-        String emptyContainerItemVariantId,
-        String emptyContainerDisplayName,
-        String emptyContainerAssetUrl,
         int amount) {
 }

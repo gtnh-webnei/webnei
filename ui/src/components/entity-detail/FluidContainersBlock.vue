@@ -24,35 +24,11 @@ const emit = defineEmits<{
           :title="c.containerDisplayName ?? c.containerItemVariantId"
           @click="emit('openItem', c.containerItemVariantId)"
         >
-          <img
-            v-if="c.containerAssetUrl"
-            :src="c.containerAssetUrl"
-            loading="lazy"
-          >
+          <img v-if="c.containerAssetUrl" :src="c.containerAssetUrl" loading="lazy" />
           <span class="container-name">{{
             c.containerDisplayName ?? c.containerItemVariantId
           }}</span>
-        </div>
-        <div class="container-arrow">
-          <span
-            v-if="c.amount > 0"
-            class="container-amount"
-          >{{ c.amount }} mB</span>
-          <span class="container-arrow-line">→</span>
-        </div>
-        <div
-          class="container-cell"
-          :title="c.emptyContainerDisplayName ?? c.emptyContainerItemVariantId"
-          @click="emit('openItem', c.emptyContainerItemVariantId)"
-        >
-          <img
-            v-if="c.emptyContainerAssetUrl"
-            :src="c.emptyContainerAssetUrl"
-            loading="lazy"
-          >
-          <span class="container-name">{{
-            c.emptyContainerDisplayName ?? c.emptyContainerItemVariantId
-          }}</span>
+          <span v-if="c.amount > 0" class="container-amount">{{ c.amount }} mB</span>
         </div>
       </div>
     </div>
@@ -61,19 +37,18 @@ const emit = defineEmits<{
 
 <style scoped>
 .container-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
 }
 .container-row {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  gap: 6px;
+  grid-template-columns: minmax(0, 1fr);
   font-size: 12px;
 }
 .container-cell {
-  display: flex;
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
   align-items: center;
   gap: 6px;
   padding: 4px 6px;
@@ -100,19 +75,9 @@ const emit = defineEmits<{
   white-space: nowrap;
   min-width: 0;
 }
-.container-arrow {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  font-size: 10px;
-  line-height: 1.1;
-  color: var(--el-text-color-secondary);
-}
 .container-amount {
   font-variant-numeric: tabular-nums;
-}
-.container-arrow-line {
-  font-size: 14px;
-  color: var(--el-text-color-disabled);
+  white-space: nowrap;
+  color: var(--el-text-color-secondary);
 }
 </style>

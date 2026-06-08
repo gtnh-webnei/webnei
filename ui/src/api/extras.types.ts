@@ -21,9 +21,6 @@ export interface FluidContainerEntry {
   containerItemVariantId: string;
   containerDisplayName: string | null;
   containerAssetUrl: string | null;
-  emptyContainerItemVariantId: string;
-  emptyContainerDisplayName: string | null;
-  emptyContainerAssetUrl: string | null;
   amount: number;
 }
 
