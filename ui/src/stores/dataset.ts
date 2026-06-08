@@ -2,7 +2,6 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { listDatasets } from '@/api/datasets';
 import type { DatasetSummary } from '@/api/types';
-import { useExtrasStore } from '@/stores/extras';
 import { DEFAULT_LOCALE, setLocale } from '@/i18n';
 import { loadDisplaySpec, loadDisplaySpecMessages } from '@/components/recipe/gregtech/displaySpec';
 
@@ -44,13 +43,9 @@ export const useDatasetStore = defineStore('dataset', () => {
   }
 
   function setActive(datasetId: string) {
-    const prev = activeDatasetId.value;
     activeDatasetId.value = datasetId;
     localStorage.setItem(STORAGE_KEY, datasetId);
     applyActiveDataset(datasetId);
-    if (prev && prev !== datasetId) {
-      useExtrasStore().clearDataset(prev);
-    }
   }
 
   function applyActiveDataset(datasetId: string | null) {

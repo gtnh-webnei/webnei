@@ -2,6 +2,9 @@ package moe.takochan.webnei.item;
 
 import java.util.List;
 
+import moe.takochan.webnei.extras.AspectEntry;
+import moe.takochan.webnei.extras.ItemRelatedFluidEntry;
+
 public record ItemDetailDto(
         String itemId,
         String modId,
@@ -18,5 +21,8 @@ public record ItemDetailDto(
         String assetUrl,
         Integer assetWidth,
         Integer assetHeight,
-        List<ItemWorldGenerationRef> worldGeneration) {
+        List<ItemWorldGenerationRef> worldGeneration,
+        List<String> oreDictNames,
+        List<ItemRelatedFluidEntry> relatedFluids,
+        List<AspectEntry> aspects) {
 }

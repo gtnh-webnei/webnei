@@ -12,6 +12,8 @@ import moe.takochan.webnei.common.NotFoundException;
 import moe.takochan.webnei.common.PageRequest;
 import moe.takochan.webnei.common.PageResponse;
 import moe.takochan.webnei.dataset.DatasetSummary;
+import moe.takochan.webnei.extras.ExtrasService;
+import moe.takochan.webnei.extras.FluidExtras;
 import moe.takochan.webnei.gtore.GtDimensionRef;
 import moe.takochan.webnei.gtore.GtUndergroundFluidBrowserEntity;
 import moe.takochan.webnei.gtore.GtUndergroundFluidBrowserRepository;
@@ -32,17 +34,20 @@ public class FluidService {
     private final GtUndergroundFluidBrowserRepository undergroundFluidRepo;
     private final ItemVariantRepository itemVariantRepo;
     private final AssetUrlBuilder assetUrlBuilder;
+    private final ExtrasService extrasService;
 
     public FluidService(FluidVariantRepository fluidRepo,
                         FluidModOptionRepository modOptionRepo,
                         GtUndergroundFluidBrowserRepository undergroundFluidRepo,
                         ItemVariantRepository itemVariantRepo,
-                        AssetUrlBuilder assetUrlBuilder) {
+                        AssetUrlBuilder assetUrlBuilder,
+                        ExtrasService extrasService) {
         this.fluidRepo = fluidRepo;
         this.modOptionRepo = modOptionRepo;
         this.undergroundFluidRepo = undergroundFluidRepo;
         this.itemVariantRepo = itemVariantRepo;
         this.assetUrlBuilder = assetUrlBuilder;
+        this.extrasService = extrasService;
     }
 
     public PageResponse<FluidSummary> list(DatasetSummary dataset, FluidQuery query, PageRequest page) {
@@ -77,6 +82,7 @@ public class FluidService {
         String datasetId = dataset.datasetId();
         FluidVariantBrowserEntity e = fluidRepo.findById(new FluidVariantBrowserEntity.FluidVariantId(datasetId, fluidVariantId))
                 .orElseThrow(() -> new NotFoundException("Fluid variant not found: " + fluidVariantId));
+        FluidExtras extras = extrasService.fluidExtras(dataset, fluidVariantId);
         return new FluidDetail(
                 e.getFluidId(),
                 e.getModId(),
@@ -93,7 +99,9 @@ public class FluidService {
                 e.getNbtText(),
                 e.getChemicalExpression(),
                 assetUrlBuilder.build(dataset, e.getAssetPath(), null),
-                undergroundResources(dataset, e.getFluidId(), e.getRegistryName()));
+                undergroundResources(dataset, e.getFluidId(), e.getRegistryName()),
+                extras.containers(),
+                extras.blocks());
     }
 
     public List<ModOptionDto> listMods(DatasetSummary dataset) {

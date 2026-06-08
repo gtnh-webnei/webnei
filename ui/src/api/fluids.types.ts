@@ -1,3 +1,4 @@
+import type { FluidBlockEntry, FluidContainerEntry } from './extras.types';
 import type { GtDimensionRef } from './gt.types';
 
 export interface FluidSummary {
@@ -30,6 +31,8 @@ export interface FluidDetail extends Omit<FluidSummary, 'fluidVariantId'> {
   chemicalExpression: string | null;
   nbtText: string | null;
   undergroundResources: FluidUndergroundResource[];
+  containers: FluidContainerEntry[];
+  blocks: FluidBlockEntry[];
 }
 
 export interface FluidListParams {

@@ -2,6 +2,9 @@ package moe.takochan.webnei.fluid;
 
 import java.util.List;
 
+import moe.takochan.webnei.extras.FluidBlockEntry;
+import moe.takochan.webnei.extras.FluidContainerEntry;
+
 public record FluidDetail(
         String fluidId,
         String modId,
@@ -18,5 +21,7 @@ public record FluidDetail(
         String nbtText,
         String chemicalExpression,
         String assetUrl,
-        List<FluidUndergroundResource> undergroundResources) {
+        List<FluidUndergroundResource> undergroundResources,
+        List<FluidContainerEntry> containers,
+        List<FluidBlockEntry> blocks) {
 }

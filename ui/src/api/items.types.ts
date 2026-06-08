@@ -1,3 +1,4 @@
+import type { AspectEntry, ItemRelatedFluidEntry } from './extras.types';
 import type { GtDimensionRef } from './gt.types';
 
 export interface NeiPanelEntry {
@@ -38,6 +39,9 @@ export interface ItemDetail {
   assetWidth: number | null;
   assetHeight: number | null;
   worldGeneration: ItemWorldGenerationRef[];
+  oreDictNames: string[];
+  relatedFluids: ItemRelatedFluidEntry[];
+  aspects: AspectEntry[];
 }
 
 export interface ItemListParams {

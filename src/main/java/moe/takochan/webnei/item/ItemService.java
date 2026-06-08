@@ -15,6 +15,8 @@ import moe.takochan.webnei.common.NotFoundException;
 import moe.takochan.webnei.common.PageRequest;
 import moe.takochan.webnei.common.PageResponse;
 import moe.takochan.webnei.dataset.DatasetSummary;
+import moe.takochan.webnei.extras.ExtrasService;
+import moe.takochan.webnei.extras.ItemExtras;
 import moe.takochan.webnei.gtore.WorldGenerationService;
 
 import org.springframework.data.domain.Page;
@@ -31,16 +33,19 @@ public class ItemService {
     private final NeiPanelEntryRepository panelRepo;
     private final AssetUrlBuilder assetUrlBuilder;
     private final WorldGenerationService worldGenerationService;
+    private final ExtrasService extrasService;
 
     public ItemService(ItemVariantRepository itemRepo,
                        ItemModOptionRepository modOptionRepo,
                        NeiPanelEntryRepository panelRepo, AssetUrlBuilder assetUrlBuilder,
-                       WorldGenerationService worldGenerationService) {
+                       WorldGenerationService worldGenerationService,
+                       ExtrasService extrasService) {
         this.itemRepo = itemRepo;
         this.modOptionRepo = modOptionRepo;
         this.panelRepo = panelRepo;
         this.assetUrlBuilder = assetUrlBuilder;
         this.worldGenerationService = worldGenerationService;
+        this.extrasService = extrasService;
     }
 
     public PageResponse<NeiPanelEntryDto> listPanel(DatasetSummary dataset, ItemQuery query, PageRequest page) {
@@ -65,6 +70,7 @@ public class ItemService {
         String datasetId = dataset.datasetId();
         ItemVariantBrowserEntity e = itemRepo.findById(new ItemVariantBrowserEntity.ItemVariantId(datasetId, itemVariantId))
                 .orElseThrow(() -> new NotFoundException("Item variant not found: " + itemVariantId));
+        ItemExtras extras = extrasService.itemExtras(dataset, itemVariantId);
         return new ItemDetailDto(
                 e.getItemId(),
                 e.getModId(),
@@ -81,7 +87,10 @@ public class ItemService {
                 assetUrlBuilder.build(dataset, e.getAssetPath(), e.getAssetSha256()),
                 e.getAssetWidth(),
                 e.getAssetHeight(),
-                worldGenerationService.forItem(dataset, itemVariantId));
+                worldGenerationService.forItem(dataset, itemVariantId),
+                extras.oreDictNames(),
+                extras.relatedFluids(),
+                extras.aspects());
     }
 
     public List<ModOptionDto> listMods(DatasetSummary dataset) {

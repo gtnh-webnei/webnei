@@ -1,11 +1,9 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { useExtrasStore } from '@/stores/extras';
 import { useEntityNavigation } from '@/composables/useEntityNavigation';
 import { getItemDetail } from '@/api/items';
 import type { ItemDetail } from '@/api/items.types';
-import type { ItemExtras } from '@/api/extras.types';
 import MinecraftTooltipText from './MinecraftTooltipText.vue';
 import type { InteractiveFluidRefFluid } from './InteractiveFluidRef.vue';
 import DetailTextCard from './entity-detail/DetailTextCard.vue';
@@ -26,12 +24,9 @@ const entityNavigation = useEntityNavigation(
   router,
   computed(() => props.datasetId),
 );
-const extrasStore = useExtrasStore();
 const detail = ref<ItemDetail | null>(null);
 const loading = ref(false);
 const error = ref<string | null>(null);
-
-const extras = ref<ItemExtras | null>(null);
 
 async function load() {
   if (!props.datasetId || !props.itemVariantId) return;
@@ -44,16 +39,6 @@ async function load() {
     error.value = e instanceof Error ? e.message : String(e);
   } finally {
     loading.value = false;
-  }
-}
-
-async function loadExtras() {
-  if (!props.datasetId || !props.itemVariantId) return;
-  extras.value = null;
-  try {
-    extras.value = await extrasStore.loadItem(props.datasetId, props.itemVariantId);
-  } catch {
-    extras.value = null;
   }
 }
 
@@ -77,12 +62,10 @@ watch(
   () => [props.datasetId, props.itemVariantId],
   () => {
     load();
-    loadExtras();
   },
 );
 onMounted(() => {
   load();
-  loadExtras();
 });
 </script>
 
@@ -96,17 +79,10 @@ onMounted(() => {
   >
     <template v-if="detail">
       <el-row :gutter="16">
-        <el-col
-          :xs="24"
-          :md="14"
-        >
+        <el-col :xs="24" :md="14">
           <ItemAttributesCard :detail="detail" />
 
-          <el-card
-            v-if="detail.tooltipText"
-            shadow="never"
-            class="tooltip-text-card"
-          >
+          <el-card v-if="detail.tooltipText" shadow="never" class="tooltip-text-card">
             <MinecraftTooltipText :text="detail.tooltipText" />
           </el-card>
 
@@ -118,18 +94,13 @@ onMounted(() => {
           />
         </el-col>
 
-        <el-col
-          :xs="24"
-          :md="10"
-        >
-          <template v-if="extras">
-            <ItemRelatedFluidsBlock
-              v-if="extras.relatedFluids.length"
-              :fluids="extras.relatedFluids"
-              @pick-fluid="pickFluid"
-              @lookup-fluid="lookupFluid"
-            />
-          </template>
+        <el-col :xs="24" :md="10">
+          <ItemRelatedFluidsBlock
+            v-if="detail.relatedFluids.length"
+            :fluids="detail.relatedFluids"
+            @pick-fluid="pickFluid"
+            @lookup-fluid="lookupFluid"
+          />
 
           <DetailTextCard
             v-if="detail.chemicalExpression"
@@ -138,16 +109,8 @@ onMounted(() => {
             code
           />
 
-          <template v-if="extras">
-            <ItemOreDictBlock
-              v-if="extras.oreDictNames.length"
-              :names="extras.oreDictNames"
-            />
-            <ItemAspectsBlock
-              v-if="extras.aspects.length"
-              :aspects="extras.aspects"
-            />
-          </template>
+          <ItemOreDictBlock v-if="detail.oreDictNames.length" :names="detail.oreDictNames" />
+          <ItemAspectsBlock v-if="detail.aspects.length" :aspects="detail.aspects" />
 
           <ItemWorldGenerationCard
             v-if="detail.worldGeneration.length"
