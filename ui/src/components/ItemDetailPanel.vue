@@ -112,6 +112,15 @@ onMounted(() => {
         </el-col>
 
         <el-col :xs="24" :md="10">
+          <template v-if="extras">
+            <ItemRelatedFluidsBlock
+              v-if="extras.relatedFluids.length"
+              :fluids="extras.relatedFluids"
+              @pick-fluid="pickFluid"
+              @lookup-fluid="lookupFluid"
+            />
+          </template>
+
           <DetailTextCard
             v-if="detail.chemicalExpression"
             :title="$t('common.chemicalExpression')"
@@ -129,15 +138,6 @@ onMounted(() => {
             :resources="detail.worldGeneration"
             @open="goToWorldGeneration"
           />
-
-          <template v-if="extras">
-            <ItemRelatedFluidsBlock
-              v-if="extras.relatedFluids.length"
-              :fluids="extras.relatedFluids"
-              @pick-fluid="pickFluid"
-              @lookup-fluid="lookupFluid"
-            />
-          </template>
         </el-col>
       </el-row>
     </template>

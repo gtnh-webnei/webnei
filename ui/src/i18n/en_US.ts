@@ -62,7 +62,7 @@ const en_US: MessageSchema = {
     density: 'Density',
     viscosity: 'Viscosity',
     luminosity: 'Luminosity',
-    correspondingBlock: 'Related Item',
+    correspondingBlock: 'Related Items',
     undergroundResources: 'Underground Fluids',
     notFound: 'Fluid not found',
     tag: 'Fluid',
