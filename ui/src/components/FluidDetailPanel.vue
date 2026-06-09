@@ -11,10 +11,17 @@ import FluidAttributesCard from './entity-detail/FluidAttributesCard.vue';
 import FluidBlocksBlock from './entity-detail/FluidBlocksBlock.vue';
 import FluidContainersBlock from './entity-detail/FluidContainersBlock.vue';
 import FluidUndergroundResourcesCard from './entity-detail/FluidUndergroundResourcesCard.vue';
+import LookupRecipeCountCard from './recipe/LookupRecipeCountCard.vue';
 
 const props = defineProps<{
   datasetId: string;
   fluidVariantId: string;
+  recipeCount?: number;
+  usageCount?: number;
+}>();
+
+const emit = defineEmits<{
+  'select-lookup-kind': [kind: 'recipe' | 'usage'];
 }>();
 
 const router = useRouter();
@@ -93,6 +100,14 @@ onMounted(() => {
         </el-col>
 
         <el-col :xs="24" :md="10">
+          <LookupRecipeCountCard
+            v-if="props.recipeCount !== undefined && props.usageCount !== undefined"
+            :recipe-count="props.recipeCount"
+            :usage-count="props.usageCount"
+            :active-kind="null"
+            @select-kind="emit('select-lookup-kind', $event)"
+          />
+
           <FluidBlocksBlock
             v-if="detail.blocks.length"
             :blocks="detail.blocks"

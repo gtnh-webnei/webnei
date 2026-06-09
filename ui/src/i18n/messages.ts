@@ -204,6 +204,9 @@ export interface MessageSchema {
     pickHint: string;
     noMatch: string;
     viewTabsLabel: string;
+    recipeCountCardTitle: string;
+    recipeCountRecipe: string;
+    recipeCountUsage: string;
   };
 
   // ---- Mod ----

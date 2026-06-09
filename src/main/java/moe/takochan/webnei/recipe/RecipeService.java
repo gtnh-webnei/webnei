@@ -28,6 +28,7 @@ import moe.takochan.webnei.recipe.dto.CategoryBreakdownDto;
 import moe.takochan.webnei.recipe.dto.GregTechRecipeDto;
 import moe.takochan.webnei.recipe.dto.GregTechSpecialItemDto;
 import moe.takochan.webnei.recipe.dto.HandlerBreakdownDto;
+import moe.takochan.webnei.recipe.dto.LookupKindCountDto;
 import moe.takochan.webnei.recipe.dto.LookupTargetHeaderDto;
 import moe.takochan.webnei.recipe.dto.MetadataValueDto;
 import moe.takochan.webnei.recipe.dto.RecipeDto;
@@ -46,6 +47,7 @@ public class RecipeService {
 
     private final RecipeBrowserRepository recipeRepo;
     private final RecipeLookupBrowserRepository lookupRepo;
+    private final RecipeLookupCountRepository lookupCountRepo;
     private final RecipeLookupBreakdownRepository lookupBreakdownRepo;
     private final RecipeSlotBrowserRepository slotRepo;
     private final IngredientEntryRepository ingredientEntryRepo;
@@ -60,6 +62,7 @@ public class RecipeService {
 
     public RecipeService(RecipeBrowserRepository recipeRepo,
                         RecipeLookupBrowserRepository lookupRepo,
+                        RecipeLookupCountRepository lookupCountRepo,
                         RecipeLookupBreakdownRepository lookupBreakdownRepo,
                         RecipeSlotBrowserRepository slotRepo,
                         IngredientEntryRepository ingredientEntryRepo,
@@ -73,6 +76,7 @@ public class RecipeService {
                         ObjectMapper objectMapper) {
         this.recipeRepo = recipeRepo;
         this.lookupRepo = lookupRepo;
+        this.lookupCountRepo = lookupCountRepo;
         this.lookupBreakdownRepo = lookupBreakdownRepo;
         this.slotRepo = slotRepo;
         this.ingredientEntryRepo = ingredientEntryRepo;
@@ -95,6 +99,9 @@ public class RecipeService {
         if (target == null || target.isBlank()) {
             throw new IllegalArgumentException("target is required");
         }
+        Map<String, Long> counts = lookupCounts(dataset.datasetId(), target);
+        long recipeCount = counts.getOrDefault("recipe", 0L);
+        long usageCount = counts.getOrDefault("usage", 0L);
         if (target.contains("@")) {
             ItemRef item = entityRefService.itemRefs(dataset, List.of(target)).get(target);
             if (item == null) throw new NotFoundException("Item not found: " + target);
@@ -105,7 +112,9 @@ public class RecipeService {
                     item.assetUrl(),
                     item.modId(),
                     item.modName(),
-                    null);
+                    null,
+                    recipeCount,
+                    usageCount);
         }
         FluidRef fluid = entityRefService.fluidRefs(dataset, List.of(target)).get(target);
         if (fluid == null) throw new NotFoundException("Fluid not found: " + target);
@@ -116,7 +125,16 @@ public class RecipeService {
                 fluid.assetUrl(),
                 fluid.modId(),
                 fluid.modName(),
-                fluid.gaseous());
+                fluid.gaseous(),
+                recipeCount,
+                usageCount);
+    }
+
+    private Map<String, Long> lookupCounts(String datasetId, String targetId) {
+        return lookupCountRepo.countByDatasetIdAndTargetId(datasetId, targetId).stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        LookupKindCountDto::lookupKind,
+                        LookupKindCountDto::recipeCount));
     }
 
     public PageResponse<RecipeDto> lookup(

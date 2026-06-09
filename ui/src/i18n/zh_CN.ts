@@ -197,6 +197,9 @@ const zh_CN: MessageSchema = {
     pickHint: '左键 · 物品详情 / 右键 · 合成来源 / 中键 · 用途去向',
     noMatch: '没有匹配的配方',
     viewTabsLabel: '查询视图',
+    recipeCountCardTitle: '配方数量',
+    recipeCountRecipe: 'R 合成',
+    recipeCountUsage: 'U 用途',
   },
 
   mod: {

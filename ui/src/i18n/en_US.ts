@@ -199,6 +199,9 @@ const en_US: MessageSchema = {
     pickHint: 'Left \u00b7 Item details / Right \u00b7 Recipe source / Middle \u00b7 Usage target',
     noMatch: 'No matching recipes',
     viewTabsLabel: 'Lookup View',
+    recipeCountCardTitle: 'Recipe counts',
+    recipeCountRecipe: 'R Recipe',
+    recipeCountUsage: 'U Usage',
   },
 
   mod: {

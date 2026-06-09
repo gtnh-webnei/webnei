@@ -58,6 +58,8 @@ const targetName = ref<string | null>(null);
 const targetIcon = ref<string | null>(null);
 const targetModName = ref<string | null>(null);
 const targetGaseous = ref(false);
+const targetRecipeCount = ref(0);
+const targetUsageCount = ref(0);
 const targetImageFailed = ref(false);
 
 const categoryMap = ref<Map<string, RecipeCategory>>(new Map());
@@ -107,6 +109,8 @@ async function fetchTargetMeta() {
   targetIcon.value = null;
   targetModName.value = null;
   targetGaseous.value = false;
+  targetRecipeCount.value = 0;
+  targetUsageCount.value = 0;
   targetImageFailed.value = false;
   if (!datasetId.value || !target.value) return;
   try {
@@ -116,6 +120,8 @@ async function fetchTargetMeta() {
     targetIcon.value = header.assetUrl;
     targetModName.value = header.modName ?? header.modId;
     targetGaseous.value = header.gaseous ?? false;
+    targetRecipeCount.value = header.recipeCount;
+    targetUsageCount.value = header.usageCount;
   } catch {
     // ignore
   }
@@ -283,8 +289,18 @@ onMounted(async () => {
         v-if="targetType === 'fluid'"
         :dataset-id="datasetId"
         :fluid-variant-id="target"
+        :recipe-count="targetRecipeCount"
+        :usage-count="targetUsageCount"
+        @select-lookup-kind="setTab"
       />
-      <ItemDetailPanel v-else :dataset-id="datasetId" :item-variant-id="target" />
+      <ItemDetailPanel
+        v-else
+        :dataset-id="datasetId"
+        :item-variant-id="target"
+        :recipe-count="targetRecipeCount"
+        :usage-count="targetUsageCount"
+        @select-lookup-kind="setTab"
+      />
     </template>
 
     <template v-if="tab !== 'detail'">

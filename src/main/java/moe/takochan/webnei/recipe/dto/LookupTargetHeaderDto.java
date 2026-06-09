@@ -7,5 +7,7 @@ public record LookupTargetHeaderDto(
         String assetUrl,
         String modId,
         String modName,
-        Boolean gaseous) {
+        Boolean gaseous,
+        long recipeCount,
+        long usageCount) {
 }

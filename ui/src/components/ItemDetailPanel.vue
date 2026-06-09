@@ -12,11 +12,18 @@ import ItemAspectsBlock from './entity-detail/ItemAspectsBlock.vue';
 import ItemAttributesCard from './entity-detail/ItemAttributesCard.vue';
 import ItemOreDictBlock from './entity-detail/ItemOreDictBlock.vue';
 import ItemRelatedFluidsBlock from './entity-detail/ItemRelatedFluidsBlock.vue';
+import LookupRecipeCountCard from './recipe/LookupRecipeCountCard.vue';
 import ItemWorldGenerationCard from './entity-detail/ItemWorldGenerationCard.vue';
 
 const props = defineProps<{
   datasetId: string;
   itemVariantId: string;
+  recipeCount?: number;
+  usageCount?: number;
+}>();
+
+const emit = defineEmits<{
+  'select-lookup-kind': [kind: 'recipe' | 'usage'];
 }>();
 
 const router = useRouter();
@@ -95,6 +102,14 @@ onMounted(() => {
         </el-col>
 
         <el-col :xs="24" :md="10">
+          <LookupRecipeCountCard
+            v-if="props.recipeCount !== undefined && props.usageCount !== undefined"
+            :recipe-count="props.recipeCount"
+            :usage-count="props.usageCount"
+            :active-kind="null"
+            @select-kind="emit('select-lookup-kind', $event)"
+          />
+
           <ItemRelatedFluidsBlock
             v-if="detail.relatedFluids.length"
             :fluids="detail.relatedFluids"

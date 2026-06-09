@@ -128,6 +128,8 @@ export interface LookupTargetHeader {
   modId: string | null;
   modName: string | null;
   gaseous: boolean | null;
+  recipeCount: number;
+  usageCount: number;
 }
 
 export interface CategoryBreakdown {
