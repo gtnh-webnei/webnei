@@ -147,7 +147,7 @@ onMounted(() => {
       <div class="spacer" />
       <div class="total">
         {{ t('common.totalCount') }} <strong>{{ total.toLocaleString() }}</strong>
-        {{ t('common.items') }}
+        {{ t('common.totalSuffix') }}
       </div>
     </div>
 

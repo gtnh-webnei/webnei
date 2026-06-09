@@ -409,9 +409,9 @@ function lookupFluid(kind: 'recipe' | 'usage', fluid: FluidRef) {
         </div>
 
         <div class="list-footer">
-          <span
-            >{{ t('common.totalCount') }} {{ total.toLocaleString() }} {{ t('common.items') }}</span
-          >
+          <span>
+            {{ t('common.totalCount') }} {{ total.toLocaleString() }} {{ t('common.totalSuffix') }}
+          </span>
         </div>
       </aside>
 

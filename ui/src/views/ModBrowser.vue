@@ -16,13 +16,9 @@ const PAGE_SIZE_KEY = 'webnei.modBrowser.pageSize';
 
 const route = useRoute();
 const datasetStore = useDatasetStore();
-const { activeDatasetId, datasets } = storeToRefs(datasetStore);
+const { activeDatasetId } = storeToRefs(datasetStore);
 
 const datasetId = computed(() => String(route.params.datasetId ?? activeDatasetId.value ?? ''));
-
-const datasetName = computed(
-  () => datasets.value.find((d) => d.datasetId === datasetId.value)?.displayName ?? '',
-);
 
 const sortField = ref<string>('modId');
 const sortDesc = ref<boolean>(false);
@@ -63,35 +59,15 @@ function onSortChange({
 
 <template>
   <div class="mod-browser">
-    <header class="header">
-      <h1>{{ t('mod.pageTitle') }}</h1>
-      <p class="lead">
-        <span v-if="datasetName">{{ datasetName }} · </span>
-        {{ t('common.totalCount') }} {{ total }} {{ t('mod.totalLabel') }}
-      </p>
-    </header>
-
     <BrowserToolbar
       v-model:q="q"
       :placeholder="t('mod.searchPlaceholder')"
       :show-secondary="false"
-      :total="items.length"
-      :total-label="t('common.showing')"
-      :total-suffix="`/ ${total}`"
+      :total="total"
     />
 
-    <el-alert
-      v-if="error"
-      :title="error"
-      type="error"
-      :closable="false"
-      show-icon
-    />
-    <el-skeleton
-      v-if="loading && items.length === 0"
-      :rows="6"
-      animated
-    />
+    <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
+    <el-skeleton v-if="loading && items.length === 0" :rows="6" animated />
 
     <el-table
       v-else
@@ -102,12 +78,7 @@ function onSortChange({
       class="mod-table"
       @sort-change="onSortChange"
     >
-      <el-table-column
-        prop="modId"
-        :label="t('mod.colModId')"
-        min-width="170"
-        sortable="custom"
-      >
+      <el-table-column prop="modId" :label="t('mod.colModId')" min-width="170" sortable="custom">
         <template #default="{ row }">
           <code class="mod-id">{{ row.modId }}</code>
         </template>
@@ -126,11 +97,7 @@ function onSortChange({
         sortable="custom"
       >
         <template #default="{ row }">
-          <el-tag
-            size="small"
-            type="info"
-            effect="plain"
-          >
+          <el-tag size="small" type="info" effect="plain">
             {{ row.version }}
           </el-tag>
         </template>
@@ -152,11 +119,7 @@ function onSortChange({
         sortable="custom"
       >
         <template #default="{ row }">
-          <el-tag
-            size="small"
-            :type="row.sourceType === 'file' ? '' : 'warning'"
-            effect="plain"
-          >
+          <el-tag size="small" :type="row.sourceType === 'file' ? '' : 'warning'" effect="plain">
             {{ row.sourceType }}
           </el-tag>
         </template>
@@ -169,30 +132,17 @@ function onSortChange({
         sortable="custom"
       >
         <template #default="{ row }">
-          <el-icon
-            v-if="row.enabled"
-            color="var(--el-color-success)"
-          >
+          <el-icon v-if="row.enabled" color="var(--el-color-success)">
             <Check />
           </el-icon>
-          <el-icon
-            v-else
-            color="var(--el-color-danger)"
-          >
+          <el-icon v-else color="var(--el-color-danger)">
             <Close />
           </el-icon>
         </template>
       </el-table-column>
-      <el-table-column
-        prop="sourceSha256"
-        :label="t('mod.colSha256')"
-        min-width="120"
-      >
+      <el-table-column prop="sourceSha256" :label="t('mod.colSha256')" min-width="120">
         <template #default="{ row }">
-          <el-tooltip
-            :content="row.sourceSha256"
-            placement="top"
-          >
+          <el-tooltip :content="row.sourceSha256" placement="top">
             <code class="sha">{{ row.sourceSha256.slice(0, 8) }}…</code>
           </el-tooltip>
         </template>
@@ -221,15 +171,6 @@ export default { name: 'ModBrowser' };
   display: flex;
   flex-direction: column;
   gap: 12px;
-}
-.header h1 {
-  margin: 0 0 4px 0;
-  font-size: 22px;
-}
-.lead {
-  margin: 0;
-  color: var(--el-text-color-secondary);
-  font-size: 13px;
 }
 .mod-table {
   width: 100%;

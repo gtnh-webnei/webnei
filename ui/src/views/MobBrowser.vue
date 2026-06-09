@@ -35,13 +35,6 @@ function openMob(mob: MobSummary) {
 
 <template>
   <div class="mob-browser">
-    <header class="header">
-      <h1>{{ $t('mob.pageTitle') }}</h1>
-      <p class="lead">
-        {{ $t('common.totalCount') }} {{ total.toLocaleString() }}{{ $t('mob.totalLabel') }}
-      </p>
-    </header>
-
     <BrowserToolbar
       v-model:q="q"
       v-model:secondary="secondary"
@@ -49,43 +42,17 @@ function openMob(mob: MobSummary) {
       :placeholder="$t('mob.searchPlaceholder')"
       :secondary-placeholder="$t('common.allMod')"
       :total="total"
-      :total-suffix="$t('common.items')"
     />
 
-    <el-alert
-      v-if="error"
-      :title="error"
-      type="error"
-      :closable="false"
-      show-icon
-    />
-    <el-skeleton
-      v-if="loading && items.length === 0"
-      :rows="6"
-      animated
-    />
-    <el-empty
-      v-else-if="!loading && items.length === 0"
-      :description="$t('mob.noMatch')"
-    />
+    <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
+    <el-skeleton v-if="loading && items.length === 0" :rows="6" animated />
+    <el-empty v-else-if="!loading && items.length === 0" :description="$t('mob.noMatch')" />
 
-    <div
-      v-else
-      v-loading="loading"
-      class="grid"
-    >
-      <MobCard
-        v-for="mob in items"
-        :key="mob.mobVariantId"
-        :mob="mob"
-        @select="openMob"
-      />
+    <div v-else v-loading="loading" class="grid">
+      <MobCard v-for="mob in items" :key="mob.mobVariantId" :mob="mob" @select="openMob" />
     </div>
 
-    <div
-      v-if="total > 0"
-      class="pager"
-    >
+    <div v-if="total > 0" class="pager">
       <el-pagination
         v-model:current-page="page"
         v-model:page-size="pageSize"
@@ -103,15 +70,6 @@ function openMob(mob: MobSummary) {
   display: flex;
   flex-direction: column;
   gap: 14px;
-}
-.header h1 {
-  margin: 0 0 4px 0;
-  font-size: 22px;
-}
-.lead {
-  margin: 0;
-  color: var(--el-text-color-secondary);
-  font-size: 13px;
 }
 .grid {
   display: grid;

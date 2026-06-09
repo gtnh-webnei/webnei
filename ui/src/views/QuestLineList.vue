@@ -54,13 +54,6 @@ onMounted(load);
 
 <template>
   <div class="quest-lines">
-    <header class="header">
-      <h1>{{ $t('quest.pageTitle') }}</h1>
-      <p class="lead">
-        {{ $t('common.totalCount') }} {{ lines.length }}{{ $t('quest.questLineSummary') }}
-      </p>
-    </header>
-
     <div class="toolbar">
       <el-input
         v-model="q"
@@ -70,31 +63,16 @@ onMounted(load);
       />
       <div class="spacer" />
       <div class="total">
-        {{ $t('common.showing') }}<strong>{{ filtered.length }}</strong> / {{ lines.length }}
+        {{ $t('common.totalCount') }} <strong>{{ filtered.length.toLocaleString() }}</strong>
+        {{ $t('common.totalSuffix') }}
       </div>
     </div>
 
-    <el-alert
-      v-if="error"
-      :title="error"
-      type="error"
-      :closable="false"
-      show-icon
-    />
-    <el-skeleton
-      v-if="loading && lines.length === 0"
-      :rows="6"
-      animated
-    />
-    <el-empty
-      v-else-if="filtered.length === 0"
-      :description="$t('quest.noQuestLines')"
-    />
+    <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
+    <el-skeleton v-if="loading && lines.length === 0" :rows="6" animated />
+    <el-empty v-else-if="filtered.length === 0" :description="$t('quest.noQuestLines')" />
 
-    <div
-      v-else
-      class="grid"
-    >
+    <div v-else class="grid">
       <div
         v-for="line in filtered"
         :key="line.questLineId"
@@ -106,32 +84,18 @@ onMounted(load);
         @keydown.space.prevent="openLine(line)"
       >
         <div class="icon-wrap">
-          <img
-            v-if="line.iconAssetUrl"
-            :src="line.iconAssetUrl"
-            :alt="line.name"
-            loading="lazy"
-          >
+          <img v-if="line.iconAssetUrl" :src="line.iconAssetUrl" :alt="line.name" loading="lazy" />
         </div>
         <div class="meta">
           <div class="name">
             {{ line.name }}
           </div>
           <div class="sub">
-            <el-tag
-              size="small"
-              type="info"
-              effect="plain"
-              round
-            >
+            <el-tag size="small" type="info" effect="plain" round>
               {{ $t('quest.taskCount', { count: line.questCount }) }}
             </el-tag>
           </div>
-          <QuestText
-            v-if="line.description"
-            :text="line.description"
-            class="desc"
-          />
+          <QuestText v-if="line.description" :text="line.description" class="desc" />
         </div>
       </div>
     </div>
@@ -143,15 +107,6 @@ onMounted(load);
   display: flex;
   flex-direction: column;
   gap: 14px;
-}
-.header h1 {
-  margin: 0 0 4px 0;
-  font-size: 22px;
-}
-.lead {
-  margin: 0;
-  color: var(--el-text-color-secondary);
-  font-size: 13px;
 }
 .toolbar {
   display: flex;
