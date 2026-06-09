@@ -32,6 +32,10 @@ function setDark(value: boolean | string | number) {
 
 <style scoped>
 .theme-switch {
+  display: inline-flex;
+  align-items: center;
+  width: 56px;
+  height: 32px;
   --el-switch-on-color: #2e333b;
   --el-switch-off-color: #e9ecef;
   --el-switch-border-color: var(--el-border-color);

@@ -155,19 +155,20 @@ function nonCachedRouteViewKey(viewRoute: RouteLocationNormalizedLoaded): string
 .header-actions {
   display: grid;
   grid-auto-flow: column;
+  grid-auto-columns: max-content;
   align-items: center;
   gap: 10px;
 }
 .header-divider {
   width: 1px;
-  height: 24px;
+  height: 28px;
   background: var(--el-border-color-lighter);
 }
 .github-link {
   display: inline-grid;
   place-items: center;
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   color: var(--el-text-color-regular);
   text-decoration: none;
 }
@@ -175,8 +176,8 @@ function nonCachedRouteViewKey(viewRoute: RouteLocationNormalizedLoaded): string
   color: var(--el-color-primary);
 }
 .github-icon {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
 }
 .app-main {
   padding: 16px;
