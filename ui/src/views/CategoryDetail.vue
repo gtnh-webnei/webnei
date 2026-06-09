@@ -10,6 +10,7 @@ import { listRecipesByCategory } from '@/api/recipes';
 import type { Recipe, RecipeCategory } from '@/api/recipes.types';
 import RecipePanel from '@/components/RecipePanel.vue';
 import CategoryHeaderRows from '@/components/recipe/CategoryHeaderRows.vue';
+import DetailHeroCard from '@/components/entity-detail/DetailHeroCard.vue';
 import { useEntityNavigation } from '@/composables/useEntityNavigation';
 
 const { t } = useI18n();
@@ -113,10 +114,6 @@ function onSlotLookup(
   entityNavigation.lookup(next, payload);
 }
 
-function back() {
-  router.back();
-}
-
 onMounted(() => {
   fetchCategoryMeta();
   fetchRecipes();
@@ -125,38 +122,12 @@ onMounted(() => {
 
 <template>
   <div class="category-detail">
-    <header class="header">
-      <el-button
-        text
-        @click="back"
-      >
-        {{ t('common.back') }}
-      </el-button>
-    </header>
-
-    <section class="hero">
-      <div class="icon-wrap">
-        <img
-          v-if="category?.iconAssetUrl"
-          :src="category.iconAssetUrl"
-          :alt="category.displayName"
-        >
-      </div>
-      <div class="title-info">
-        <h1>{{ category?.displayName ?? categoryId }}</h1>
-        <div class="meta-row">
-          <el-tag
-            v-if="category"
-            size="small"
-            type="info"
-            effect="plain"
-            round
-          >
-            {{ category.modName }}
-          </el-tag>
-        </div>
-      </div>
-    </section>
+    <DetailHeroCard
+      :title="category?.displayName ?? categoryId"
+      :subtitle="category?.modName ?? ''"
+      :asset-url="category?.iconAssetUrl"
+      :image-alt="category?.displayName ?? categoryId"
+    />
 
     <CategoryHeaderRows
       :dataset-id="datasetId"
@@ -180,29 +151,12 @@ onMounted(() => {
       </div>
     </div>
 
-    <el-alert
-      v-if="error"
-      :title="error"
-      type="error"
-      :closable="false"
-      show-icon
-    />
+    <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
 
-    <el-skeleton
-      v-if="loading && recipes.length === 0"
-      :rows="6"
-      animated
-    />
-    <el-empty
-      v-else-if="!loading && recipes.length === 0"
-      :description="t('category.noRecipes')"
-    />
+    <el-skeleton v-if="loading && recipes.length === 0" :rows="6" animated />
+    <el-empty v-else-if="!loading && recipes.length === 0" :description="t('category.noRecipes')" />
 
-    <div
-      v-else
-      v-loading="loading"
-      class="recipes"
-    >
+    <div v-else v-loading="loading" class="recipes">
       <RecipePanel
         v-for="r in recipes"
         :key="r.recipeId"
@@ -214,10 +168,7 @@ onMounted(() => {
       />
     </div>
 
-    <div
-      v-if="total > 0"
-      class="pager"
-    >
+    <div v-if="total > 0" class="pager">
       <el-pagination
         v-model:current-page="page"
         v-model:page-size="pageSize"
@@ -235,51 +186,6 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 14px;
-}
-.header {
-  display: flex;
-  align-items: center;
-}
-.hero {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.icon-wrap {
-  width: 56px;
-  height: 56px;
-  flex-shrink: 0;
-  background: var(--el-fill-color-light);
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px;
-}
-.icon-wrap img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  image-rendering: pixelated;
-}
-.title-info {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.title-info h1 {
-  margin: 0;
-  font-size: 20px;
-  line-height: 1.2;
-}
-.meta-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
 }
 .toolbar {
   display: flex;
