@@ -514,16 +514,18 @@ function lookupFluid(kind: 'recipe' | 'usage', fluid: FluidRef) {
           <template v-else-if="currentDetailKind() === 'small-ore'">
             <section class="detail-section-card">
               <h3>{{ t('gtResource.relatedItem') }}</h3>
-              <InteractiveItemRef
-                :item="(detail as GtSmallOreDetail).smallOreItem"
-                variant="row"
-                @pick="pickItem"
-                @lookup="lookupItem"
-              />
+              <div class="gt-related-ref-list">
+                <InteractiveItemRef
+                  :item="(detail as GtSmallOreDetail).smallOreItem"
+                  variant="row"
+                  @pick="pickItem"
+                  @lookup="lookupItem"
+                />
+              </div>
             </section>
             <section class="detail-section-card">
               <h3>{{ t('gtResource.chanceDrops') }}</h3>
-              <div class="variant-grid named">
+              <div class="gt-related-ref-grid">
                 <InteractiveItemRef
                   :item="(detail as GtSmallOreDetail).dustItem"
                   variant="row"
@@ -545,12 +547,14 @@ function lookupFluid(kind: 'recipe' | 'usage', fluid: FluidRef) {
           <template v-else-if="currentDetailKind() === 'underground-fluid'">
             <section class="detail-section-card">
               <h3>{{ t('gtResource.relatedFluid') }}</h3>
-              <InteractiveFluidRef
-                :fluid="(detail as GtUndergroundFluidDetail).fluid"
-                variant="row"
-                @pick="pickFluid"
-                @lookup="lookupFluid"
-              />
+              <div class="gt-related-ref-list">
+                <InteractiveFluidRef
+                  :fluid="(detail as GtUndergroundFluidDetail).fluid"
+                  variant="row"
+                  @pick="pickFluid"
+                  @lookup="lookupFluid"
+                />
+              </div>
             </section>
             <section class="detail-section-card underground-fluid-table">
               <div class="underground-fluid-head">
@@ -817,6 +821,9 @@ function lookupFluid(kind: 'recipe' | 'usage', fluid: FluidRef) {
   border-radius: 12px;
   background: var(--el-bg-color);
 }
+.detail-section-card {
+  background: var(--el-fill-color-blank);
+}
 .detail-hero-card {
   display: grid;
   grid-template-columns: 128px minmax(0, 1fr);
@@ -1013,6 +1020,15 @@ function lookupFluid(kind: 'recipe' | 'usage', fluid: FluidRef) {
 .detail-dimension-icon.compact img {
   width: 24px;
   height: 24px;
+}
+.gt-related-ref-list,
+.gt-related-ref-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+.gt-related-ref-grid {
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
 }
 .variant-grid {
   display: grid;

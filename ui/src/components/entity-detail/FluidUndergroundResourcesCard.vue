@@ -27,25 +27,16 @@ const emit = defineEmits<{
             v-if="resource.dimensionDisplay.iconAssetUrl"
             :src="resource.dimensionDisplay.iconAssetUrl"
             :alt="resource.dimensionDisplay.displayName"
-          >
+          />
           <span class="underground-dimension-name">
             {{ resource.dimensionDisplay.displayName }}
           </span>
         </span>
         <span class="underground-stats">
-          <el-tag
-            size="small"
-            effect="plain"
-            round
-          >
+          <el-tag size="small" effect="plain" round>
             {{ resource.minAmount }}-{{ resource.maxAmount }} L
           </el-tag>
-          <el-tag
-            size="small"
-            type="warning"
-            effect="plain"
-            round
-          >
+          <el-tag size="small" type="warning" effect="plain" round>
             {{ $t('common.probability') }} {{ formatChancePercent(resource.chance) }}
           </el-tag>
         </span>
@@ -62,13 +53,14 @@ const emit = defineEmits<{
 .underground-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) max-content;
-  gap: 8px;
+  gap: 10px;
   align-items: center;
   width: 100%;
+  min-height: 48px;
   border: 1px solid var(--el-border-color-lighter);
   border-radius: 8px;
   background: var(--el-fill-color-light);
-  padding: 8px 10px;
+  padding: 7px 10px;
   color: inherit;
   font: inherit;
   text-align: left;
@@ -76,7 +68,7 @@ const emit = defineEmits<{
 }
 .underground-row:hover {
   border-color: var(--el-color-primary-light-5);
-  background: var(--el-color-primary-light-9);
+  background: var(--el-fill-color);
 }
 .underground-dimension {
   min-width: 0;

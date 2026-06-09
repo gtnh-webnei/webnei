@@ -36,16 +36,6 @@ const emit = defineEmits<{
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
 }
-.container-list :deep(.item-ref--row) {
-  grid-template-columns: 24px minmax(0, 1fr) auto;
-  gap: 6px;
-  padding: 4px 6px;
-  border-radius: 4px;
-}
-.container-list :deep(.item-ref--row img) {
-  width: 22px;
-  height: 22px;
-}
 .container-amount {
   font-variant-numeric: tabular-nums;
   white-space: nowrap;

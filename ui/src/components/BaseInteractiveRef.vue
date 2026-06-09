@@ -56,16 +56,8 @@ function onAuxClick(e: MouseEvent) {
       @contextmenu="lookup('recipe', $event)"
       @auxclick="onAuxClick"
     >
-      <img
-        v-if="assetUrl"
-        :src="assetUrl"
-        :alt="displayName"
-        loading="lazy"
-      >
-      <span
-        v-if="variant === 'text' || variant === 'row'"
-        :class="nameClass"
-      >{{
+      <img v-if="assetUrl" :src="assetUrl" :alt="displayName" loading="lazy" />
+      <span v-if="variant === 'text' || variant === 'row'" :class="nameClass">{{
         displayName
       }}</span>
       <slot name="suffix" />
@@ -135,21 +127,24 @@ function onAuxClick(e: MouseEvent) {
 .fluid-ref--row {
   width: 100%;
   min-width: 0;
+  min-height: 48px;
   display: grid;
   grid-template-columns: 34px minmax(0, 1fr) auto;
-  gap: 8px;
+  gap: 10px;
   align-items: center;
-  padding: 6px;
+  padding: 7px 10px;
+  border: 1px solid var(--el-border-color-lighter);
   border-radius: 8px;
-  background: var(--el-fill-color-lighter);
+  background: var(--el-fill-color-light);
   text-align: left;
 }
 .item-ref--row:hover,
 .item-ref--row:focus-visible,
 .fluid-ref--row:hover,
 .fluid-ref--row:focus-visible {
-  background: var(--el-color-primary-light-9);
-  outline: 1px solid var(--el-color-primary-light-5);
+  border-color: var(--el-color-primary-light-5);
+  background: var(--el-fill-color);
+  outline: none;
 }
 .item-ref--row img,
 .item-ref--icon img,
