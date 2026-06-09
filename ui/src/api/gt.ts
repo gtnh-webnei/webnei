@@ -5,7 +5,6 @@ import type {
   GtOreVeinDetail,
   GtOreVeinSummary,
   GtResourceListResponse,
-  GtSection,
   GtSmallOreDetail,
   GtSmallOreSummary,
   GtUndergroundFluidDetail,
@@ -107,8 +106,4 @@ export async function getGtBartWorksOreDetail(
     `${gtBase(datasetId)}/bartworks-ores/${encodeURIComponent(entryId)}`,
   );
   return data;
-}
-
-export function sectionPath(section: GtSection): string {
-  return section;
 }
