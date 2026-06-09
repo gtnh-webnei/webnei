@@ -32,6 +32,7 @@ export interface MessageSchema {
     probability: string;
     pickHintSlot: string;
     pickHintCategory: string;
+    githubRepository: string;
   };
 
   // ---- Dataset ----

@@ -33,6 +33,7 @@ const zh_CN: MessageSchema = {
     probability: '概率',
     pickHintSlot: '左键 · 切换查看此物品 / 右键 · 合成来源 / 中键 · 用途去向',
     pickHintCategory: '左键 · 物品详情 / 右键 · 合成来源 / 中键 · 用途去向',
+    githubRepository: 'GitHub 仓库',
   },
 
   dataset: {

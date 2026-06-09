@@ -35,6 +35,7 @@ const en_US: MessageSchema = {
       'Left \u00b7 Switch view / Right \u00b7 Recipe source / Middle \u00b7 Usage target',
     pickHintCategory:
       'Left \u00b7 Item details / Right \u00b7 Recipe source / Middle \u00b7 Usage target',
+    githubRepository: 'GitHub repository',
   },
 
   dataset: {

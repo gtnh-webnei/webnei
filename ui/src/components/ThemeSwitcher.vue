@@ -2,59 +2,41 @@
 import { computed } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useI18n } from 'vue-i18n';
-import { Sunny, Moon, MagicStick } from '@element-plus/icons-vue';
-import { useThemeStore, type ThemeMode } from '@/stores/theme';
+import { Sunny, Moon } from '@element-plus/icons-vue';
+import { useThemeStore } from '@/stores/theme';
 
 const { t } = useI18n();
 const store = useThemeStore();
-const { mode } = storeToRefs(store);
+const { effective } = storeToRefs(store);
 
-const options = computed<{ value: ThemeMode; label: string; icon: typeof Sunny }[]>(() => [
-  { value: 'light', label: t('theme.light'), icon: Sunny },
-  { value: 'dark', label: t('theme.dark'), icon: Moon },
-  { value: 'auto', label: t('theme.auto'), icon: MagicStick },
-]);
+const isDark = computed(() => effective.value === 'dark');
+const title = computed(() => (isDark.value ? t('theme.light') : t('theme.dark')));
+
+function setDark(value: boolean | string | number) {
+  store.setMode(value ? 'dark' : 'light');
+}
 </script>
 
 <template>
-  <el-dropdown
-    trigger="click"
-    @command="(c: ThemeMode) => store.setMode(c)"
-  >
-    <el-button
-      circle
-      :title="options.find((o) => o.value === mode)?.label"
-    >
-      <el-icon>
-        <Sunny v-if="mode === 'light'" />
-        <Moon v-else-if="mode === 'dark'" />
-        <MagicStick v-else />
-      </el-icon>
-    </el-button>
-    <template #dropdown>
-      <el-dropdown-menu>
-        <el-dropdown-item
-          v-for="o in options"
-          :key="o.value"
-          :command="o.value"
-          :class="{ active: o.value === mode }"
-        >
-          <el-icon class="mr">
-            <component :is="o.icon" />
-          </el-icon>
-          {{ o.label }}
-        </el-dropdown-item>
-      </el-dropdown-menu>
-    </template>
-  </el-dropdown>
+  <el-switch
+    class="theme-switch"
+    size="large"
+    :model-value="isDark"
+    :title="title"
+    :aria-label="title"
+    :active-action-icon="Moon"
+    :inactive-action-icon="Sunny"
+    @change="setDark"
+  />
 </template>
 
 <style scoped>
-.mr {
-  margin-right: 6px;
+.theme-switch {
+  --el-switch-on-color: #2e333b;
+  --el-switch-off-color: #e9ecef;
+  --el-switch-border-color: var(--el-border-color);
 }
-:global(.el-dropdown-menu__item.active) {
-  color: var(--el-color-primary);
-  font-weight: 600;
+.theme-switch :deep(.el-switch__action) {
+  color: #3c3c43;
 }
 </style>
