@@ -1,6 +1,7 @@
 package moe.takochan.webnei.common;
 
 import java.util.List;
+import moe.takochan.webnei.model.dto.PageRequest;
 
 public record PageResponse<T>(List<T> items, int page, int size, long total) {
 

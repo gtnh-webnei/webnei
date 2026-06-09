@@ -1,0 +1,12 @@
+package moe.takochan.webnei.model.dto;
+
+public record SlotLayoutDto(
+        String role,
+        int slotIndex,
+        int x,
+        int y,
+        int width,
+        int height,
+        String slotStyle,
+        String placement) {
+}

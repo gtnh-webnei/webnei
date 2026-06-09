@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 
 import moe.takochan.webnei.config.AssetsProperties;
-import moe.takochan.webnei.dataset.DatasetSummary;
+import moe.takochan.webnei.model.dto.DatasetSummary;
 
 import org.springframework.stereotype.Component;
 

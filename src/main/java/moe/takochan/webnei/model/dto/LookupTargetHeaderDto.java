@@ -1,0 +1,13 @@
+package moe.takochan.webnei.model.dto;
+
+public record LookupTargetHeaderDto(
+        String targetType,
+        String targetId,
+        String displayName,
+        String assetUrl,
+        String modId,
+        String modName,
+        Boolean gaseous,
+        long recipeCount,
+        long usageCount) {
+}
