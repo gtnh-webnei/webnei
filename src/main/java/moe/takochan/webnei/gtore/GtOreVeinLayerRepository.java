@@ -14,7 +14,5 @@ public interface GtOreVeinLayerRepository
 
     List<GtOreVeinLayerEntity> findByDatasetIdAndBlockItemVariantId(String datasetId, String blockItemVariantId, Sort sort);
 
-    List<GtOreVeinLayerEntity> findByDatasetIdAndMaterialName(String datasetId, String materialName, Sort sort);
-
     List<GtOreVeinLayerEntity> findByDatasetIdAndMaterialNameIn(String datasetId, List<String> materialNames, Sort sort);
 }
