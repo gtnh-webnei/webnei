@@ -31,11 +31,6 @@ export interface ModSummary {
   enabled: boolean;
 }
 
-export interface DatasetDetail {
-  dataset: DatasetSummary;
-  mods: ModSummary[];
-}
-
 export interface ApiError {
   code: string;
   message: string;

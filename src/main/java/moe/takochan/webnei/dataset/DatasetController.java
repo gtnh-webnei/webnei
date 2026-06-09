@@ -31,11 +31,6 @@ public class DatasetController {
         return datasetService.list();
     }
 
-    @GetMapping("/{datasetId}")
-    public DatasetDetail detail(@PathVariable String datasetId) {
-        return datasetService.detail(datasetResolver.resolve(datasetId));
-    }
-
     @GetMapping("/{datasetId}/mods/page")
     public PageResponse<ModSummary> listModsPage(
             @PathVariable String datasetId,

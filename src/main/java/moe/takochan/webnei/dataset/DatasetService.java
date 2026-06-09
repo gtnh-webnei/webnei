@@ -58,14 +58,6 @@ public class DatasetService {
                 .orElseThrow(() -> new NotFoundException("Dataset not found: " + datasetId));
     }
 
-    public DatasetDetail detail(DatasetSummary dataset) {
-        List<ModSummary> mods = modRepo.findByDatasetIdOrderByNameAsc(dataset.datasetId())
-                .stream()
-                .map(this::toModSummary)
-                .toList();
-        return new DatasetDetail(dataset, mods);
-    }
-
     public PageResponse<ModSummary> listModsPage(
             DatasetSummary dataset, String query, String sortField, boolean descending, PageRequest page) {
         String datasetId = dataset.datasetId();
