@@ -77,6 +77,7 @@ public class ExtrasService {
                 .toList());
         List<FluidBlockEntry> blocks = blockRows.stream()
                 .map(e -> toBlock(e, blockRefs))
+                .filter(java.util.Objects::nonNull)
                 .toList();
 
         return new FluidExtras(
@@ -94,20 +95,22 @@ public class ExtrasService {
                 .toList();
         Map<String, FluidRef> fluids = entityRefService.fluidRefs(dataset, fluidIds);
         return fluidIds.stream()
-                .map(fluidVariantId -> new ItemRelatedFluidEntry(fluids.getOrDefault(fluidVariantId, entityRefService.fluidRef(dataset, fluidVariantId))))
+                .map(fluids::get)
+                .filter(java.util.Objects::nonNull)
+                .map(ItemRelatedFluidEntry::new)
                 .toList();
     }
 
     private List<FluidContainerEntry> toContainers(List<FluidContainerBrowserEntity> rows, Map<String, ItemRef> containerRefs) {
         return rows.stream()
                 .map(e -> toContainer(e, containerRefs))
+                .filter(java.util.Objects::nonNull)
                 .toList();
     }
 
     private FluidContainerEntry toContainer(FluidContainerBrowserEntity e, Map<String, ItemRef> containerRefs) {
-        return new FluidContainerEntry(
-                containerRefs.getOrDefault(e.getContainerItemVariantId(), fallbackItemRef(e.getContainerItemVariantId(), e.getContainerDisplayName())),
-                e.getAmount());
+        ItemRef container = containerRefs.get(e.getContainerItemVariantId());
+        return container == null ? null : new FluidContainerEntry(container, e.getAmount());
     }
 
     private AspectEntry toAspect(ItemAspectBrowserEntity e, DatasetSummary dataset) {
@@ -118,12 +121,8 @@ public class ExtrasService {
     }
 
     private FluidBlockEntry toBlock(FluidBlockBrowserEntity e, Map<String, ItemRef> blockRefs) {
-        return new FluidBlockEntry(
-                blockRefs.getOrDefault(e.getBlockItemVariantId(), fallbackItemRef(e.getBlockItemVariantId(), e.getBlockDisplayName())));
-    }
-
-    private static ItemRef fallbackItemRef(String itemVariantId, String displayName) {
-        return new ItemRef(itemVariantId, null, null, displayName, null, null);
+        ItemRef block = blockRefs.get(e.getBlockItemVariantId());
+        return block == null ? null : new FluidBlockEntry(block);
     }
 
     private static Specification<FluidContainerBrowserEntity> containerForItem(String datasetId, String itemVariantId) {

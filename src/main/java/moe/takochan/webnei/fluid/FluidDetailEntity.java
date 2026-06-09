@@ -10,9 +10,9 @@ import org.hibernate.annotations.Immutable;
 
 @Entity
 @Immutable
-@IdClass(FluidVariantBrowserEntity.FluidVariantId.class)
-@Table(name = "v_fluid_variant_browser")
-public class FluidVariantBrowserEntity {
+@IdClass(FluidDetailEntity.FluidDetailId.class)
+@Table(name = "v_fluid_detail")
+public class FluidDetailEntity {
 
     @Id
     @Column(name = "dataset_id", nullable = false)
@@ -28,6 +28,9 @@ public class FluidVariantBrowserEntity {
     @Column(name = "mod_id", nullable = false)
     private String modId;
 
+    @Column(name = "mod_name", nullable = false)
+    private String modName;
+
     @Column(name = "registry_name", nullable = false)
     private String registryName;
 
@@ -37,11 +40,8 @@ public class FluidVariantBrowserEntity {
     @Column(name = "display_name", nullable = false)
     private String displayName;
 
-    @Column(name = "runtime_fluid_id", nullable = false)
-    private int runtimeFluidId;
-
     @Column(nullable = false)
-    private int luminosity;
+    private boolean gaseous;
 
     @Column(nullable = false)
     private int density;
@@ -53,10 +53,10 @@ public class FluidVariantBrowserEntity {
     private int viscosity;
 
     @Column(nullable = false)
-    private boolean gaseous;
+    private int luminosity;
 
-    @Column(name = "nbt_hash", nullable = false)
-    private String nbtHash;
+    @Column(name = "runtime_fluid_id", nullable = false)
+    private int runtimeFluidId;
 
     @Column(name = "nbt_text", nullable = false)
     private String nbtText;
@@ -64,52 +64,39 @@ public class FluidVariantBrowserEntity {
     @Column(name = "chemical_expression")
     private String chemicalExpression;
 
-    @Column(name = "fluid_search_text")
-    private String fluidSearchText;
-
-    @Column(name = "variant_search_text")
-    private String variantSearchText;
-
-    @Column(name = "asset_id", nullable = false)
-    private String assetId;
-
-    @Column(name = "asset_path")
-    private String assetPath;
-
-    protected FluidVariantBrowserEntity() {}
+    protected FluidDetailEntity() {}
 
     public String getDatasetId() { return datasetId; }
     public String getFluidVariantId() { return fluidVariantId; }
     public String getFluidId() { return fluidId; }
     public String getModId() { return modId; }
+    public String getModName() { return modName; }
     public String getRegistryName() { return registryName; }
     public String getUnlocalizedName() { return unlocalizedName; }
     public String getDisplayName() { return displayName; }
-    public int getRuntimeFluidId() { return runtimeFluidId; }
-    public int getLuminosity() { return luminosity; }
+    public boolean isGaseous() { return gaseous; }
     public int getDensity() { return density; }
     public int getTemperature() { return temperature; }
     public int getViscosity() { return viscosity; }
-    public boolean isGaseous() { return gaseous; }
-    public String getNbtHash() { return nbtHash; }
+    public int getLuminosity() { return luminosity; }
+    public int getRuntimeFluidId() { return runtimeFluidId; }
     public String getNbtText() { return nbtText; }
     public String getChemicalExpression() { return chemicalExpression; }
-    public String getFluidSearchText() { return fluidSearchText; }
-    public String getVariantSearchText() { return variantSearchText; }
-    public String getAssetId() { return assetId; }
-    public String getAssetPath() { return assetPath; }
 
-    public static class FluidVariantId {
+    public static class FluidDetailId {
         private String datasetId;
         private String fluidVariantId;
 
-        public FluidVariantId() {}
-        public FluidVariantId(String datasetId, String fluidVariantId) { this.datasetId = datasetId; this.fluidVariantId = fluidVariantId; }
+        public FluidDetailId() {}
+        public FluidDetailId(String datasetId, String fluidVariantId) {
+            this.datasetId = datasetId;
+            this.fluidVariantId = fluidVariantId;
+        }
 
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (!(o instanceof FluidVariantId other)) return false;
+            if (!(o instanceof FluidDetailId other)) return false;
             return datasetId.equals(other.datasetId) && fluidVariantId.equals(other.fluidVariantId);
         }
 

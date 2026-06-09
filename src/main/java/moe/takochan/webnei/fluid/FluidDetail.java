@@ -20,7 +20,6 @@ public record FluidDetail(
         int runtimeFluidId,
         String nbtText,
         String chemicalExpression,
-        String assetUrl,
         List<FluidUndergroundResource> undergroundResources,
         List<FluidContainerEntry> containers,
         List<FluidBlockEntry> blocks) {

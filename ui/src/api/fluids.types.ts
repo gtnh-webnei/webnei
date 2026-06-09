@@ -25,8 +25,18 @@ export interface FluidUndergroundResource {
   maxAmount: number;
 }
 
-export interface FluidDetail extends Omit<FluidSummary, 'fluidVariantId'> {
+export interface FluidDetail {
+  fluidId: string;
+  modId: string;
+  modName: string;
+  registryName: string;
   unlocalizedName: string;
+  displayName: string;
+  gaseous: boolean;
+  density: number;
+  temperature: number;
+  viscosity: number;
+  luminosity: number;
   runtimeFluidId: number;
   chemicalExpression: string | null;
   nbtText: string | null;

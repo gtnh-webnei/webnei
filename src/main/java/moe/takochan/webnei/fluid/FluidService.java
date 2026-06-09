@@ -3,10 +3,14 @@ package moe.takochan.webnei.fluid;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import jakarta.persistence.criteria.Predicate;
 
 import moe.takochan.webnei.asset.AssetUrlBuilder;
+import moe.takochan.webnei.common.EntityRefService;
+import moe.takochan.webnei.common.ItemRef;
 import moe.takochan.webnei.common.ModOptionDto;
 import moe.takochan.webnei.common.NotFoundException;
 import moe.takochan.webnei.common.PageRequest;
@@ -17,8 +21,6 @@ import moe.takochan.webnei.extras.FluidExtras;
 import moe.takochan.webnei.gtore.GtDimensionRef;
 import moe.takochan.webnei.gtore.GtUndergroundFluidBrowserEntity;
 import moe.takochan.webnei.gtore.GtUndergroundFluidBrowserRepository;
-import moe.takochan.webnei.item.ItemVariantBrowserEntity;
-import moe.takochan.webnei.item.ItemVariantRepository;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,35 +31,42 @@ import org.springframework.stereotype.Service;
 @Service
 public class FluidService {
 
-    private final FluidVariantRepository fluidRepo;
+    private final FluidListRepository fluidListRepo;
+    private final FluidSearchDocumentRepository searchRepo;
+    private final FluidDetailRepository fluidDetailRepo;
     private final FluidModOptionRepository modOptionRepo;
     private final GtUndergroundFluidBrowserRepository undergroundFluidRepo;
-    private final ItemVariantRepository itemVariantRepo;
     private final AssetUrlBuilder assetUrlBuilder;
     private final ExtrasService extrasService;
+    private final EntityRefService entityRefService;
 
-    public FluidService(FluidVariantRepository fluidRepo,
+    public FluidService(FluidListRepository fluidListRepo,
+                        FluidSearchDocumentRepository searchRepo,
+                        FluidDetailRepository fluidDetailRepo,
                         FluidModOptionRepository modOptionRepo,
                         GtUndergroundFluidBrowserRepository undergroundFluidRepo,
-                        ItemVariantRepository itemVariantRepo,
                         AssetUrlBuilder assetUrlBuilder,
-                        ExtrasService extrasService) {
-        this.fluidRepo = fluidRepo;
+                        ExtrasService extrasService,
+                        EntityRefService entityRefService) {
+        this.fluidListRepo = fluidListRepo;
+        this.searchRepo = searchRepo;
+        this.fluidDetailRepo = fluidDetailRepo;
         this.modOptionRepo = modOptionRepo;
         this.undergroundFluidRepo = undergroundFluidRepo;
-        this.itemVariantRepo = itemVariantRepo;
         this.assetUrlBuilder = assetUrlBuilder;
         this.extrasService = extrasService;
+        this.entityRefService = entityRefService;
     }
 
     public PageResponse<FluidSummary> list(DatasetSummary dataset, FluidQuery query, PageRequest page) {
+        if (query.q() != null && !query.q().isBlank()) {
+            return search(dataset, query, page);
+        }
+
         String datasetId = dataset.datasetId();
-        Specification<FluidVariantBrowserEntity> spec = hasDatasetId(datasetId);
+        Specification<FluidListEntity> spec = hasDatasetId(datasetId);
         if (query.modId() != null && !query.modId().isBlank()) {
             spec = spec.and(modIdEq(query.modId()));
-        }
-        if (query.q() != null && !query.q().isBlank()) {
-            spec = spec.and(textSearch(query.q()));
         }
 
         int pageIndex = page != null ? page.page() : 0;
@@ -68,25 +77,48 @@ public class FluidService {
                         .and(Sort.by("displayName").ascending())
                         .and(Sort.by("fluidVariantId").ascending()));
 
-        Page<FluidVariantBrowserEntity> result = fluidRepo.findAll(spec, pageable);
-        Map<String, String> modNames = modOptionRepo.findByDatasetIdOrderByNameAscModIdAsc(datasetId)
-                .stream()
-                .collect(java.util.stream.Collectors.toMap(FluidModOptionEntity::getModId, FluidModOptionEntity::getName));
+        Page<FluidListEntity> result = fluidListRepo.findAll(spec, pageable);
         List<FluidSummary> items = result.stream()
-                .map(e -> toSummary(e, dataset, modNames))
+                .map(e -> toSummary(e, dataset))
+                .toList();
+        return new PageResponse<>(items, pageIndex, pageSize, result.getTotalElements());
+    }
+
+    private PageResponse<FluidSummary> search(DatasetSummary dataset, FluidQuery query, PageRequest page) {
+        String datasetId = dataset.datasetId();
+        int pageIndex = page != null ? page.page() : 0;
+        int pageSize = page != null ? page.size() : 100;
+        Pageable pageable = org.springframework.data.domain.PageRequest.of(
+                pageIndex, pageSize,
+                Sort.by("modId").ascending()
+                        .and(Sort.by("displayName").ascending())
+                        .and(Sort.by("fluidVariantId").ascending()));
+        Page<FluidSearchDocumentEntity> result = searchRepo.findAll(searchSpec(datasetId, query), pageable);
+        List<String> ids = result.stream()
+                .map(FluidSearchDocumentEntity::getFluidVariantId)
+                .toList();
+        Map<String, FluidListEntity> rows = fluidListRepo.findAllById(ids.stream()
+                        .map(id -> new FluidListEntity.FluidListId(datasetId, id))
+                        .toList())
+                .stream()
+                .collect(Collectors.toMap(FluidListEntity::getFluidVariantId, Function.identity()));
+        List<FluidSummary> items = ids.stream()
+                .map(rows::get)
+                .filter(e -> e != null)
+                .map(e -> toSummary(e, dataset))
                 .toList();
         return new PageResponse<>(items, pageIndex, pageSize, result.getTotalElements());
     }
 
     public FluidDetail detail(DatasetSummary dataset, String fluidVariantId) {
         String datasetId = dataset.datasetId();
-        FluidVariantBrowserEntity e = fluidRepo.findById(new FluidVariantBrowserEntity.FluidVariantId(datasetId, fluidVariantId))
+        FluidDetailEntity e = fluidDetailRepo.findById(new FluidDetailEntity.FluidDetailId(datasetId, fluidVariantId))
                 .orElseThrow(() -> new NotFoundException("Fluid variant not found: " + fluidVariantId));
         FluidExtras extras = extrasService.fluidExtras(dataset, fluidVariantId);
         return new FluidDetail(
                 e.getFluidId(),
                 e.getModId(),
-                modName(datasetId, e.getModId()),
+                e.getModName(),
                 e.getRegistryName(),
                 e.getUnlocalizedName(),
                 e.getDisplayName(),
@@ -98,7 +130,6 @@ public class FluidService {
                 e.getRuntimeFluidId(),
                 e.getNbtText(),
                 e.getChemicalExpression(),
-                assetUrlBuilder.build(dataset, e.getAssetPath(), null),
                 undergroundResources(dataset, e.getFluidId(), e.getRegistryName()),
                 extras.containers(),
                 extras.blocks());
@@ -111,18 +142,12 @@ public class FluidService {
                 .toList();
     }
 
-    private FluidSummary toSummary(FluidVariantBrowserEntity e, DatasetSummary dataset, Map<String, String> modNames) {
+    private FluidSummary toSummary(FluidListEntity e, DatasetSummary dataset) {
         return new FluidSummary(
-                e.getFluidVariantId(), e.getFluidId(), e.getModId(), modNames.getOrDefault(e.getModId(), e.getModId()),
+                e.getFluidVariantId(), e.getFluidId(), e.getModId(), e.getModName(),
                 e.getRegistryName(), e.getDisplayName(), e.isGaseous(),
                 e.getDensity(), e.getTemperature(), e.getViscosity(), e.getLuminosity(),
                 assetUrlBuilder.build(dataset, e.getAssetPath(), null));
-    }
-
-    private String modName(String datasetId, String modId) {
-        return modOptionRepo.findByDatasetIdAndModId(datasetId, modId)
-                .map(FluidModOptionEntity::getName)
-                .orElse(modId);
     }
 
     private List<FluidUndergroundResource> undergroundResources(
@@ -145,8 +170,8 @@ public class FluidService {
                 .values()
                 .stream()
                 .toList();
-        Map<String, ItemVariantBrowserEntity> dimensionIcons = loadItemVariants(
-                datasetId,
+        Map<String, ItemRef> dimensionIcons = entityRefService.itemRefs(
+                dataset,
                 rows.stream()
                         .map(GtUndergroundFluidBrowserEntity::getDimensionIconItemVariantId)
                         .filter(id -> id != null && !id.isBlank())
@@ -166,31 +191,23 @@ public class FluidService {
     private GtDimensionRef dimensionRef(
             DatasetSummary dataset,
             GtUndergroundFluidBrowserEntity fluid,
-            Map<String, ItemVariantBrowserEntity> dimensionIcons) {
+            Map<String, ItemRef> dimensionIcons) {
         return new GtDimensionRef(
                 fluid.getDimension(),
                 fluid.getDimensionFullName() != null ? fluid.getDimensionFullName() : fluid.getDimension(),
                 fluid.getDimensionDisplayName() != null ? fluid.getDimensionDisplayName() : fluid.getDimension(),
                 fluid.getDimensionDisplayAbbr() != null ? fluid.getDimensionDisplayAbbr() : fluid.getDimension(),
                 fluid.getDimensionIconItemVariantId(),
-                itemAssetUrl(dataset, fluid.getDimensionIconItemVariantId(), dimensionIcons),
+                itemAssetUrl(fluid.getDimensionIconItemVariantId(), dimensionIcons),
                 fluid.getDimensionSortOrder() == null ? Integer.MAX_VALUE : fluid.getDimensionSortOrder());
     }
 
-    private Map<String, ItemVariantBrowserEntity> loadItemVariants(String datasetId, List<String> itemVariantIds) {
-        if (itemVariantIds.isEmpty()) return Map.of();
-        return itemVariantRepo.findByDatasetIdAndItemVariantIdIn(datasetId, itemVariantIds)
-                .stream()
-                .collect(java.util.stream.Collectors.toMap(ItemVariantBrowserEntity::getItemVariantId, item -> item));
-    }
-
     private String itemAssetUrl(
-            DatasetSummary dataset,
             String itemVariantId,
-            Map<String, ItemVariantBrowserEntity> itemVariants) {
+            Map<String, ItemRef> itemVariants) {
         if (itemVariantId == null || itemVariantId.isBlank()) return null;
-        ItemVariantBrowserEntity item = itemVariants.get(itemVariantId);
-        return item == null ? null : assetUrlBuilder.build(dataset, item.getAssetPath(), item.getAssetSha256());
+        ItemRef item = itemVariants.get(itemVariantId);
+        return item == null ? null : item.assetUrl();
     }
 
     private static String stripNamespace(String value) {
@@ -199,22 +216,23 @@ public class FluidService {
         return idx >= 0 ? value.substring(idx + 1) : value;
     }
 
-    private static Specification<FluidVariantBrowserEntity> hasDatasetId(String datasetId) {
+    private static Specification<FluidListEntity> hasDatasetId(String datasetId) {
         return (root, query, cb) -> cb.equal(root.get("datasetId"), datasetId);
     }
 
-    private static Specification<FluidVariantBrowserEntity> modIdEq(String modId) {
+    private static Specification<FluidListEntity> modIdEq(String modId) {
         return (root, query, cb) -> cb.equal(root.get("modId"), modId);
     }
 
-    private static Specification<FluidVariantBrowserEntity> textSearch(String q) {
-        String pattern = "%" + q.trim().toLowerCase() + "%";
+    private static Specification<FluidSearchDocumentEntity> searchSpec(String datasetId, FluidQuery query) {
         return (root, cq, cb) -> {
-            Predicate[] conditions = {
-                    cb.like(root.get("fluidSearchText"), pattern),
-                    cb.like(root.get("variantSearchText"), pattern)
-            };
-            return cb.or(conditions);
+            var predicates = new ArrayList<Predicate>();
+            predicates.add(cb.equal(root.get("datasetId"), datasetId));
+            predicates.add(cb.like(root.get("searchText"), "%" + query.q().trim().toLowerCase() + "%"));
+            if (query.modId() != null && !query.modId().isBlank()) {
+                predicates.add(cb.equal(root.get("modId"), query.modId()));
+            }
+            return cb.and(predicates.toArray(Predicate[]::new));
         };
     }
 }

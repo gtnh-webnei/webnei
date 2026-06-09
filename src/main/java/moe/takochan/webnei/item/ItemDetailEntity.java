@@ -10,9 +10,9 @@ import org.hibernate.annotations.Immutable;
 
 @Entity
 @Immutable
-@IdClass(ItemVariantBrowserEntity.ItemVariantId.class)
-@Table(name = "v_item_variant_browser")
-public class ItemVariantBrowserEntity {
+@IdClass(ItemDetailEntity.ItemDetailId.class)
+@Table(name = "v_item_detail")
+public class ItemDetailEntity {
 
     @Id
     @Column(name = "dataset_id", nullable = false)
@@ -28,6 +28,9 @@ public class ItemVariantBrowserEntity {
     @Column(name = "mod_id", nullable = false)
     private String modId;
 
+    @Column(name = "mod_name", nullable = false)
+    private String modName;
+
     @Column(name = "registry_name", nullable = false)
     private String registryName;
 
@@ -40,17 +43,14 @@ public class ItemVariantBrowserEntity {
     @Column(name = "max_damage", nullable = false)
     private int maxDamage;
 
-    @Column(name = "runtime_item_id", nullable = false)
-    private int runtimeItemId;
-
     @Column(nullable = false)
     private int damage;
 
-    @Column(name = "nbt_hash", nullable = false)
-    private String nbtHash;
-
     @Column(name = "nbt_text", nullable = false)
     private String nbtText;
+
+    @Column(name = "chemical_expression")
+    private String chemicalExpression;
 
     @Column(name = "display_name", nullable = false)
     private String displayName;
@@ -58,66 +58,37 @@ public class ItemVariantBrowserEntity {
     @Column(name = "tooltip_text", nullable = false)
     private String tooltipText;
 
-    @Column(name = "chemical_expression")
-    private String chemicalExpression;
-
-    @Column(name = "item_search_text")
-    private String itemSearchText;
-
-    @Column(name = "variant_search_text")
-    private String variantSearchText;
-
-    @Column(name = "asset_id", nullable = false)
-    private String assetId;
-
-    @Column(name = "asset_path")
-    private String assetPath;
-
-    @Column(name = "asset_sha256")
-    private String assetSha256;
-
-    @Column(name = "asset_width")
-    private Integer assetWidth;
-
-    @Column(name = "asset_height")
-    private Integer assetHeight;
-
-    protected ItemVariantBrowserEntity() {}
+    protected ItemDetailEntity() {}
 
     public String getDatasetId() { return datasetId; }
     public String getItemVariantId() { return itemVariantId; }
     public String getItemId() { return itemId; }
     public String getModId() { return modId; }
+    public String getModName() { return modName; }
     public String getRegistryName() { return registryName; }
     public String getUnlocalizedName() { return unlocalizedName; }
     public int getMaxStackSize() { return maxStackSize; }
     public int getMaxDamage() { return maxDamage; }
-    public int getRuntimeItemId() { return runtimeItemId; }
     public int getDamage() { return damage; }
-    public String getNbtHash() { return nbtHash; }
     public String getNbtText() { return nbtText; }
+    public String getChemicalExpression() { return chemicalExpression; }
     public String getDisplayName() { return displayName; }
     public String getTooltipText() { return tooltipText; }
-    public String getChemicalExpression() { return chemicalExpression; }
-    public String getItemSearchText() { return itemSearchText; }
-    public String getVariantSearchText() { return variantSearchText; }
-    public String getAssetId() { return assetId; }
-    public String getAssetPath() { return assetPath; }
-    public String getAssetSha256() { return assetSha256; }
-    public Integer getAssetWidth() { return assetWidth; }
-    public Integer getAssetHeight() { return assetHeight; }
 
-    public static class ItemVariantId {
+    public static class ItemDetailId {
         private String datasetId;
         private String itemVariantId;
 
-        public ItemVariantId() {}
-        public ItemVariantId(String datasetId, String itemVariantId) { this.datasetId = datasetId; this.itemVariantId = itemVariantId; }
+        public ItemDetailId() {}
+        public ItemDetailId(String datasetId, String itemVariantId) {
+            this.datasetId = datasetId;
+            this.itemVariantId = itemVariantId;
+        }
 
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (!(o instanceof ItemVariantId other)) return false;
+            if (!(o instanceof ItemDetailId other)) return false;
             return datasetId.equals(other.datasetId) && itemVariantId.equals(other.itemVariantId);
         }
 

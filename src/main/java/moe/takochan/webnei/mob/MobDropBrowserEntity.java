@@ -32,15 +32,6 @@ public class MobDropBrowserEntity {
     @Column(name = "item_variant_id", nullable = false)
     private String itemVariantId;
 
-    @Column(name = "display_name")
-    private String displayName;
-
-    @Column(name = "asset_path")
-    private String assetPath;
-
-    @Column(name = "asset_sha256")
-    private String assetSha256;
-
     @Column(name = "stack_size", nullable = false)
     private int stackSize;
 
@@ -60,9 +51,6 @@ public class MobDropBrowserEntity {
     public int getListIndex() { return listIndex; }
     public String getDropType() { return dropType; }
     public String getItemVariantId() { return itemVariantId; }
-    public String getDisplayName() { return displayName; }
-    public String getAssetPath() { return assetPath; }
-    public String getAssetSha256() { return assetSha256; }
     public int getStackSize() { return stackSize; }
     public double getProbability() { return probability; }
     public boolean isLootable() { return lootable; }

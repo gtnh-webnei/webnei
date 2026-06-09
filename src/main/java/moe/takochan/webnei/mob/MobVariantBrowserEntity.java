@@ -28,6 +28,9 @@ public class MobVariantBrowserEntity {
     @Column(name = "mod_id", nullable = false)
     private String modId;
 
+    @Column(name = "mod_name", nullable = false)
+    private String modName;
+
     @Column(name = "entity_name", nullable = false)
     private String entityName;
 
@@ -70,6 +73,7 @@ public class MobVariantBrowserEntity {
     public String getMobVariantId() { return mobVariantId; }
     public String getMobId() { return mobId; }
     public String getModId() { return modId; }
+    public String getModName() { return modName; }
     public String getEntityName() { return entityName; }
     public String getDisplayName() { return displayName; }
     public double getWidth() { return width; }

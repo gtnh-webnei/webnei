@@ -26,27 +26,11 @@ public class FluidBlockBrowserEntity {
     @Column(name = "block_item_variant_id", nullable = false)
     private String blockItemVariantId;
 
-    @Column(name = "block_display_name")
-    private String blockDisplayName;
-
-    @Column(name = "block_asset_path")
-    private String blockAssetPath;
-
-    @Column(name = "block_asset_sha256")
-    private String blockAssetSha256;
-
-    @Column(name = "block_tooltip_text")
-    private String blockTooltipText;
-
     protected FluidBlockBrowserEntity() {}
 
     public String getDatasetId() { return datasetId; }
     public String getFluidVariantId() { return fluidVariantId; }
     public String getBlockItemVariantId() { return blockItemVariantId; }
-    public String getBlockDisplayName() { return blockDisplayName; }
-    public String getBlockAssetPath() { return blockAssetPath; }
-    public String getBlockAssetSha256() { return blockAssetSha256; }
-    public String getBlockTooltipText() { return blockTooltipText; }
 
     public static class FluidBlockId {
         private String datasetId;

@@ -35,9 +35,6 @@ export interface ItemDetail {
   displayName: string;
   tooltipText: string;
   chemicalExpression: string | null;
-  assetUrl: string | null;
-  assetWidth: number | null;
-  assetHeight: number | null;
   worldGeneration: ItemWorldGenerationRef[];
   oreDictNames: string[];
   relatedFluids: ItemRelatedFluidEntry[];

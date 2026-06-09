@@ -3,11 +3,9 @@ package moe.takochan.webnei.item;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import jakarta.persistence.criteria.JoinType;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Root;
-import jakarta.persistence.criteria.Subquery;
 
 import moe.takochan.webnei.asset.AssetUrlBuilder;
 import moe.takochan.webnei.common.ModOptionDto;
@@ -28,53 +26,81 @@ import org.springframework.stereotype.Service;
 @Service
 public class ItemService {
 
-    private final ItemVariantRepository itemRepo;
+    private final ItemListRepository itemListRepo;
+    private final ItemSearchDocumentRepository searchRepo;
+    private final ItemDetailRepository itemDetailRepo;
     private final ItemModOptionRepository modOptionRepo;
-    private final NeiPanelEntryRepository panelRepo;
     private final AssetUrlBuilder assetUrlBuilder;
     private final WorldGenerationService worldGenerationService;
     private final ExtrasService extrasService;
 
-    public ItemService(ItemVariantRepository itemRepo,
+    public ItemService(ItemListRepository itemListRepo,
+                       ItemSearchDocumentRepository searchRepo,
+                       ItemDetailRepository itemDetailRepo,
                        ItemModOptionRepository modOptionRepo,
-                       NeiPanelEntryRepository panelRepo, AssetUrlBuilder assetUrlBuilder,
+                       AssetUrlBuilder assetUrlBuilder,
                        WorldGenerationService worldGenerationService,
                        ExtrasService extrasService) {
-        this.itemRepo = itemRepo;
+        this.itemListRepo = itemListRepo;
+        this.searchRepo = searchRepo;
+        this.itemDetailRepo = itemDetailRepo;
         this.modOptionRepo = modOptionRepo;
-        this.panelRepo = panelRepo;
         this.assetUrlBuilder = assetUrlBuilder;
         this.worldGenerationService = worldGenerationService;
         this.extrasService = extrasService;
     }
 
     public PageResponse<NeiPanelEntryDto> listPanel(DatasetSummary dataset, ItemQuery query, PageRequest page) {
+        if (query.q() != null && !query.q().isBlank()) {
+            return searchPanel(dataset, query, page);
+        }
+
         String datasetId = dataset.datasetId();
-        Specification<NeiPanelEntryEntity> spec = panelSpec(datasetId, query);
+        Specification<ItemListEntity> spec = panelSpec(datasetId, query);
         int pageIndex = page != null ? page.page() : 0;
         int pageSize = page != null ? page.size() : 100;
         Pageable pageable = org.springframework.data.domain.PageRequest.of(
                 pageIndex, pageSize, Sort.by("panelIndex").ascending());
 
-        Page<NeiPanelEntryEntity> result = panelRepo.findAll(spec, pageable);
-        Map<String, String> modNames = modOptionRepo.findByDatasetIdOrderByNameAscModIdAsc(datasetId)
-                .stream()
-                .collect(java.util.stream.Collectors.toMap(ItemModOptionEntity::getModId, ItemModOptionEntity::getName));
+        Page<ItemListEntity> result = itemListRepo.findAll(spec, pageable);
         List<NeiPanelEntryDto> items = result.stream()
-                .map(e -> toDto(e, dataset, modNames))
+                .map(e -> toDto(e, dataset))
+                .toList();
+        return new PageResponse<>(items, pageIndex, pageSize, result.getTotalElements());
+    }
+
+    private PageResponse<NeiPanelEntryDto> searchPanel(DatasetSummary dataset, ItemQuery query, PageRequest page) {
+        String datasetId = dataset.datasetId();
+        int pageIndex = page != null ? page.page() : 0;
+        int pageSize = page != null ? page.size() : 100;
+        Pageable pageable = org.springframework.data.domain.PageRequest.of(
+                pageIndex, pageSize, Sort.by("panelIndex").ascending());
+        Page<ItemSearchDocumentEntity> result = searchRepo.findAll(searchSpec(datasetId, query), pageable);
+        List<String> ids = result.stream()
+                .map(ItemSearchDocumentEntity::getItemVariantId)
+                .toList();
+        Map<String, ItemListEntity> rows = itemListRepo.findAllById(ids.stream()
+                        .map(id -> new ItemListEntity.ItemListId(datasetId, id))
+                        .toList())
+                .stream()
+                .collect(Collectors.toMap(ItemListEntity::getItemVariantId, Function.identity()));
+        List<NeiPanelEntryDto> items = ids.stream()
+                .map(rows::get)
+                .filter(e -> e != null)
+                .map(e -> toDto(e, dataset))
                 .toList();
         return new PageResponse<>(items, pageIndex, pageSize, result.getTotalElements());
     }
 
     public ItemDetailDto detail(DatasetSummary dataset, String itemVariantId) {
         String datasetId = dataset.datasetId();
-        ItemVariantBrowserEntity e = itemRepo.findById(new ItemVariantBrowserEntity.ItemVariantId(datasetId, itemVariantId))
+        ItemDetailEntity e = itemDetailRepo.findById(new ItemDetailEntity.ItemDetailId(datasetId, itemVariantId))
                 .orElseThrow(() -> new NotFoundException("Item variant not found: " + itemVariantId));
         ItemExtras extras = extrasService.itemExtras(dataset, itemVariantId);
         return new ItemDetailDto(
                 e.getItemId(),
                 e.getModId(),
-                modName(datasetId, e.getModId()),
+                e.getModName(),
                 e.getRegistryName(),
                 e.getUnlocalizedName(),
                 e.getMaxStackSize(),
@@ -84,9 +110,6 @@ public class ItemService {
                 e.getChemicalExpression(),
                 e.getDisplayName(),
                 e.getTooltipText(),
-                assetUrlBuilder.build(dataset, e.getAssetPath(), e.getAssetSha256()),
-                e.getAssetWidth(),
-                e.getAssetHeight(),
                 worldGenerationService.forItem(dataset, itemVariantId),
                 extras.oreDictNames(),
                 extras.relatedFluids(),
@@ -100,61 +123,41 @@ public class ItemService {
                 .toList();
     }
 
-    private static Specification<NeiPanelEntryEntity> panelSpec(String datasetId, ItemQuery query) {
+    private static Specification<ItemListEntity> panelSpec(String datasetId, ItemQuery query) {
         return (root, cq, cb) -> {
             var predicates = new ArrayList<Predicate>();
             predicates.add(cb.equal(root.get("datasetId"), datasetId));
-            var iv = root.join("itemVariant", JoinType.INNER);
 
             if (query.modId() != null && !query.modId().isBlank()) {
-                predicates.add(cb.equal(iv.get("modId"), query.modId()));
-            }
-            if (query.q() != null && !query.q().isBlank()) {
-                String pattern = "%" + query.q().trim().toLowerCase() + "%";
-
-                Subquery<Integer> variantMatch = cq.subquery(Integer.class);
-                Root<ItemVariantSearchEntity> variant = variantMatch.from(ItemVariantSearchEntity.class);
-                variantMatch.select(cb.literal(1));
-                variantMatch.where(
-                        cb.equal(variant.get("datasetId"), root.get("datasetId")),
-                        cb.equal(variant.get("itemVariantId"), root.get("itemVariantId")),
-                        cb.like(variant.get("searchText"), pattern));
-
-                Subquery<Integer> itemMatch = cq.subquery(Integer.class);
-                Root<ItemVariantSearchEntity> itemVariant = itemMatch.from(ItemVariantSearchEntity.class);
-                Root<ItemSearchEntity> item = itemMatch.from(ItemSearchEntity.class);
-                itemMatch.select(cb.literal(1));
-                itemMatch.where(
-                        cb.equal(itemVariant.get("datasetId"), root.get("datasetId")),
-                        cb.equal(itemVariant.get("itemVariantId"), root.get("itemVariantId")),
-                        cb.equal(item.get("datasetId"), itemVariant.get("datasetId")),
-                        cb.equal(item.get("itemId"), itemVariant.get("itemId")),
-                        cb.like(item.get("searchText"), pattern));
-
-                predicates.add(cb.or(cb.exists(variantMatch), cb.exists(itemMatch)));
+                predicates.add(cb.equal(root.get("modId"), query.modId()));
             }
 
             return cb.and(predicates.toArray(Predicate[]::new));
         };
     }
 
-    private NeiPanelEntryDto toDto(NeiPanelEntryEntity e, DatasetSummary dataset, Map<String, String> modNames) {
-        ItemVariantBrowserEntity iv = e.getItemVariant();
-        return new NeiPanelEntryDto(
-                e.getItemVariantId(),
-                iv.getItemId(),
-                iv.getModId(),
-                modNames.getOrDefault(iv.getModId(), iv.getModId()),
-                iv.getRegistryName(),
-                iv.getDamage(),
-                iv.getDisplayName(),
-                assetUrlBuilder.build(dataset, iv.getAssetPath(), iv.getAssetSha256()),
-                e.getPanelIndex());
+    private static Specification<ItemSearchDocumentEntity> searchSpec(String datasetId, ItemQuery query) {
+        return (root, cq, cb) -> {
+            var predicates = new ArrayList<Predicate>();
+            predicates.add(cb.equal(root.get("datasetId"), datasetId));
+            predicates.add(cb.like(root.get("searchText"), "%" + query.q().trim().toLowerCase() + "%"));
+            if (query.modId() != null && !query.modId().isBlank()) {
+                predicates.add(cb.equal(root.get("modId"), query.modId()));
+            }
+            return cb.and(predicates.toArray(Predicate[]::new));
+        };
     }
 
-    private String modName(String datasetId, String modId) {
-        return modOptionRepo.findByDatasetIdAndModId(datasetId, modId)
-                .map(ItemModOptionEntity::getName)
-                .orElse(modId);
+    private NeiPanelEntryDto toDto(ItemListEntity e, DatasetSummary dataset) {
+        return new NeiPanelEntryDto(
+                e.getItemVariantId(),
+                e.getItemId(),
+                e.getModId(),
+                e.getModName(),
+                e.getRegistryName(),
+                e.getDamage(),
+                e.getDisplayName(),
+                assetUrlBuilder.build(dataset, e.getAssetPath(), e.getAssetSha256()),
+                e.getPanelIndex());
     }
 }

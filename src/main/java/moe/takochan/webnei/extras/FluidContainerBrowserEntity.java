@@ -34,27 +34,6 @@ public class FluidContainerBrowserEntity {
     @Column(name = "empty_container_item_variant_id", nullable = false)
     private String emptyContainerItemVariantId;
 
-    @Column(name = "fluid_display_name", nullable = false)
-    private String fluidDisplayName;
-
-    @Column(name = "container_display_name")
-    private String containerDisplayName;
-
-    @Column(name = "container_asset_path")
-    private String containerAssetPath;
-
-    @Column(name = "container_asset_sha256")
-    private String containerAssetSha256;
-
-    @Column(name = "empty_container_display_name")
-    private String emptyContainerDisplayName;
-
-    @Column(name = "empty_container_asset_path")
-    private String emptyContainerAssetPath;
-
-    @Column(name = "empty_container_asset_sha256")
-    private String emptyContainerAssetSha256;
-
     protected FluidContainerBrowserEntity() {}
 
     public String getDatasetId() { return datasetId; }
@@ -62,13 +41,6 @@ public class FluidContainerBrowserEntity {
     public int getAmount() { return amount; }
     public String getContainerItemVariantId() { return containerItemVariantId; }
     public String getEmptyContainerItemVariantId() { return emptyContainerItemVariantId; }
-    public String getFluidDisplayName() { return fluidDisplayName; }
-    public String getContainerDisplayName() { return containerDisplayName; }
-    public String getContainerAssetPath() { return containerAssetPath; }
-    public String getContainerAssetSha256() { return containerAssetSha256; }
-    public String getEmptyContainerDisplayName() { return emptyContainerDisplayName; }
-    public String getEmptyContainerAssetPath() { return emptyContainerAssetPath; }
-    public String getEmptyContainerAssetSha256() { return emptyContainerAssetSha256; }
 
     public static class FluidContainerId {
         private String datasetId;

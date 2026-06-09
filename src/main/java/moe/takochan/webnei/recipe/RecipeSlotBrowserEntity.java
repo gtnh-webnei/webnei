@@ -48,24 +48,6 @@ public class RecipeSlotBrowserEntity {
     @Column(name = "fluid_variant_id")
     private String fluidVariantId;
 
-    @Column(name = "item_display_name")
-    private String itemDisplayName;
-
-    @Column(name = "item_mod_id")
-    private String itemModId;
-
-    @Column(name = "item_asset_path")
-    private String itemAssetPath;
-
-    @Column(name = "fluid_display_name")
-    private String fluidDisplayName;
-
-    @Column(name = "fluid_mod_id")
-    private String fluidModId;
-
-    @Column(name = "fluid_asset_path")
-    private String fluidAssetPath;
-
     protected RecipeSlotBrowserEntity() {}
 
     public String getDatasetId() { return datasetId; }
@@ -78,12 +60,6 @@ public class RecipeSlotBrowserEntity {
     public double getProbability() { return probability; }
     public String getItemVariantId() { return itemVariantId; }
     public String getFluidVariantId() { return fluidVariantId; }
-    public String getItemDisplayName() { return itemDisplayName; }
-    public String getItemModId() { return itemModId; }
-    public String getItemAssetPath() { return itemAssetPath; }
-    public String getFluidDisplayName() { return fluidDisplayName; }
-    public String getFluidModId() { return fluidModId; }
-    public String getFluidAssetPath() { return fluidAssetPath; }
 
     public static class SlotBrowserId {
         private String datasetId;

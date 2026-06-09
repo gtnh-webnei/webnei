@@ -5,10 +5,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import moe.takochan.webnei.asset.AssetUrlBuilder;
+import moe.takochan.webnei.common.EntityRefService;
+import moe.takochan.webnei.common.ItemRef;
 import moe.takochan.webnei.dataset.DatasetSummary;
-import moe.takochan.webnei.item.ItemVariantBrowserEntity;
-import moe.takochan.webnei.item.ItemVariantRepository;
 import moe.takochan.webnei.item.ItemWorldGenerationRef;
 
 import org.springframework.data.domain.Sort;
@@ -17,8 +16,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class WorldGenerationService {
 
-    private final AssetUrlBuilder assetUrlBuilder;
-    private final ItemVariantRepository itemVariantRepo;
+    private final EntityRefService entityRefService;
     private final GtDimensionDisplayRepository dimensionDisplayRepo;
     private final GtOreVeinRepository oreVeinRepo;
     private final GtOreVeinLayerRepository oreVeinLayerRepo;
@@ -29,8 +27,7 @@ public class WorldGenerationService {
     private final GtBartWorksOreRepository bartWorksOreRepo;
     private final GtBartWorksOreLayerRepository bartWorksOreLayerRepo;
 
-    public WorldGenerationService(AssetUrlBuilder assetUrlBuilder,
-                                  ItemVariantRepository itemVariantRepo,
+    public WorldGenerationService(EntityRefService entityRefService,
                                   GtDimensionDisplayRepository dimensionDisplayRepo,
                                   GtOreVeinRepository oreVeinRepo,
                                   GtOreVeinLayerRepository oreVeinLayerRepo,
@@ -40,8 +37,7 @@ public class WorldGenerationService {
                                   GtOreSmallDimensionRepository smallOreDimensionRepo,
                                   GtBartWorksOreRepository bartWorksOreRepo,
                                   GtBartWorksOreLayerRepository bartWorksOreLayerRepo) {
-        this.assetUrlBuilder = assetUrlBuilder;
-        this.itemVariantRepo = itemVariantRepo;
+        this.entityRefService = entityRefService;
         this.dimensionDisplayRepo = dimensionDisplayRepo;
         this.oreVeinRepo = oreVeinRepo;
         this.oreVeinLayerRepo = oreVeinLayerRepo;
@@ -99,7 +95,7 @@ public class WorldGenerationService {
                 .filter(id -> id != null && !id.isBlank())
                 .distinct()
                 .toList();
-        Map<String, ItemVariantBrowserEntity> itemVariants = loadItemVariants(datasetId, itemVariantIds);
+        Map<String, ItemRef> itemVariants = entityRefService.itemRefs(dataset, itemVariantIds);
 
         blockLayers.forEach(layer -> putOreVeinRef(refs, dataset, oreVeins.get(layer.getVeinName()), dimensions, itemVariants));
         layerVariants.forEach(variant -> putOreVeinRef(refs, dataset, oreVeins.get(variant.getVeinName()), dimensions, itemVariants));
@@ -125,7 +121,7 @@ public class WorldGenerationService {
             DatasetSummary dataset,
             GtOreVeinEntity vein,
             Map<String, GtDimensionDisplayEntity> dimensions,
-            Map<String, ItemVariantBrowserEntity> itemVariants) {
+            Map<String, ItemRef> itemVariants) {
         if (vein != null) {
             refs.putIfAbsent("ore-veins|" + vein.getVeinName(), oreVeinRef(dataset, vein, dimensions, itemVariants));
         }
@@ -135,7 +131,7 @@ public class WorldGenerationService {
             DatasetSummary dataset,
             GtOreVeinEntity vein,
             Map<String, GtDimensionDisplayEntity> dimensions,
-            Map<String, ItemVariantBrowserEntity> itemVariants) {
+            Map<String, ItemRef> itemVariants) {
         String datasetId = dataset.datasetId();
         return new ItemWorldGenerationRef(
                 "ore-veins",
@@ -154,7 +150,7 @@ public class WorldGenerationService {
             DatasetSummary dataset,
             GtOreSmallEntity ore,
             Map<String, GtDimensionDisplayEntity> dimensions,
-            Map<String, ItemVariantBrowserEntity> itemVariants) {
+            Map<String, ItemRef> itemVariants) {
         String datasetId = dataset.datasetId();
         return new ItemWorldGenerationRef(
                 "small-ores",
@@ -173,7 +169,7 @@ public class WorldGenerationService {
             DatasetSummary dataset,
             GtBartWorksOreEntity ore,
             Map<String, GtDimensionDisplayEntity> dimensions,
-            Map<String, ItemVariantBrowserEntity> itemVariants) {
+            Map<String, ItemRef> itemVariants) {
         String stat = "Y " + ore.getHeightMin() + "-" + ore.getHeightMax() + " · "
                 + ("small".equals(ore.getEntryType()) ? "每区块 " + ore.getAmountPerChunk() : "权重 " + ore.getWeight());
         return new ItemWorldGenerationRef(
@@ -190,23 +186,20 @@ public class WorldGenerationService {
             String dimension,
             String fallbackName,
             Map<String, GtDimensionDisplayEntity> dimensions,
-            Map<String, ItemVariantBrowserEntity> itemVariants) {
+            Map<String, ItemRef> itemVariants) {
         GtDimensionDisplayEntity d = dimensions.get(dimension);
         if (d == null) {
             return new GtDimensionRef(dimension, fallbackName, fallbackName, fallbackName, "", null, Integer.MAX_VALUE);
         }
         return new GtDimensionRef(
                 d.getDimension(), d.getFullName(), d.getDisplayName(), d.getDisplayAbbr(),
-                d.getIconItemVariantId(), itemAssetUrl(dataset, d.getIconItemVariantId(), itemVariants), d.getSortOrder());
+                d.getIconItemVariantId(), itemAssetUrl(d.getIconItemVariantId(), itemVariants), d.getSortOrder());
     }
 
-    private String itemAssetUrl(
-            DatasetSummary dataset,
-            String itemVariantId,
-            Map<String, ItemVariantBrowserEntity> itemVariants) {
+    private String itemAssetUrl(String itemVariantId, Map<String, ItemRef> itemVariants) {
         if (itemVariantId == null || itemVariantId.isBlank()) return null;
-        ItemVariantBrowserEntity item = itemVariants.get(itemVariantId);
-        return item == null ? null : assetUrlBuilder.build(dataset, item.getAssetPath(), item.getAssetSha256());
+        ItemRef item = itemVariants.get(itemVariantId);
+        return item == null ? null : item.assetUrl();
     }
 
     private Map<String, GtOreVeinEntity> loadOreVeins(String datasetId, List<String> veinNames) {
@@ -229,15 +222,8 @@ public class WorldGenerationService {
         return out;
     }
 
-    private Map<String, ItemVariantBrowserEntity> loadItemVariants(String datasetId, List<String> itemVariantIds) {
-        if (itemVariantIds.isEmpty()) return Map.of();
-        return itemVariantRepo.findByDatasetIdAndItemVariantIdIn(datasetId, itemVariantIds)
-                .stream()
-                .collect(java.util.stream.Collectors.toMap(ItemVariantBrowserEntity::getItemVariantId, item -> item));
-    }
-
-    private String itemDisplayName(String itemVariantId, Map<String, ItemVariantBrowserEntity> itemVariants) {
-        ItemVariantBrowserEntity item = itemVariants.get(itemVariantId);
-        return item == null ? itemVariantId : item.getDisplayName();
+    private String itemDisplayName(String itemVariantId, Map<String, ItemRef> itemVariants) {
+        ItemRef item = itemVariants.get(itemVariantId);
+        return item == null ? itemVariantId : item.displayName();
     }
 }

@@ -5,7 +5,6 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface NeiPanelEntryRepository
-        extends JpaRepository<NeiPanelEntryEntity, NeiPanelEntryEntity.NeiPanelEntryId>,
-                JpaSpecificationExecutor<NeiPanelEntryEntity> {
+public interface ItemListRepository extends JpaRepository<ItemListEntity, ItemListEntity.ItemListId>,
+        JpaSpecificationExecutor<ItemListEntity> {
 }
