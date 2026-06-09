@@ -52,7 +52,7 @@ const en_US: MessageSchema = {
   },
 
   fluid: {
-    searchPlaceholder: 'Search name / registry / id / chemical expression / NBT',
+    searchPlaceholder: 'Search name / id / chemical expression',
     noMatch: 'No matching fluids',
     cardPickHint: 'Left \u00b7 Details \u00b7 Right \u00b7 Recipe \u00b7 Middle \u00b7 Usage',
     fluidId: 'Fluid ID',
@@ -70,7 +70,7 @@ const en_US: MessageSchema = {
   },
 
   item: {
-    searchPlaceholder: 'Search name / registry / id / tooltip / chemical expression',
+    searchPlaceholder: 'Search name / id / tooltip / chemical expression',
     viewCard: 'Cards',
     viewCompact: 'Compact',
     noMatch: 'No matching items',
