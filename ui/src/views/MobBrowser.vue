@@ -40,6 +40,7 @@ function openMob(mob: MobSummary) {
       v-model:secondary="secondary"
       :secondary-options="secondaryOptions"
       :placeholder="$t('mob.searchPlaceholder')"
+      :search-help="$t('mob.searchHelp')"
       :secondary-placeholder="$t('common.allMod')"
       :total="total"
     />

@@ -59,6 +59,7 @@ function openCategory(c: RecipeCategory) {
       v-model:secondary="secondary"
       :secondary-options="secondaryOptions"
       :placeholder="t('category.searchPlaceholder')"
+      :search-help="t('category.searchHelp')"
       :secondary-placeholder="t('common.allMod')"
       :total="total"
     >

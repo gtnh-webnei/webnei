@@ -50,7 +50,8 @@ const zh_CN: MessageSchema = {
   },
 
   fluid: {
-    searchPlaceholder: '搜索名称 / id / 化学表达式',
+    searchPlaceholder: '搜索流体',
+    searchHelp: '支持名称、ID、化学表达式',
     noMatch: '没有匹配的流体',
     cardPickHint: '左键 · 详情 · 右键 · 合成 · 中键 · 用途',
     fluidId: '流体 ID',
@@ -68,7 +69,8 @@ const zh_CN: MessageSchema = {
   },
 
   item: {
-    searchPlaceholder: '搜索名称 / id / tooltip / 化学表达式',
+    searchPlaceholder: '搜索物品',
+    searchHelp: '支持名称、ID、tooltip、化学表达式、矿物词典',
     viewCard: '卡片',
     viewCompact: '紧凑',
     noMatch: '没有匹配的物品',
@@ -87,7 +89,8 @@ const zh_CN: MessageSchema = {
   mob: {
     pageTitle: '生物浏览',
     totalLabel: ' 个生物',
-    searchPlaceholder: '搜索名称 / Entity 名',
+    searchPlaceholder: '搜索生物',
+    searchHelp: '支持名称、Entity 名',
     noMatch: '没有匹配的生物',
     maxHealth: '最大生命',
     armor: '护甲',
@@ -117,7 +120,8 @@ const zh_CN: MessageSchema = {
   quest: {
     pageTitle: '任务浏览',
     questLineSummary: ' 条任务线 · 浏览 BetterQuesting 任务图谱',
-    searchPlaceholder: '搜索任务线名称 / 描述',
+    searchPlaceholder: '搜索任务线',
+    searchHelp: '支持任务线名称、描述',
     noQuestLines: '没有任务线',
     taskCount: '{count} 个任务',
     taskType: {
@@ -156,7 +160,8 @@ const zh_CN: MessageSchema = {
   category: {
     pageTitle: '配方分类',
     leadText: '浏览 NEI 注册的所有配方处理器',
-    searchPlaceholder: '搜索分类名 / id / handler',
+    searchPlaceholder: '搜索配方分类',
+    searchHelp: '支持分类名、id、handler',
     hideZeroRecipes: '隐藏 0 配方',
     noMatch: '没有匹配的分类',
     recipeCount: '{count} 配方',
@@ -206,7 +211,8 @@ const zh_CN: MessageSchema = {
   mod: {
     pageTitle: 'Mod 列表',
     totalLabel: ' 个 mod',
-    searchPlaceholder: '搜索 mod id / 名称 / 版本 / 文件名',
+    searchPlaceholder: '搜索 Mod',
+    searchHelp: '支持 mod id、名称、版本、文件名',
     noMatch: '没有匹配的 Mod',
     colModId: 'Mod ID',
     colName: '名称',

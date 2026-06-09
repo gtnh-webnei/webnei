@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { Warning } from '@element-plus/icons-vue';
 import type { ModOption } from '@/api/types';
 
 const { t } = useI18n();
@@ -17,6 +18,7 @@ const props = withDefaults(
     total?: number;
     totalLabel?: string;
     totalSuffix?: string;
+    searchHelp?: string;
   }>(),
   {
     placeholder: '',
@@ -26,6 +28,7 @@ const props = withDefaults(
     total: undefined,
     totalLabel: '',
     totalSuffix: '',
+    searchHelp: '',
   },
 );
 
@@ -39,12 +42,15 @@ const displayTotalSuffix = computed(() => props.totalSuffix || t('common.totalSu
 
 <template>
   <div class="browser-toolbar">
-    <el-input
-      v-model="q"
-      :placeholder="displayPlaceholder"
-      clearable
-      class="search-input"
-    />
+    <el-input v-model="q" :placeholder="displayPlaceholder" clearable class="search-input">
+      <template v-if="searchHelp" #suffix>
+        <el-tooltip :content="searchHelp" effect="light" placement="top">
+          <el-icon class="search-help-icon">
+            <Warning />
+          </el-icon>
+        </el-tooltip>
+      </template>
+    </el-input>
     <el-select
       v-if="showSecondary"
       v-model="secondary"
@@ -53,19 +59,11 @@ const displayTotalSuffix = computed(() => props.totalSuffix || t('common.totalSu
       filterable
       class="secondary-select"
     >
-      <el-option
-        v-for="o in secondaryOptions"
-        :key="o.modId"
-        :label="o.name"
-        :value="o.modId"
-      />
+      <el-option v-for="o in secondaryOptions" :key="o.modId" :label="o.name" :value="o.modId" />
     </el-select>
     <slot name="extra" />
     <div class="spacer" />
-    <div
-      v-if="typeof total === 'number'"
-      class="total"
-    >
+    <div v-if="typeof total === 'number'" class="total">
       {{ displayTotalLabel }} <strong>{{ total.toLocaleString() }}</strong> {{ displayTotalSuffix }}
     </div>
   </div>
@@ -86,6 +84,9 @@ const displayTotalSuffix = computed(() => props.totalSuffix || t('common.totalSu
 .secondary-select {
   width: 240px;
   flex-shrink: 0;
+}
+.search-help-icon {
+  color: var(--el-text-color-secondary);
 }
 .spacer {
   flex: 1;

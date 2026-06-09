@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
+import { Warning } from '@element-plus/icons-vue';
 import { useDatasetStore } from '@/stores/dataset';
 import { listQuestLines } from '@/api/quests';
 import QuestText from '@/components/QuestText.vue';
@@ -60,7 +61,15 @@ onMounted(load);
         :placeholder="$t('quest.searchPlaceholder')"
         clearable
         class="search-input"
-      />
+      >
+        <template #suffix>
+          <el-tooltip :content="$t('quest.searchHelp')" effect="light" placement="top">
+            <el-icon class="search-help-icon">
+              <Warning />
+            </el-icon>
+          </el-tooltip>
+        </template>
+      </el-input>
       <div class="spacer" />
       <div class="total">
         {{ $t('common.totalCount') }} <strong>{{ filtered.length.toLocaleString() }}</strong>
@@ -117,6 +126,9 @@ onMounted(load);
 .search-input {
   width: 320px;
   max-width: 100%;
+}
+.search-help-icon {
+  color: var(--el-text-color-secondary);
 }
 .spacer {
   flex: 1;

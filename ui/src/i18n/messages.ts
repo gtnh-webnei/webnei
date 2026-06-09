@@ -52,6 +52,7 @@ export interface MessageSchema {
   // ---- Fluid ----
   fluid: {
     searchPlaceholder: string;
+    searchHelp: string;
     noMatch: string;
     cardPickHint: string;
     fluidId: string;
@@ -71,6 +72,7 @@ export interface MessageSchema {
   // ---- Item ----
   item: {
     searchPlaceholder: string;
+    searchHelp: string;
     viewCard: string;
     viewCompact: string;
     noMatch: string;
@@ -91,6 +93,7 @@ export interface MessageSchema {
     pageTitle: string;
     totalLabel: string;
     searchPlaceholder: string;
+    searchHelp: string;
     noMatch: string;
     maxHealth: string;
     armor: string;
@@ -122,6 +125,7 @@ export interface MessageSchema {
     pageTitle: string;
     questLineSummary: string;
     searchPlaceholder: string;
+    searchHelp: string;
     noQuestLines: string;
     taskCount: string;
     taskType: {
@@ -162,6 +166,7 @@ export interface MessageSchema {
     pageTitle: string;
     leadText: string;
     searchPlaceholder: string;
+    searchHelp: string;
     hideZeroRecipes: string;
     noMatch: string;
     recipeCount: string;
@@ -215,6 +220,7 @@ export interface MessageSchema {
     pageTitle: string;
     totalLabel: string;
     searchPlaceholder: string;
+    searchHelp: string;
     noMatch: string;
     colModId: string;
     colName: string;

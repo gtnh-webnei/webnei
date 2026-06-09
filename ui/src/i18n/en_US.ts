@@ -52,7 +52,8 @@ const en_US: MessageSchema = {
   },
 
   fluid: {
-    searchPlaceholder: 'Search name / id / chemical expression',
+    searchPlaceholder: 'Search fluids',
+    searchHelp: 'Supports name, ID, and chemical expression',
     noMatch: 'No matching fluids',
     cardPickHint: 'Left \u00b7 Details \u00b7 Right \u00b7 Recipe \u00b7 Middle \u00b7 Usage',
     fluidId: 'Fluid ID',
@@ -70,7 +71,8 @@ const en_US: MessageSchema = {
   },
 
   item: {
-    searchPlaceholder: 'Search name / id / tooltip / chemical expression',
+    searchPlaceholder: 'Search items',
+    searchHelp: 'Supports name, ID, tooltip, chemical expression, and Ore Dictionary',
     viewCard: 'Cards',
     viewCompact: 'Compact',
     noMatch: 'No matching items',
@@ -89,7 +91,8 @@ const en_US: MessageSchema = {
   mob: {
     pageTitle: 'Mob Browser',
     totalLabel: ' mobs',
-    searchPlaceholder: 'Search name / entity name',
+    searchPlaceholder: 'Search mobs',
+    searchHelp: 'Supports name and entity name',
     noMatch: 'No matching mobs',
     maxHealth: 'Max Health',
     armor: 'Armor',
@@ -119,7 +122,8 @@ const en_US: MessageSchema = {
   quest: {
     pageTitle: 'Quest Browser',
     questLineSummary: ' quest lines \u00b7 Browse BetterQuesting quest graphs',
-    searchPlaceholder: 'Search quest line name / description',
+    searchPlaceholder: 'Search quest lines',
+    searchHelp: 'Supports quest line name and description',
     noQuestLines: 'No quest lines',
     taskCount: '{count} tasks',
     taskType: {
@@ -158,7 +162,8 @@ const en_US: MessageSchema = {
   category: {
     pageTitle: 'Recipe Categories',
     leadText: 'Browse all NEI-registered recipe handlers',
-    searchPlaceholder: 'Search category name / id / handler',
+    searchPlaceholder: 'Search categories',
+    searchHelp: 'Supports category name, id, and handler',
     hideZeroRecipes: 'Hide empty categories',
     noMatch: 'No matching categories',
     recipeCount: '{count} recipes',
@@ -208,7 +213,8 @@ const en_US: MessageSchema = {
   mod: {
     pageTitle: 'Mod List',
     totalLabel: ' mods',
-    searchPlaceholder: 'Search mod id / name / version / filename',
+    searchPlaceholder: 'Search Mods',
+    searchHelp: 'Supports mod id, name, version, and filename',
     noMatch: 'No matching mods',
     colModId: 'Mod ID',
     colName: 'Name',

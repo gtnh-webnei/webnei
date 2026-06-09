@@ -42,39 +42,18 @@ function openDetail(item: NeiPanelEntry) {
       v-model:secondary="secondary"
       :secondary-options="secondaryOptions"
       :placeholder="t('item.searchPlaceholder')"
+      :search-help="t('item.searchHelp')"
       :total="total"
     />
 
-    <el-alert
-      v-if="error"
-      :title="error"
-      type="error"
-      :closable="false"
-      show-icon
-    />
+    <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
 
-    <el-skeleton
-      v-if="loading && items.length === 0"
-      :rows="6"
-      animated
-    />
+    <el-skeleton v-if="loading && items.length === 0" :rows="6" animated />
 
-    <el-empty
-      v-else-if="items.length === 0"
-      :description="t('item.noMatch')"
-    />
+    <el-empty v-else-if="items.length === 0" :description="t('item.noMatch')" />
 
-    <div
-      v-else
-      v-loading="loading"
-      class="grid"
-    >
-      <ItemCard
-        v-for="item in items"
-        :key="item.itemVariantId"
-        :item="item"
-        @select="openDetail"
-      />
+    <div v-else v-loading="loading" class="grid">
+      <ItemCard v-for="item in items" :key="item.itemVariantId" :item="item" @select="openDetail" />
     </div>
 
     <div class="pager">

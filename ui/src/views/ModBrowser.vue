@@ -62,6 +62,7 @@ function onSortChange({
     <BrowserToolbar
       v-model:q="q"
       :placeholder="t('mod.searchPlaceholder')"
+      :search-help="t('mod.searchHelp')"
       :show-secondary="false"
       :total="total"
     />
