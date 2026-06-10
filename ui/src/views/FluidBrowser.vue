@@ -47,12 +47,34 @@ function openDetail(fluid: FluidSummary) {
       :total="total"
     />
 
-    <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
-    <el-skeleton v-if="loading && items.length === 0" :rows="6" animated />
-    <el-empty v-else-if="items.length === 0" :description="t('fluid.noMatch')" />
+    <el-alert
+      v-if="error"
+      :title="error"
+      type="error"
+      :closable="false"
+      show-icon
+    />
+    <el-skeleton
+      v-if="loading && items.length === 0"
+      :rows="6"
+      animated
+    />
+    <el-empty
+      v-else-if="items.length === 0"
+      :description="t('fluid.noMatch')"
+    />
 
-    <div v-else v-loading="loading" class="grid">
-      <FluidCard v-for="f in items" :key="f.fluidVariantId" :fluid="f" @select="openDetail" />
+    <div
+      v-else
+      v-loading="loading"
+      class="grid"
+    >
+      <FluidCard
+        v-for="f in items"
+        :key="f.fluidVariantId"
+        :fluid="f"
+        @select="openDetail"
+      />
     </div>
 
     <div class="pager">

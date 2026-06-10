@@ -16,15 +16,22 @@ const emit = defineEmits<{
 
 <template>
   <header class="detail-hero-card">
-    <div class="detail-hero-icon-wrap" :class="iconClass">
+    <div
+      class="detail-hero-icon-wrap"
+      :class="iconClass"
+    >
       <img
         v-if="assetUrl"
         :src="assetUrl"
         :alt="imageAlt ?? title"
         class="detail-hero-icon"
         @error="emit('imageError')"
-      />
-      <div v-else-if="fallbackText" class="detail-hero-fallback" :class="fallbackClass">
+      >
+      <div
+        v-else-if="fallbackText"
+        class="detail-hero-fallback"
+        :class="fallbackClass"
+      >
         {{ fallbackText }}
       </div>
     </div>
@@ -34,7 +41,13 @@ const emit = defineEmits<{
           {{ title }}
         </h1>
         <div class="detail-hero-subtitle">
-          <el-tag v-if="subtitle" size="default" type="info" effect="light" round>
+          <el-tag
+            v-if="subtitle"
+            size="default"
+            type="info"
+            effect="light"
+            round
+          >
             {{ subtitle }}
           </el-tag>
           <slot name="tags" />

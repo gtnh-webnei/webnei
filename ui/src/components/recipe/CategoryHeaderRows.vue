@@ -161,28 +161,45 @@ watch(
 </script>
 
 <template>
-  <div v-if="applicableItems.length > 0 || tiers.length > 0" class="header-rows">
-    <section v-if="!hideApplicableItems && applicableItems.length > 0" class="row">
+  <div
+    v-if="applicableItems.length > 0 || tiers.length > 0"
+    class="header-rows"
+  >
+    <section
+      v-if="!hideApplicableItems && applicableItems.length > 0"
+      class="row"
+    >
       <div class="row-label">
         <span>{{ t('category.applicableItems') }}</span>
         <span class="row-count">{{ applicableItems.length }}</span>
       </div>
       <div class="applicable-block">
         <div class="applicable-list-wrap">
-          <div ref="listEl" class="applicable-items" :class="{ expanded: applicableItemsExpanded }">
+          <div
+            ref="listEl"
+            class="applicable-items"
+            :class="{ expanded: applicableItemsExpanded }"
+          >
             <AppTooltip
               v-for="m in visibleApplicableItems"
               :key="m.itemVariantId"
               :content="m.displayName ?? m.itemVariantId"
             >
-              <button type="button" class="applicable-item-cell" @click="openApplicableItem(m)">
+              <button
+                type="button"
+                class="applicable-item-cell"
+                @click="openApplicableItem(m)"
+              >
                 <img
                   v-if="m.assetUrl"
                   :src="m.assetUrl"
                   :alt="m.displayName ?? m.itemVariantId"
                   class="applicable-item-icon"
+                >
+                <span
+                  v-else
+                  class="applicable-item-icon placeholder"
                 />
-                <span v-else class="applicable-item-icon placeholder" />
               </button>
             </AppTooltip>
             <button
@@ -198,7 +215,10 @@ watch(
       </div>
     </section>
 
-    <section v-if="tiers.length > 0" class="row">
+    <section
+      v-if="tiers.length > 0"
+      class="row"
+    >
       <div class="row-label">
         <span>{{ t('category.voltage') }}</span>
         <span class="row-count">{{ tiers.length }}</span>

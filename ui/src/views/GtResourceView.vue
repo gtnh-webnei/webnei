@@ -313,7 +313,10 @@ function lookupFluid(kind: 'recipe' | 'usage', fluid: FluidRef) {
       <div class="gt-heading">
         <h1>{{ t('gtResource.pageTitle') }}</h1>
       </div>
-      <nav class="page-tabs gt-section-tabs" :aria-label="t('gtResource.sectionMenuLabel')">
+      <nav
+        class="page-tabs gt-section-tabs"
+        :aria-label="t('gtResource.sectionMenuLabel')"
+      >
         <button
           v-for="section in sections"
           :key="section.key"
@@ -327,10 +330,22 @@ function lookupFluid(kind: 'recipe' | 'usage', fluid: FluidRef) {
       </nav>
     </header>
 
-    <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
+    <el-alert
+      v-if="error"
+      :title="error"
+      type="error"
+      :closable="false"
+      show-icon
+    />
 
-    <section class="gt-browser" :class="{ 'show-detail': showDetailOnMobile }">
-      <aside v-loading="loading" class="gt-list-card">
+    <section
+      class="gt-browser"
+      :class="{ 'show-detail': showDetailOnMobile }"
+    >
+      <aside
+        v-loading="loading"
+        class="gt-list-card"
+      >
         <div class="list-toolbar">
           <el-input
             v-model="q"
@@ -357,7 +372,7 @@ function lookupFluid(kind: 'recipe' | 'usage', fluid: FluidRef) {
                     v-if="option.iconAssetUrl"
                     :src="option.iconAssetUrl"
                     :alt="option.displayName"
-                  />
+                  >
                 </span>
                 <span>{{ option.displayName }}</span>
               </span>
@@ -380,7 +395,10 @@ function lookupFluid(kind: 'recipe' | 'usage', fluid: FluidRef) {
         </div>
 
         <div class="list-scroll">
-          <el-empty v-if="!loading && items.length === 0" :description="t('gtResource.empty')" />
+          <el-empty
+            v-if="!loading && items.length === 0"
+            :description="t('gtResource.empty')"
+          />
           <button
             v-for="item in items"
             v-else
@@ -390,18 +408,32 @@ function lookupFluid(kind: 'recipe' | 'usage', fluid: FluidRef) {
             @click="selectItem(item)"
           >
             <span class="icon-box">
-              <img v-if="itemIcon(item)" :src="itemIcon(item)!" :alt="itemTitle(item)" />
+              <img
+                v-if="itemIcon(item)"
+                :src="itemIcon(item)!"
+                :alt="itemTitle(item)"
+              >
             </span>
             <span class="card-main">
               <span class="card-title">{{ itemTitle(item) }}</span>
-              <span v-if="itemDimensions(item).length" class="dimension-row">
+              <span
+                v-if="itemDimensions(item).length"
+                class="dimension-row"
+              >
                 <span
                   v-for="dim in itemDimensions(item).slice(0, 6)"
                   :key="dim.dimension"
                   class="dimension-icon"
                 >
-                  <img v-if="dim.iconAssetUrl" :src="dim.iconAssetUrl" :alt="dim.displayName" />
-                  <span v-else class="dimension-text">{{ dim.displayName }}</span>
+                  <img
+                    v-if="dim.iconAssetUrl"
+                    :src="dim.iconAssetUrl"
+                    :alt="dim.displayName"
+                  >
+                  <span
+                    v-else
+                    class="dimension-text"
+                  >{{ dim.displayName }}</span>
                 </span>
               </span>
             </span>
@@ -415,11 +447,21 @@ function lookupFluid(kind: 'recipe' | 'usage', fluid: FluidRef) {
         </div>
       </aside>
 
-      <main v-loading="detailLoading" class="gt-detail">
-        <el-button class="mobile-back" text @click="showDetailOnMobile = false">
+      <main
+        v-loading="detailLoading"
+        class="gt-detail"
+      >
+        <el-button
+          class="mobile-back"
+          text
+          @click="showDetailOnMobile = false"
+        >
           {{ t('common.back') }}
         </el-button>
-        <el-empty v-if="!detail" :description="t('gtResource.selectItemEmpty')" />
+        <el-empty
+          v-if="!detail"
+          :description="t('gtResource.selectItemEmpty')"
+        />
 
         <template v-else>
           <section class="detail-hero-card">
@@ -428,31 +470,48 @@ function lookupFluid(kind: 'recipe' | 'usage', fluid: FluidRef) {
                 v-if="detailIcon(detail)"
                 :src="detailIcon(detail)!"
                 :alt="detailTitle(detail)"
-              />
+              >
             </div>
             <div class="detail-hero-main">
               <h2>{{ detailTitle(detail) }}</h2>
               <div
                 v-if="
                   currentDetailKind() === 'underground-fluid' ||
-                  currentDetailKind() === 'bartworks-ore'
+                    currentDetailKind() === 'bartworks-ore'
                 "
                 class="detail-tags"
               >
-                <el-tag v-if="currentDetailKind() === 'underground-fluid'" effect="plain" round>
+                <el-tag
+                  v-if="currentDetailKind() === 'underground-fluid'"
+                  effect="plain"
+                  round
+                >
                   {{ t('gtResource.undergroundFluidTag') }}
                 </el-tag>
-                <el-tag v-if="currentDetailKind() === 'bartworks-ore'" effect="plain" round>
+                <el-tag
+                  v-if="currentDetailKind() === 'bartworks-ore'"
+                  effect="plain"
+                  round
+                >
                   {{ t('gtResource.bartWorksTag') }}
                 </el-tag>
               </div>
-              <dl v-if="detailStats(detail).length" class="stats-grid">
-                <div v-for="stat in detailStats(detail)" :key="stat.label">
+              <dl
+                v-if="detailStats(detail).length"
+                class="stats-grid"
+              >
+                <div
+                  v-for="stat in detailStats(detail)"
+                  :key="stat.label"
+                >
                   <dt>{{ stat.label }}</dt>
                   <dd>{{ stat.value }}</dd>
                 </div>
               </dl>
-              <section v-if="detailDimensions(detail).length" class="dimension-strip">
+              <section
+                v-if="detailDimensions(detail).length"
+                class="dimension-strip"
+              >
                 <h3>{{ t('gtResource.dimension') }}</h3>
                 <div class="dimension-detail-row">
                   <AppTooltip
@@ -471,7 +530,11 @@ function lookupFluid(kind: 'recipe' | 'usage', fluid: FluidRef) {
                       </div>
                     </template>
                     <span class="detail-dimension-icon">
-                      <img v-if="dim.iconAssetUrl" :src="dim.iconAssetUrl" :alt="dim.displayName" />
+                      <img
+                        v-if="dim.iconAssetUrl"
+                        :src="dim.iconAssetUrl"
+                        :alt="dim.displayName"
+                      >
                     </span>
                   </AppTooltip>
                 </div>
@@ -479,7 +542,10 @@ function lookupFluid(kind: 'recipe' | 'usage', fluid: FluidRef) {
             </div>
           </section>
 
-          <section v-if="currentDetailKind() === 'ore-vein'" class="layer-grid">
+          <section
+            v-if="currentDetailKind() === 'ore-vein'"
+            class="layer-grid"
+          >
             <article
               v-for="layer in orderedOreVeinLayers(detail as GtOreVeinDetail)"
               :key="layer.layer"
@@ -491,7 +557,7 @@ function lookupFluid(kind: 'recipe' | 'usage', fluid: FluidRef) {
                     v-if="layer.item.assetUrl"
                     :src="layer.item.assetUrl"
                     :alt="layer.item.displayName ?? layer.item.itemVariantId"
-                  />
+                  >
                 </span>
                 <span>{{ layerLabel(layer.layer) }}</span>
               </h3>
@@ -573,7 +639,7 @@ function lookupFluid(kind: 'recipe' | 'usage', fluid: FluidRef) {
                       v-if="entry.dimensionDisplay.iconAssetUrl"
                       :src="entry.dimensionDisplay.iconAssetUrl"
                       :alt="entry.dimensionDisplay.displayName"
-                    />
+                    >
                   </span>
                   <span>{{ entry.dimensionDisplay.displayName }}</span>
                 </span>
@@ -583,7 +649,10 @@ function lookupFluid(kind: 'recipe' | 'usage', fluid: FluidRef) {
             </section>
           </template>
 
-          <section v-else-if="currentDetailKind() === 'bartworks-ore'" class="bartworks-card">
+          <section
+            v-else-if="currentDetailKind() === 'bartworks-ore'"
+            class="bartworks-card"
+          >
             <div class="bartworks-header">
               <h3>
                 {{

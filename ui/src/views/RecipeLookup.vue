@@ -258,16 +258,33 @@ onMounted(async () => {
       :image-alt="targetName ?? target"
       @image-error="targetImageFailed = true"
     >
-      <template v-if="isFluid" #tags>
-        <el-tag size="small" type="primary" effect="plain" round>
+      <template
+        v-if="isFluid"
+        #tags
+      >
+        <el-tag
+          size="small"
+          type="primary"
+          effect="plain"
+          round
+        >
           {{ t('fluid.tag') }}
         </el-tag>
-        <el-tag v-if="targetGaseous" size="small" type="warning" effect="plain" round>
+        <el-tag
+          v-if="targetGaseous"
+          size="small"
+          type="warning"
+          effect="plain"
+          round
+        >
           {{ t('fluid.gaseous') }}
         </el-tag>
       </template>
       <template #tabs>
-        <nav class="page-tabs lookup-tabs" :aria-label="t('lookup.viewTabsLabel')">
+        <nav
+          class="page-tabs lookup-tabs"
+          :aria-label="t('lookup.viewTabsLabel')"
+        >
           <button
             v-for="item in lookupTabs"
             :key="item.value"
@@ -282,7 +299,13 @@ onMounted(async () => {
       </template>
     </DetailHeroCard>
 
-    <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
+    <el-alert
+      v-if="error"
+      :title="error"
+      type="error"
+      :closable="false"
+      show-icon
+    />
 
     <template v-if="tab === 'detail' && targetType">
       <FluidDetailPanel
@@ -304,7 +327,10 @@ onMounted(async () => {
     </template>
 
     <template v-if="tab !== 'detail'">
-      <div v-if="categoryTabs.length > 0" class="handler-tabs">
+      <div
+        v-if="categoryTabs.length > 0"
+        class="handler-tabs"
+      >
         <button
           v-for="c in categoryTabs"
           :key="c.categoryId"
@@ -319,7 +345,7 @@ onMounted(async () => {
             :src="c.iconAssetUrl"
             class="handler-icon"
             :alt="c.displayName"
-          />
+          >
           <span class="handler-name">{{ c.displayName }}</span>
           <span class="handler-badge">{{ c.count }}</span>
         </button>
@@ -336,10 +362,21 @@ onMounted(async () => {
         @update:active-tier="selectedTier = $event"
       />
 
-      <el-skeleton v-if="loading && recipes.length === 0" :rows="6" animated />
-      <el-empty v-else-if="!loading && recipes.length === 0" :description="t('lookup.noMatch')" />
+      <el-skeleton
+        v-if="loading && recipes.length === 0"
+        :rows="6"
+        animated
+      />
+      <el-empty
+        v-else-if="!loading && recipes.length === 0"
+        :description="t('lookup.noMatch')"
+      />
 
-      <div v-else v-loading="loading" class="recipes">
+      <div
+        v-else
+        v-loading="loading"
+        class="recipes"
+      >
         <RecipePanel
           v-for="r in recipes"
           :key="r.recipeId"

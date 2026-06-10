@@ -151,12 +151,29 @@ onMounted(() => {
       </div>
     </div>
 
-    <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
+    <el-alert
+      v-if="error"
+      :title="error"
+      type="error"
+      :closable="false"
+      show-icon
+    />
 
-    <el-skeleton v-if="loading && recipes.length === 0" :rows="6" animated />
-    <el-empty v-else-if="!loading && recipes.length === 0" :description="t('category.noRecipes')" />
+    <el-skeleton
+      v-if="loading && recipes.length === 0"
+      :rows="6"
+      animated
+    />
+    <el-empty
+      v-else-if="!loading && recipes.length === 0"
+      :description="t('category.noRecipes')"
+    />
 
-    <div v-else v-loading="loading" class="recipes">
+    <div
+      v-else
+      v-loading="loading"
+      class="recipes"
+    >
       <RecipePanel
         v-for="r in recipes"
         :key="r.recipeId"
@@ -168,7 +185,10 @@ onMounted(() => {
       />
     </div>
 
-    <div v-if="total > 0" class="pager">
+    <div
+      v-if="total > 0"
+      class="pager"
+    >
       <el-pagination
         v-model:current-page="page"
         v-model:page-size="pageSize"

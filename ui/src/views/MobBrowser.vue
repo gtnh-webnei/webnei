@@ -45,15 +45,40 @@ function openMob(mob: MobSummary) {
       :total="total"
     />
 
-    <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
-    <el-skeleton v-if="loading && items.length === 0" :rows="6" animated />
-    <el-empty v-else-if="!loading && items.length === 0" :description="$t('mob.noMatch')" />
+    <el-alert
+      v-if="error"
+      :title="error"
+      type="error"
+      :closable="false"
+      show-icon
+    />
+    <el-skeleton
+      v-if="loading && items.length === 0"
+      :rows="6"
+      animated
+    />
+    <el-empty
+      v-else-if="!loading && items.length === 0"
+      :description="$t('mob.noMatch')"
+    />
 
-    <div v-else v-loading="loading" class="grid">
-      <MobCard v-for="mob in items" :key="mob.mobVariantId" :mob="mob" @select="openMob" />
+    <div
+      v-else
+      v-loading="loading"
+      class="grid"
+    >
+      <MobCard
+        v-for="mob in items"
+        :key="mob.mobVariantId"
+        :mob="mob"
+        @select="openMob"
+      />
     </div>
 
-    <div v-if="total > 0" class="pager">
+    <div
+      v-if="total > 0"
+      class="pager"
+    >
       <el-pagination
         v-model:current-page="page"
         v-model:page-size="pageSize"

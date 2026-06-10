@@ -88,8 +88,14 @@ onMounted(() => {
   >
     <template v-if="detail">
       <el-row :gutter="16">
-        <el-col :xs="24" :md="14">
-          <FluidAttributesCard :detail="detail" :state-label="gaseousLabel" />
+        <el-col
+          :xs="24"
+          :md="14"
+        >
+          <FluidAttributesCard
+            :detail="detail"
+            :state-label="gaseousLabel"
+          />
 
           <DetailTextCard
             v-if="detail.nbtText"
@@ -99,7 +105,10 @@ onMounted(() => {
           />
         </el-col>
 
-        <el-col :xs="24" :md="10">
+        <el-col
+          :xs="24"
+          :md="10"
+        >
           <LookupRecipeCountCard
             v-if="props.recipeCount !== undefined && props.usageCount !== undefined"
             :recipe-count="props.recipeCount"

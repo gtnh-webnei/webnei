@@ -86,10 +86,17 @@ onMounted(() => {
   >
     <template v-if="detail">
       <el-row :gutter="16">
-        <el-col :xs="24" :md="14">
+        <el-col
+          :xs="24"
+          :md="14"
+        >
           <ItemAttributesCard :detail="detail" />
 
-          <el-card v-if="detail.tooltipText" shadow="never" class="tooltip-text-card">
+          <el-card
+            v-if="detail.tooltipText"
+            shadow="never"
+            class="tooltip-text-card"
+          >
             <MinecraftTooltipText :text="detail.tooltipText" />
           </el-card>
 
@@ -101,7 +108,10 @@ onMounted(() => {
           />
         </el-col>
 
-        <el-col :xs="24" :md="10">
+        <el-col
+          :xs="24"
+          :md="10"
+        >
           <LookupRecipeCountCard
             v-if="props.recipeCount !== undefined && props.usageCount !== undefined"
             :recipe-count="props.recipeCount"
@@ -124,8 +134,14 @@ onMounted(() => {
             code
           />
 
-          <ItemOreDictBlock v-if="detail.oreDictNames.length" :names="detail.oreDictNames" />
-          <ItemAspectsBlock v-if="detail.aspects.length" :aspects="detail.aspects" />
+          <ItemOreDictBlock
+            v-if="detail.oreDictNames.length"
+            :names="detail.oreDictNames"
+          />
+          <ItemAspectsBlock
+            v-if="detail.aspects.length"
+            :aspects="detail.aspects"
+          />
 
           <ItemWorldGenerationCard
             v-if="detail.worldGeneration.length"

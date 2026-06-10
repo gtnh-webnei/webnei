@@ -56,8 +56,16 @@ function onAuxClick(e: MouseEvent) {
       @contextmenu="lookup('recipe', $event)"
       @auxclick="onAuxClick"
     >
-      <img v-if="assetUrl" :src="assetUrl" :alt="displayName" loading="lazy" />
-      <span v-if="variant === 'text' || variant === 'row'" :class="nameClass">{{
+      <img
+        v-if="assetUrl"
+        :src="assetUrl"
+        :alt="displayName"
+        loading="lazy"
+      >
+      <span
+        v-if="variant === 'text' || variant === 'row'"
+        :class="nameClass"
+      >{{
         displayName
       }}</span>
       <slot name="suffix" />

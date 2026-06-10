@@ -26,7 +26,10 @@ function onClick(item: SpecialItemDisplay) {
 </script>
 
 <template>
-  <section v-if="items.length" class="specials">
+  <section
+    v-if="items.length"
+    class="specials"
+  >
     <div class="label">
       {{ t('recipe.specialItems') }}
     </div>
@@ -43,8 +46,11 @@ function onClick(item: SpecialItemDisplay) {
           :src="item.assetUrl"
           :alt="item.displayName ?? ''"
           loading="lazy"
-        />
-        <span v-else class="placeholder">?</span>
+        >
+        <span
+          v-else
+          class="placeholder"
+        >?</span>
       </button>
     </div>
   </section>

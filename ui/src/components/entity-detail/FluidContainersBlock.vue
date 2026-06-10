@@ -23,7 +23,10 @@ const emit = defineEmits<{
         @pick="(item) => emit('openItem', item.itemVariantId)"
       >
         <template #suffix>
-          <span v-if="entry.amount > 0" class="container-amount">{{ entry.amount }} mB</span>
+          <span
+            v-if="entry.amount > 0"
+            class="container-amount"
+          >{{ entry.amount }} mB</span>
         </template>
       </InteractiveItemRef>
     </div>

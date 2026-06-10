@@ -27,16 +27,25 @@ const emit = defineEmits<{
             v-if="resource.dimensionDisplay.iconAssetUrl"
             :src="resource.dimensionDisplay.iconAssetUrl"
             :alt="resource.dimensionDisplay.displayName"
-          />
+          >
           <span class="underground-dimension-name">
             {{ resource.dimensionDisplay.displayName }}
           </span>
         </span>
         <span class="underground-stats">
-          <el-tag size="small" effect="plain" round>
+          <el-tag
+            size="small"
+            effect="plain"
+            round
+          >
             {{ resource.minAmount }}-{{ resource.maxAmount }} L
           </el-tag>
-          <el-tag size="small" type="warning" effect="plain" round>
+          <el-tag
+            size="small"
+            type="warning"
+            effect="plain"
+            round
+          >
             {{ $t('common.probability') }} {{ formatChancePercent(resource.chance) }}
           </el-tag>
         </span>

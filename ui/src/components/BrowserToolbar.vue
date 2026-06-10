@@ -42,9 +42,21 @@ const displayTotalSuffix = computed(() => props.totalSuffix || t('common.totalSu
 
 <template>
   <div class="browser-toolbar">
-    <el-input v-model="q" :placeholder="displayPlaceholder" clearable class="search-input">
-      <template v-if="searchHelp" #suffix>
-        <el-tooltip :content="searchHelp" effect="light" placement="top">
+    <el-input
+      v-model="q"
+      :placeholder="displayPlaceholder"
+      clearable
+      class="search-input"
+    >
+      <template
+        v-if="searchHelp"
+        #suffix
+      >
+        <el-tooltip
+          :content="searchHelp"
+          effect="light"
+          placement="top"
+        >
           <el-icon class="search-help-icon">
             <Warning />
           </el-icon>
@@ -59,11 +71,19 @@ const displayTotalSuffix = computed(() => props.totalSuffix || t('common.totalSu
       filterable
       class="secondary-select"
     >
-      <el-option v-for="o in secondaryOptions" :key="o.modId" :label="o.name" :value="o.modId" />
+      <el-option
+        v-for="o in secondaryOptions"
+        :key="o.modId"
+        :label="o.name"
+        :value="o.modId"
+      />
     </el-select>
     <slot name="extra" />
     <div class="spacer" />
-    <div v-if="typeof total === 'number'" class="total">
+    <div
+      v-if="typeof total === 'number'"
+      class="total"
+    >
       {{ displayTotalLabel }} <strong>{{ total.toLocaleString() }}</strong> {{ displayTotalSuffix }}
     </div>
   </div>
