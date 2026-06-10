@@ -2,10 +2,7 @@ package moe.takochan.webnei.service;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import moe.takochan.webnei.asset.AssetUrlBuilder;
 import moe.takochan.webnei.common.PageResponse;
 import moe.takochan.webnei.model.dto.CategoryApplicableItemDto;
@@ -14,9 +11,7 @@ import moe.takochan.webnei.model.dto.DatasetSummary;
 import moe.takochan.webnei.model.dto.ModOptionDto;
 import moe.takochan.webnei.model.dto.PageRequest;
 import moe.takochan.webnei.model.dto.RecipeCategoryDto;
-import moe.takochan.webnei.model.entity.table.NeiTextureExportEntity;
 import moe.takochan.webnei.model.entity.view.RecipeCategoryBrowserEntity;
-import moe.takochan.webnei.repository.table.NeiTextureExportRepository;
 import moe.takochan.webnei.repository.table.RecipeFilterTagRepository;
 import moe.takochan.webnei.repository.view.RecipeCategoryBrowserRepository;
 import moe.takochan.webnei.repository.view.RecipeCategoryApplicableItemBrowserRepository;
@@ -36,7 +31,6 @@ public class RecipeCategoryService {
     private final RecipeCategoryVoltageTierRepository voltageTierRepo;
     private final RecipeLookupVoltageTierRepository lookupVoltageTierRepo;
     private final RecipeFilterTagRepository filterTagRepo;
-    private final NeiTextureExportRepository textureRepo;
     private final AssetUrlBuilder assetUrlBuilder;
 
     public RecipeCategoryService(RecipeCategoryBrowserRepository categoryRepo,
@@ -44,14 +38,12 @@ public class RecipeCategoryService {
                                  RecipeCategoryVoltageTierRepository voltageTierRepo,
                                  RecipeLookupVoltageTierRepository lookupVoltageTierRepo,
                                  RecipeFilterTagRepository filterTagRepo,
-                                 NeiTextureExportRepository textureRepo,
                                  AssetUrlBuilder assetUrlBuilder) {
         this.categoryRepo = categoryRepo;
         this.applicableItemRepo = applicableItemRepo;
         this.voltageTierRepo = voltageTierRepo;
         this.lookupVoltageTierRepo = lookupVoltageTierRepo;
         this.filterTagRepo = filterTagRepo;
-        this.textureRepo = textureRepo;
         this.assetUrlBuilder = assetUrlBuilder;
     }
 
@@ -136,46 +128,20 @@ public class RecipeCategoryService {
     }
 
     private List<RecipeCategoryDto> toDtoList(List<RecipeCategoryBrowserEntity> entities, DatasetSummary dataset) {
-        Map<String, String> iconFallback = resolveIconFallbacks(entities, dataset.datasetId());
         List<RecipeCategoryDto> dtos = new ArrayList<>(entities.size());
         for (RecipeCategoryBrowserEntity e : entities) {
-            dtos.add(toDto(e, dataset, iconFallback));
+            dtos.add(toDto(e, dataset));
         }
         return dtos;
     }
 
-    private Map<String, String> resolveIconFallbacks(List<RecipeCategoryBrowserEntity> entities, String datasetId) {
-        List<String> resources = entities.stream()
-                .filter(e -> e.getIconAssetPath() == null)
-                .map(RecipeCategoryBrowserEntity::getIconImageResource)
-                .filter(Objects::nonNull)
-                .filter(s -> !s.isBlank())
-                .distinct()
-                .toList();
-        return loadTextureFallbacks(datasetId, resources);
-    }
-
-    private Map<String, String> loadTextureFallbacks(String datasetId, List<String> resources) {
-        if (resources.isEmpty()) return Map.of();
-        Map<String, String> fallback = new HashMap<>();
-        for (NeiTextureExportEntity e : textureRepo.findByDatasetIdAndResourceIn(datasetId, resources)) {
-            fallback.put(e.getResource(), e.getExportedPath());
-        }
-        return fallback;
-    }
-
-    private static String iconPath(String iconAssetPath, String iconImageResource, Map<String, String> iconFallback) {
-        return iconAssetPath != null ? iconAssetPath : iconFallback.get(iconImageResource);
-    }
-
-    private RecipeCategoryDto toDto(RecipeCategoryBrowserEntity e, DatasetSummary dataset,
-                                    Map<String, String> iconFallback) {
+    private RecipeCategoryDto toDto(RecipeCategoryBrowserEntity e, DatasetSummary dataset) {
         return new RecipeCategoryDto(
                 e.getCategoryId(),
                 e.getHandlerId(),
                 e.getDisplayName(),
                 e.isShapeless(),
-                assetUrlBuilder.build(dataset, iconPath(e.getIconAssetPath(), e.getIconImageResource(), iconFallback), null),
+                assetUrlBuilder.build(dataset, e.getIconAssetPath(), null),
                 e.getItemInputWidth(),
                 e.getItemInputHeight(),
                 e.getFluidInputWidth(),

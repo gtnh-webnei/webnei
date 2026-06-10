@@ -27,7 +27,6 @@ import moe.takochan.webnei.model.dto.RecipeSlotCandidateDto;
 import moe.takochan.webnei.model.dto.RecipeSlotDto;
 import moe.takochan.webnei.model.dto.SlotLayoutDto;
 import moe.takochan.webnei.model.entity.table.IngredientEntryEntity;
-import moe.takochan.webnei.model.entity.table.NeiTextureExportEntity;
 import moe.takochan.webnei.model.entity.table.RecipeFilterTagEntity;
 import moe.takochan.webnei.model.entity.table.RecipeMetadataEntity;
 import moe.takochan.webnei.model.entity.table.RecipeSearchDocumentEntity;
@@ -38,7 +37,6 @@ import moe.takochan.webnei.model.entity.view.RecipeLookupBrowserEntity;
 import moe.takochan.webnei.model.entity.view.RecipeSlotBrowserEntity;
 import moe.takochan.webnei.model.query.RecipeLookupQuery;
 import moe.takochan.webnei.repository.table.IngredientEntryRepository;
-import moe.takochan.webnei.repository.table.NeiTextureExportRepository;
 import moe.takochan.webnei.repository.table.RecipeLookupCountRepository;
 import moe.takochan.webnei.repository.table.RecipeMetadataRepository;
 import moe.takochan.webnei.repository.table.RecipeSlotLayoutRepository;
@@ -68,7 +66,6 @@ public class RecipeService {
     private final RecipeSlotLayoutRepository slotLayoutRepo;
     private final RecipeMetadataRepository metadataRepo;
     private final EntityRefService entityRefService;
-    private final NeiTextureExportRepository textureRepo;
     private final AssetUrlBuilder assetUrlBuilder;
     private final ObjectMapper objectMapper;
 
@@ -81,7 +78,6 @@ public class RecipeService {
                         RecipeSlotLayoutRepository slotLayoutRepo,
                         RecipeMetadataRepository metadataRepo,
                         EntityRefService entityRefService,
-                        NeiTextureExportRepository textureRepo,
                         AssetUrlBuilder assetUrlBuilder,
                         ObjectMapper objectMapper) {
         this.recipeRepo = recipeRepo;
@@ -93,7 +89,6 @@ public class RecipeService {
         this.slotLayoutRepo = slotLayoutRepo;
         this.metadataRepo = metadataRepo;
         this.entityRefService = entityRefService;
-        this.textureRepo = textureRepo;
         this.assetUrlBuilder = assetUrlBuilder;
         this.objectMapper = objectMapper;
     }
@@ -169,7 +164,6 @@ public class RecipeService {
         List<RecipeLookupBreakdownEntity> rows = lookupBreakdownRepo.findByDatasetIdAndTargetIdAndLookupKindOrderByDisplayOrderAscCategoryIdAsc(
                 datasetId, query.target(), kind);
 
-        Map<String, String> iconFallback = resolveBreakdownIconFallbacks(rows, datasetId);
         Map<String, List<RecipeLookupBreakdownEntity>> byHandler = new LinkedHashMap<>();
         for (RecipeLookupBreakdownEntity row : rows) {
             byHandler.computeIfAbsent(row.getHandlerId(), ignored -> new ArrayList<>()).add(row);
@@ -179,7 +173,6 @@ public class RecipeService {
                 String handlerId,
                 String displayName,
                 String iconAssetPath,
-                String iconImageResource,
                 int representativeOrder,
                 long total,
                 List<CategoryBreakdownDto> categories) {}
@@ -198,14 +191,13 @@ public class RecipeService {
                 categories.add(new CategoryBreakdownDto(
                         row.getCategoryId(),
                         row.getDisplayName(),
-                        assetUrlBuilder.build(dataset, iconPath(row.getIconAssetPath(), row.getIconImageResource(), iconFallback), null),
+                        assetUrlBuilder.build(dataset, row.getIconAssetPath(), null),
                         row.getRecipeCount()));
             }
             aggregates.add(new HandlerOut(
                     e.getKey(),
                     rep.getDisplayName(),
                     rep.getIconAssetPath(),
-                    rep.getIconImageResource(),
                     rep.getDisplayOrder(),
                     total,
                     categories));
@@ -218,7 +210,7 @@ public class RecipeService {
                 .map(h -> new HandlerBreakdownDto(
                         h.handlerId(),
                         h.displayName(),
-                        assetUrlBuilder.build(dataset, iconPath(h.iconAssetPath(), h.iconImageResource(), iconFallback), null),
+                        assetUrlBuilder.build(dataset, h.iconAssetPath(), null),
                         h.total(),
                         h.categories()))
                 .toList();
@@ -430,29 +422,6 @@ public class RecipeService {
         return s == null || s.isEmpty() ? null : s;
     }
 
-    private Map<String, String> resolveBreakdownIconFallbacks(List<RecipeLookupBreakdownEntity> rows, String datasetId) {
-        List<String> resources = rows.stream()
-                .filter(e -> e.getIconAssetPath() == null)
-                .map(RecipeLookupBreakdownEntity::getIconImageResource)
-                .filter(Objects::nonNull)
-                .filter(s -> !s.isBlank())
-                .distinct()
-                .toList();
-        return loadTextureFallbacks(datasetId, resources);
-    }
-
-    private Map<String, String> loadTextureFallbacks(String datasetId, List<String> resources) {
-        if (resources.isEmpty()) return Map.of();
-        Map<String, String> fallback = new HashMap<>();
-        for (NeiTextureExportEntity e : textureRepo.findByDatasetIdAndResourceIn(datasetId, resources)) {
-            fallback.put(e.getResource(), e.getExportedPath());
-        }
-        return fallback;
-    }
-
-    private static String iconPath(String iconAssetPath, String iconImageResource, Map<String, String> iconFallback) {
-        return iconAssetPath != null ? iconAssetPath : iconFallback.get(iconImageResource);
-    }
 
     private static Pageable pageRequest(PageRequest page, Sort sort) {
         PageRequest checkedPage = Objects.requireNonNull(page, "page");

@@ -46,7 +46,7 @@ export type FormatName =
   | 'java_double'
   | 'bool_yes_no';
 
-export type TranslateFn = (key: string, params?: Record<string, unknown>) => string;
+export type TranslateFn = (key: string, params?: Record<string, unknown> | unknown[]) => string;
 
 export interface VoltageBlockSingle {
   labelKey: string;
@@ -144,7 +144,7 @@ function makeFormats(t: TranslateFn): Record<FormatName, (v: unknown) => string>
   };
 }
 
-function tr(t: TranslateFn, key: string, params?: Record<string, unknown>): string {
+function tr(t: TranslateFn, key: string, params?: Record<string, unknown> | unknown[]): string {
   const value = t(key, params);
   if (value === key) console.warn(`[displaySpec] missing i18n key=${key}`);
   return value;
@@ -493,8 +493,10 @@ function renderLine(
     if (tbl) {
       const looked = lookupSuffixTable(tbl, raw, line.suffix_table_lookup);
       if (looked !== undefined) {
-        const tmpl = line.suffixTableFormatKey ? tr(t, line.suffixTableFormatKey) : '{0}';
-        valueText = valueText + tmpl.replace('{0}', tr(t, looked));
+        const lookedText = tr(t, looked);
+        valueText =
+          valueText +
+          (line.suffixTableFormatKey ? tr(t, line.suffixTableFormatKey, [lookedText]) : lookedText);
       }
     }
   }

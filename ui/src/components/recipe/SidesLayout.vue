@@ -63,17 +63,10 @@ const hasOutputs = computed(() => itemOutputs.value.length + fluidOutputs.value.
 
 const shapeless = computed(() => !!props.category?.shapeless);
 
-const inputDims = computed<{ w: number | null; h: number | null }>(() => {
-  // GT exporter 把所有 RecipeMap 的 input 写成 maxItemInputs×1（flat），
-  // 但装配线 NEI handler 实际是 4×4 网格。这里按真实布局展示。
-  if (props.category?.categoryId === 'gregtech:assemblyline') {
-    return { w: 4, h: 4 };
-  }
-  return {
-    w: props.category?.itemInputWidth ?? null,
-    h: props.category?.itemInputHeight ?? null,
-  };
-});
+const inputDims = computed<{ w: number | null; h: number | null }>(() => ({
+  w: props.category?.itemInputWidth ?? null,
+  h: props.category?.itemInputHeight ?? null,
+}));
 
 const fluidInputDims = computed<{ w: number | null; h: number | null }>(() => ({
   w: props.category?.fluidInputWidth ?? null,
@@ -96,10 +89,7 @@ function onLookup(
 </script>
 
 <template>
-  <section
-    v-if="specialInputs.length"
-    class="side special-inputs"
-  >
+  <section v-if="specialInputs.length" class="side special-inputs">
     <div class="side-header">
       <div class="side-label">
         {{ t('recipe.specialInput') }}
@@ -124,33 +114,21 @@ function onLookup(
     </div>
   </section>
 
-  <section
-    v-if="hasInputs"
-    class="side inputs"
-  >
+  <section v-if="hasInputs" class="side inputs">
     <div class="side-header">
       <div class="side-label">
         {{ t('recipe.input') }}
       </div>
       <div class="side-meta">
-        <span
-          v-if="itemInputs.length"
-          class="meta-chip"
-        >
+        <span v-if="itemInputs.length" class="meta-chip">
           <span class="dot item" />{{ t('recipe.itemCountLabel', { count: itemInputs.length }) }}
         </span>
-        <span
-          v-if="fluidInputs.length"
-          class="meta-chip"
-        >
+        <span v-if="fluidInputs.length" class="meta-chip">
           <span class="dot fluid" />{{ t('recipe.fluidCountLabel', { count: fluidInputs.length }) }}
         </span>
       </div>
     </div>
-    <div
-      v-if="itemInputs.length"
-      class="group"
-    >
+    <div v-if="itemInputs.length" class="group">
       <SlotGrid
         :slots="itemInputs"
         :declared-w="inputDims.w"
@@ -162,10 +140,7 @@ function onLookup(
         @lookup="onLookup"
       />
     </div>
-    <div
-      v-if="fluidInputs.length"
-      class="group"
-    >
+    <div v-if="fluidInputs.length" class="group">
       <SlotGrid
         :slots="fluidInputs"
         :declared-w="fluidInputDims.w"
@@ -191,44 +166,29 @@ function onLookup(
     </div>
   </section>
 
-  <div
-    v-if="hasInputs && hasOutputs"
-    class="divider"
-  >
+  <div v-if="hasInputs && hasOutputs" class="divider">
     <span class="divider-line" />
     <span class="divider-label">{{ t('recipe.outputDivider') }}</span>
     <span class="divider-line" />
   </div>
 
-  <section
-    v-if="hasOutputs"
-    class="side outputs"
-  >
+  <section v-if="hasOutputs" class="side outputs">
     <div class="side-header">
       <div class="side-label">
         {{ t('recipe.output') }}
       </div>
       <div class="side-meta">
-        <span
-          v-if="itemOutputs.length"
-          class="meta-chip"
-        >
+        <span v-if="itemOutputs.length" class="meta-chip">
           <span class="dot item" />{{ t('recipe.itemCountLabel', { count: itemOutputs.length }) }}
         </span>
-        <span
-          v-if="fluidOutputs.length"
-          class="meta-chip"
-        >
+        <span v-if="fluidOutputs.length" class="meta-chip">
           <span class="dot fluid" />{{
             t('recipe.fluidCountLabel', { count: fluidOutputs.length })
           }}
         </span>
       </div>
     </div>
-    <div
-      v-if="itemOutputs.length"
-      class="group"
-    >
+    <div v-if="itemOutputs.length" class="group">
       <SlotGrid
         :slots="itemOutputs"
         :declared-w="category?.itemOutputWidth"
@@ -240,10 +200,7 @@ function onLookup(
         @lookup="onLookup"
       />
     </div>
-    <div
-      v-if="fluidOutputs.length"
-      class="group"
-    >
+    <div v-if="fluidOutputs.length" class="group">
       <SlotGrid
         :slots="fluidOutputs"
         :declared-w="fluidOutputDims.w"
@@ -269,10 +226,7 @@ function onLookup(
     </div>
   </section>
 
-  <section
-    v-if="specialOutputs.length"
-    class="side special-outputs"
-  >
+  <section v-if="specialOutputs.length" class="side special-outputs">
     <div class="side-header">
       <div class="side-label">
         {{ t('recipe.specialOutput') }}
