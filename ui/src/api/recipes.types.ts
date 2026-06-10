@@ -30,14 +30,6 @@ export interface RecipeSlot {
   placement?: string | null;
 }
 
-export interface GregTechSpecialItem {
-  itemVariantId: string;
-  displayName: string | null;
-  modId: string | null;
-  modName: string | null;
-  assetUrl: string | null;
-}
-
 export type GregTechRecipeKind = 'PROCESSING' | 'FUEL';
 
 export interface MaterialRef {
@@ -72,18 +64,6 @@ export interface MetadataValue {
   valueJson: MetadataJsonValue | null;
 }
 
-export interface GregTechRecipeInfo {
-  recipeKind: GregTechRecipeKind;
-  visibleInNei: boolean;
-  voltageTier: string | null;
-  voltage: number | null;
-  amperage: number | null;
-  durationTicks: number;
-  specialValue: number | null;
-  specialItems: GregTechSpecialItem[];
-  metadata: Record<string, MetadataValue>;
-}
-
 export interface Recipe {
   recipeId: string;
   categoryId: string;
@@ -93,7 +73,7 @@ export interface Recipe {
   sourceRef: string;
   description: string;
   slots: RecipeSlot[];
-  gregtech: GregTechRecipeInfo | null;
+  metadata: Record<string, MetadataValue>;
 }
 
 export interface RecipeCategory {

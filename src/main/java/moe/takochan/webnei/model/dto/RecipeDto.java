@@ -1,6 +1,7 @@
 package moe.takochan.webnei.model.dto;
 
 import java.util.List;
+import java.util.Map;
 
 public record RecipeDto(
         String recipeId,
@@ -11,5 +12,5 @@ public record RecipeDto(
         String sourceRef,
         String description,
         List<RecipeSlotDto> slots,
-        GregTechRecipeDto gregtech) {
+        Map<String, MetadataValueDto> metadata) {
 }

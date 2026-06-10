@@ -7,13 +7,7 @@
  * Schema 见 SCHEMA.md。
  */
 import { Parser, type Expression } from 'expr-eval';
-import type {
-  GregTechRecipeInfo,
-  GregTechSpecialItem,
-  MetadataValue,
-  RecipeSlot,
-  RecipeSlotCandidate,
-} from '@/api/recipes.types';
+import type { MetadataValue, RecipeSlot, RecipeSlotCandidate } from '@/api/recipes.types';
 import { mergeLocaleMessages } from '@/i18n';
 
 // ─────────────────────────────────────────────────────────────────────
@@ -241,19 +235,30 @@ export interface RecipeCtx {
   special_value: number | null;
   fluid_inputs: Array<{ amount: number; fluid_id: string }>;
   item_inputs: Array<{ item_id: string; amount: number }>;
-  special_items: GregTechSpecialItem[];
+  special_items: Array<{ itemVariantId: string }>;
   metadata: Record<string, unknown>;
 }
 
-/** 把 GregTechRecipeInfo + 槽位扁平化成 ctx。 */
-export function buildCtx(handler: string, gt: GregTechRecipeInfo, slots: RecipeSlot[]): RecipeCtx {
+/**
+ * 把核心 recipe.metadata + 槽位扁平化成 ctx。
+ *
+ * GregTech 不再是特例：voltage / voltage_tier / amperage / duration_ticks / special_value /
+ * recipe_kind 都从通用 metadata 取（exporter 写入的 metadata key）；special_items 从 role=
+ * special_item 的槽位取（取首个候选作代表值，供 spec 的 special_item line 引用）。
+ */
+export function buildCtx(
+  handler: string,
+  metadata: Record<string, MetadataValue>,
+  slots: RecipeSlot[],
+): RecipeCtx {
   const flatMeta: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(gt.metadata)) {
+  for (const [k, v] of Object.entries(metadata)) {
     flatMeta[k] = unwrapMetadata(v);
   }
 
   const fluidInputs: Array<{ amount: number; fluid_id: string }> = [];
   const itemInputs: Array<{ item_id: string; amount: number }> = [];
+  const specialItems: Array<{ itemVariantId: string }> = [];
   for (const slot of slots) {
     const primary = primarySlotCandidate(slot);
     if (slot.role === 'fluid_input') {
@@ -266,22 +271,33 @@ export function buildCtx(handler: string, gt: GregTechRecipeInfo, slots: RecipeS
         item_id: primary?.itemVariantId ?? slot.itemVariantId ?? '',
         amount: primary?.amount ?? slot.amount ?? 0,
       });
+    } else if (slot.role === 'special_item') {
+      const id = primary?.itemVariantId ?? slot.itemVariantId ?? '';
+      if (id) specialItems.push({ itemVariantId: id });
     }
   }
 
+  const recipeKindRaw = flatMeta['recipe_kind'];
   return {
     handler,
-    recipe_kind: gt.recipeKind,
-    voltage: gt.voltage,
-    voltage_tier: gt.voltageTier,
-    amperage: gt.amperage,
-    duration_ticks: gt.durationTicks,
-    special_value: gt.specialValue,
+    recipe_kind: recipeKindRaw === 'FUEL' ? 'FUEL' : 'PROCESSING',
+    voltage: numOrNull(flatMeta['voltage']),
+    voltage_tier: flatMeta['voltage_tier'] != null ? String(flatMeta['voltage_tier']) : null,
+    amperage: numOrNull(flatMeta['amperage']),
+    duration_ticks: numOrNull(flatMeta['duration_ticks']) ?? 0,
+    special_value: numOrNull(flatMeta['special_value']),
     fluid_inputs: fluidInputs,
     item_inputs: itemInputs,
-    special_items: gt.specialItems ?? [],
+    special_items: specialItems,
     metadata: flatMeta,
   };
+}
+
+function numOrNull(v: unknown): number | null {
+  if (v === null || v === undefined) return null;
+  if (typeof v === 'number') return v;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
 }
 
 function unwrapMetadata(v: MetadataValue): unknown {
@@ -721,7 +737,7 @@ async function fetchSpec(url: string): Promise<DisplaySpec> {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`spec fetch failed: ${url} → ${res.status}`);
   const spec = (await res.json()) as DisplaySpec;
-  if (spec.schema !== 'gregtech-display-spec' || spec.version !== 2) {
+  if (spec.schema !== 'recipe-display-spec' || spec.version !== 2) {
     console.warn('[displaySpec] unexpected spec schema/version:', spec.schema, spec.version);
   }
   return spec;

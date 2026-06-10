@@ -16,8 +16,8 @@ import moe.takochan.webnei.model.dto.PageRequest;
 import moe.takochan.webnei.model.dto.RecipeCategoryDto;
 import moe.takochan.webnei.model.entity.table.NeiTextureExportEntity;
 import moe.takochan.webnei.model.entity.view.RecipeCategoryBrowserEntity;
-import moe.takochan.webnei.repository.table.GregTechRecipeRepository;
 import moe.takochan.webnei.repository.table.NeiTextureExportRepository;
+import moe.takochan.webnei.repository.table.RecipeFilterTagRepository;
 import moe.takochan.webnei.repository.view.RecipeCategoryBrowserRepository;
 import moe.takochan.webnei.repository.view.RecipeCategoryMachineBrowserRepository;
 import moe.takochan.webnei.repository.view.RecipeCategoryVoltageTierRepository;
@@ -35,7 +35,7 @@ public class RecipeCategoryService {
     private final RecipeCategoryMachineBrowserRepository machineRepo;
     private final RecipeCategoryVoltageTierRepository voltageTierRepo;
     private final RecipeLookupVoltageTierRepository lookupVoltageTierRepo;
-    private final GregTechRecipeRepository gregTechRecipeRepo;
+    private final RecipeFilterTagRepository filterTagRepo;
     private final NeiTextureExportRepository textureRepo;
     private final AssetUrlBuilder assetUrlBuilder;
 
@@ -43,14 +43,14 @@ public class RecipeCategoryService {
                                  RecipeCategoryMachineBrowserRepository machineRepo,
                                  RecipeCategoryVoltageTierRepository voltageTierRepo,
                                  RecipeLookupVoltageTierRepository lookupVoltageTierRepo,
-                                 GregTechRecipeRepository gregTechRecipeRepo,
+                                 RecipeFilterTagRepository filterTagRepo,
                                  NeiTextureExportRepository textureRepo,
                                  AssetUrlBuilder assetUrlBuilder) {
         this.categoryRepo = categoryRepo;
         this.machineRepo = machineRepo;
         this.voltageTierRepo = voltageTierRepo;
         this.lookupVoltageTierRepo = lookupVoltageTierRepo;
-        this.gregTechRecipeRepo = gregTechRecipeRepo;
+        this.filterTagRepo = filterTagRepo;
         this.textureRepo = textureRepo;
         this.assetUrlBuilder = assetUrlBuilder;
     }
@@ -123,10 +123,10 @@ public class RecipeCategoryService {
                     .toList();
         }
         if (query != null && !query.isBlank()) {
-            return gregTechRecipeRepo.findVoltageTiersByCategoryAndSearch(
-                            datasetId, categoryId, "%" + query.trim().toLowerCase() + "%")
+            return filterTagRepo.findTagValuesByCategoryAndSearch(
+                            datasetId, categoryId, "voltage_tier", "%" + query.trim().toLowerCase() + "%")
                     .stream()
-                    .map(row -> new CategoryVoltageTierDto(row.getTier(), row.getRecipeCount()))
+                    .map(row -> new CategoryVoltageTierDto(row.getTagValue(), row.getRecipeCount()))
                     .toList();
         }
         return voltageTierRepo.findByDatasetIdAndCategoryIdOrderByMinVoltageAsc(datasetId, categoryId)

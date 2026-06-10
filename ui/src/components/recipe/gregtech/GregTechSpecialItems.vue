@@ -3,10 +3,15 @@ import { useRouter, useRoute } from 'vue-router';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useEntityNavigation } from '@/composables/useEntityNavigation';
-import type { GregTechSpecialItem } from '@/api/recipes.types';
+
+interface SpecialItemDisplay {
+  itemVariantId: string;
+  displayName: string | null;
+  assetUrl: string | null;
+}
 
 defineProps<{
-  items: GregTechSpecialItem[];
+  items: SpecialItemDisplay[];
 }>();
 
 const router = useRouter();
@@ -15,16 +20,13 @@ const datasetId = computed(() => String(route.params.datasetId ?? ''));
 const entityNavigation = useEntityNavigation(router, datasetId);
 const { t } = useI18n();
 
-function onClick(item: GregTechSpecialItem) {
+function onClick(item: SpecialItemDisplay) {
   entityNavigation.pick(item.itemVariantId);
 }
 </script>
 
 <template>
-  <section
-    v-if="items.length"
-    class="specials"
-  >
+  <section v-if="items.length" class="specials">
     <div class="label">
       {{ t('recipe.specialItems') }}
     </div>
@@ -41,11 +43,8 @@ function onClick(item: GregTechSpecialItem) {
           :src="item.assetUrl"
           :alt="item.displayName ?? ''"
           loading="lazy"
-        >
-        <span
-          v-else
-          class="placeholder"
-        >?</span>
+        />
+        <span v-else class="placeholder">?</span>
       </button>
     </div>
   </section>

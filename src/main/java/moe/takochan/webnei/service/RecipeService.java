@@ -16,8 +16,6 @@ import moe.takochan.webnei.common.PageResponse;
 import moe.takochan.webnei.model.dto.CategoryBreakdownDto;
 import moe.takochan.webnei.model.dto.DatasetSummary;
 import moe.takochan.webnei.model.dto.FluidRef;
-import moe.takochan.webnei.model.dto.GregTechRecipeDto;
-import moe.takochan.webnei.model.dto.GregTechSpecialItemDto;
 import moe.takochan.webnei.model.dto.HandlerBreakdownDto;
 import moe.takochan.webnei.model.dto.ItemRef;
 import moe.takochan.webnei.model.dto.LookupKindCountDto;
@@ -28,11 +26,10 @@ import moe.takochan.webnei.model.dto.RecipeDto;
 import moe.takochan.webnei.model.dto.RecipeSlotCandidateDto;
 import moe.takochan.webnei.model.dto.RecipeSlotDto;
 import moe.takochan.webnei.model.dto.SlotLayoutDto;
-import moe.takochan.webnei.model.entity.table.GregTechRecipeEntity;
-import moe.takochan.webnei.model.entity.table.GregTechRecipeMetadataEntity;
-import moe.takochan.webnei.model.entity.table.GregTechSpecialItemEntity;
 import moe.takochan.webnei.model.entity.table.IngredientEntryEntity;
 import moe.takochan.webnei.model.entity.table.NeiTextureExportEntity;
+import moe.takochan.webnei.model.entity.table.RecipeFilterTagEntity;
+import moe.takochan.webnei.model.entity.table.RecipeMetadataEntity;
 import moe.takochan.webnei.model.entity.table.RecipeSearchDocumentEntity;
 import moe.takochan.webnei.model.entity.table.RecipeSlotLayoutEntity;
 import moe.takochan.webnei.model.entity.view.RecipeBrowserEntity;
@@ -40,12 +37,10 @@ import moe.takochan.webnei.model.entity.view.RecipeLookupBreakdownEntity;
 import moe.takochan.webnei.model.entity.view.RecipeLookupBrowserEntity;
 import moe.takochan.webnei.model.entity.view.RecipeSlotBrowserEntity;
 import moe.takochan.webnei.model.query.RecipeLookupQuery;
-import moe.takochan.webnei.repository.table.GregTechRecipeMetadataRepository;
-import moe.takochan.webnei.repository.table.GregTechRecipeRepository;
-import moe.takochan.webnei.repository.table.GregTechSpecialItemRepository;
 import moe.takochan.webnei.repository.table.IngredientEntryRepository;
 import moe.takochan.webnei.repository.table.NeiTextureExportRepository;
 import moe.takochan.webnei.repository.table.RecipeLookupCountRepository;
+import moe.takochan.webnei.repository.table.RecipeMetadataRepository;
 import moe.takochan.webnei.repository.table.RecipeSlotLayoutRepository;
 import moe.takochan.webnei.repository.view.RecipeBrowserRepository;
 import moe.takochan.webnei.repository.view.RecipeLookupBreakdownRepository;
@@ -71,9 +66,7 @@ public class RecipeService {
     private final RecipeSlotBrowserRepository slotRepo;
     private final IngredientEntryRepository ingredientEntryRepo;
     private final RecipeSlotLayoutRepository slotLayoutRepo;
-    private final GregTechRecipeRepository gregTechRecipeRepo;
-    private final GregTechRecipeMetadataRepository metadataRepo;
-    private final GregTechSpecialItemRepository specialItemRepo;
+    private final RecipeMetadataRepository metadataRepo;
     private final EntityRefService entityRefService;
     private final NeiTextureExportRepository textureRepo;
     private final AssetUrlBuilder assetUrlBuilder;
@@ -86,9 +79,7 @@ public class RecipeService {
                         RecipeSlotBrowserRepository slotRepo,
                         IngredientEntryRepository ingredientEntryRepo,
                         RecipeSlotLayoutRepository slotLayoutRepo,
-                        GregTechRecipeRepository gregTechRecipeRepo,
-                        GregTechRecipeMetadataRepository metadataRepo,
-                        GregTechSpecialItemRepository specialItemRepo,
+                        RecipeMetadataRepository metadataRepo,
                         EntityRefService entityRefService,
                         NeiTextureExportRepository textureRepo,
                         AssetUrlBuilder assetUrlBuilder,
@@ -100,9 +91,7 @@ public class RecipeService {
         this.slotRepo = slotRepo;
         this.ingredientEntryRepo = ingredientEntryRepo;
         this.slotLayoutRepo = slotLayoutRepo;
-        this.gregTechRecipeRepo = gregTechRecipeRepo;
         this.metadataRepo = metadataRepo;
-        this.specialItemRepo = specialItemRepo;
         this.entityRefService = entityRefService;
         this.textureRepo = textureRepo;
         this.assetUrlBuilder = assetUrlBuilder;
@@ -269,10 +258,9 @@ public class RecipeService {
                 .distinct()
                 .toList();
         Map<String, List<SlotLayoutDto>> layoutMap = loadLayouts(datasetId, categoryIds);
-        List<GregTechSpecialItemEntity> specialRows = specialItemRepo.findByDatasetIdAndRecipeIdIn(
-                datasetId, new ArrayList<>(headers.keySet()), Sort.by("recipeId").ascending().and(Sort.by("listIndex").ascending()));
-        Map<String, List<RecipeSlotDto>> slotMap = loadSlots(dataset, new ArrayList<>(headers.keySet()), specialRows, layoutMap);
-        Map<String, GregTechRecipeDto> gtMap = loadGregTechInfo(dataset, new ArrayList<>(headers.keySet()), specialRows);
+        Map<String, List<RecipeSlotDto>> slotMap = loadSlots(dataset, new ArrayList<>(headers.keySet()), layoutMap);
+        Map<String, Map<String, MetadataValueDto>> metadataMap =
+                loadMetadata(datasetId, new ArrayList<>(headers.keySet()));
 
         List<RecipeDto> out = new ArrayList<>(recipeIds.size());
         for (String id : recipeIds) {
@@ -287,13 +275,13 @@ public class RecipeService {
                     h.getSourceRef(),
                     h.getDescription(),
                     slotMap.getOrDefault(id, List.of()),
-                    gtMap.get(id)));
+                    metadataMap.getOrDefault(id, Map.of())));
         }
         return out;
     }
 
     private Map<String, List<RecipeSlotDto>> loadSlots(
-            DatasetSummary dataset, List<String> recipeIds, List<GregTechSpecialItemEntity> specialRows,
+            DatasetSummary dataset, List<String> recipeIds,
             Map<String, List<SlotLayoutDto>> layoutMap) {
         String datasetId = dataset.datasetId();
         List<RecipeSlotBrowserEntity> rows = slotRepo.findByDatasetIdAndRecipeIdIn(
@@ -353,37 +341,6 @@ public class RecipeService {
                             assetUrl,
                             nullIfEmpty(r.getGroupId()) == null ? List.of() : candidatesByGroup.getOrDefault(r.getGroupId(), List.of()),
                             placementByCategoryRoleSlot.get(r.getCategoryId() + ":" + r.getRole() + ":" + r.getSlotIndex())));
-        }
-        Map<String, ItemRef> itemRefs = entityRefService.itemRefs(dataset, specialRows.stream()
-                .map(GregTechSpecialItemEntity::getItemVariantId)
-                .filter(Objects::nonNull)
-                .filter(s -> !s.isBlank())
-                .distinct()
-                .toList());
-        for (GregTechSpecialItemEntity si : specialRows) {
-            ItemRef item = itemRefs.get(si.getItemVariantId());
-            String categoryId = categoryByRecipe.get(si.getRecipeId());
-            String placement = categoryId == null
-                    ? null
-                    : placementByCategoryRoleSlot.get(categoryId + ":special_item:" + si.getListIndex());
-            byRecipe.computeIfAbsent(si.getRecipeId(), ignored -> new ArrayList<>())
-                    .add(new RecipeSlotDto(
-                            "special_item",
-                            si.getListIndex(),
-                            si.getItemVariantId(),
-                            null,
-                            1,
-                            1.0,
-                            null,
-                            item == null ? null : item.displayName(),
-                            item == null ? null : item.modId(),
-                            item == null ? null : item.modName(),
-                            null,
-                            null,
-                            item == null ? null : item.tooltipText(),
-                            item == null ? null : item.assetUrl(),
-                            List.of(),
-                            placement));
         }
         byRecipe.values().forEach(list -> list.sort(Comparator
                 .comparing(RecipeSlotDto::role)
@@ -450,51 +407,9 @@ public class RecipeService {
         return map;
     }
 
-    private Map<String, GregTechRecipeDto> loadGregTechInfo(
-            DatasetSummary dataset, List<String> recipeIds, List<GregTechSpecialItemEntity> specialRows) {
-        Map<String, List<GregTechSpecialItemDto>> specialItems = mapGregTechSpecialItems(dataset, specialRows);
-        Map<String, Map<String, MetadataValueDto>> metadata = loadGregTechMetadata(dataset.datasetId(), recipeIds);
-        Map<String, GregTechRecipeDto> out = new HashMap<>();
-        for (GregTechRecipeEntity e : gregTechRecipeRepo.findByDatasetIdAndRecipeIdIn(dataset.datasetId(), recipeIds)) {
-            out.put(e.getRecipeId(), new GregTechRecipeDto(
-                    e.getRecipeKind(),
-                    e.isVisibleInNei(),
-                    e.getVoltageTier(),
-                    e.getVoltage(),
-                    e.getAmperage(),
-                    e.getDurationTicks(),
-                    e.getSpecialValue(),
-                    specialItems.getOrDefault(e.getRecipeId(), List.of()),
-                    metadata.getOrDefault(e.getRecipeId(), Map.of())));
-        }
-        return out;
-    }
-
-    private Map<String, List<GregTechSpecialItemDto>> mapGregTechSpecialItems(
-            DatasetSummary dataset, List<GregTechSpecialItemEntity> specialRows) {
-        Map<String, ItemRef> itemRefs = entityRefService.itemRefs(dataset, specialRows.stream()
-                .map(GregTechSpecialItemEntity::getItemVariantId)
-                .filter(Objects::nonNull)
-                .filter(s -> !s.isBlank())
-                .distinct()
-                .toList());
-        Map<String, List<GregTechSpecialItemDto>> out = new LinkedHashMap<>();
-        for (GregTechSpecialItemEntity e : specialRows) {
-            ItemRef item = itemRefs.get(e.getItemVariantId());
-            out.computeIfAbsent(e.getRecipeId(), ignored -> new ArrayList<>())
-                    .add(new GregTechSpecialItemDto(
-                            e.getItemVariantId(),
-                            item == null ? null : item.displayName(),
-                            item == null ? null : item.modId(),
-                            item == null ? null : item.modName(),
-                            item == null ? null : item.assetUrl()));
-        }
-        return out;
-    }
-
-    private Map<String, Map<String, MetadataValueDto>> loadGregTechMetadata(String datasetId, List<String> recipeIds) {
+    private Map<String, Map<String, MetadataValueDto>> loadMetadata(String datasetId, List<String> recipeIds) {
         Map<String, Map<String, MetadataValueDto>> out = new LinkedHashMap<>();
-        for (GregTechRecipeMetadataEntity e : metadataRepo.findByDatasetIdAndRecipeIdIn(
+        for (RecipeMetadataEntity e : metadataRepo.findByDatasetIdAndRecipeIdIn(
                 datasetId, recipeIds, Sort.by("recipeId").ascending().and(Sort.by("metadataKey").ascending()))) {
             out.computeIfAbsent(e.getRecipeId(), ignored -> new LinkedHashMap<>())
                     .put(e.getMetadataKey(), new MetadataValueDto(e.getValueType(), e.getValueText(), parseMetadataJson(e.getValueJson(), e.getRecipeId(), e.getMetadataKey())));
@@ -576,12 +491,13 @@ public class RecipeService {
     private static Specification<RecipeBrowserEntity> recipeVoltageTier(String datasetId, String voltageTier) {
         return (root, query, cb) -> {
             Subquery<String> subquery = query.subquery(String.class);
-            var gt = subquery.from(GregTechRecipeEntity.class);
-            subquery.select(gt.get("recipeId"));
+            var ft = subquery.from(RecipeFilterTagEntity.class);
+            subquery.select(ft.get("recipeId"));
             subquery.where(
-                    cb.equal(gt.get("datasetId"), datasetId),
-                    cb.equal(gt.get("recipeId"), root.get("recipeId")),
-                    cb.equal(gt.get("voltageTier"), voltageTier));
+                    cb.equal(ft.get("datasetId"), datasetId),
+                    cb.equal(ft.get("recipeId"), root.get("recipeId")),
+                    cb.equal(ft.get("tagKey"), "voltage_tier"),
+                    cb.equal(ft.get("tagValue"), voltageTier));
             return cb.exists(subquery);
         };
     }
@@ -607,12 +523,13 @@ public class RecipeService {
     private static Specification<RecipeLookupBrowserEntity> lookupVoltageTier(String datasetId, String voltageTier) {
         return (root, query, cb) -> {
             Subquery<String> subquery = query.subquery(String.class);
-            var gt = subquery.from(GregTechRecipeEntity.class);
-            subquery.select(gt.get("recipeId"));
+            var ft = subquery.from(RecipeFilterTagEntity.class);
+            subquery.select(ft.get("recipeId"));
             subquery.where(
-                    cb.equal(gt.get("datasetId"), datasetId),
-                    cb.equal(gt.get("recipeId"), root.get("recipeId")),
-                    cb.equal(gt.get("voltageTier"), voltageTier));
+                    cb.equal(ft.get("datasetId"), datasetId),
+                    cb.equal(ft.get("recipeId"), root.get("recipeId")),
+                    cb.equal(ft.get("tagKey"), "voltage_tier"),
+                    cb.equal(ft.get("tagValue"), voltageTier));
             return cb.exists(subquery);
         };
     }

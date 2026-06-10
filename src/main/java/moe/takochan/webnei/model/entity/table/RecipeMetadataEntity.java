@@ -8,11 +8,16 @@ import jakarta.persistence.Table;
 
 import org.hibernate.annotations.Immutable;
 
+/**
+ * Generic per-recipe metadata (EAV), backing the {@code recipe_metadata} table. Any mod's extra
+ * recipe data is stored here as key-value; the display spec decides rendering. Replaces the former
+ * GregTech-specific metadata entity.
+ */
 @Entity
 @Immutable
-@IdClass(GregTechRecipeMetadataEntity.MetadataId.class)
-@Table(name = "gregtech_recipe_metadata")
-public class GregTechRecipeMetadataEntity {
+@IdClass(RecipeMetadataEntity.MetadataId.class)
+@Table(name = "recipe_metadata")
+public class RecipeMetadataEntity {
 
     @Id
     @Column(name = "dataset_id", nullable = false)
@@ -35,7 +40,7 @@ public class GregTechRecipeMetadataEntity {
     @Column(name = "value_json")
     private String valueJson;
 
-    protected GregTechRecipeMetadataEntity() {}
+    protected RecipeMetadataEntity() {}
 
     public String getDatasetId() { return datasetId; }
     public String getRecipeId() { return recipeId; }
