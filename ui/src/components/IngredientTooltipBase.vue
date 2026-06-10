@@ -30,52 +30,28 @@ withDefaults(
 </script>
 
 <template>
-  <div
-    class="ingredient-tooltip-content"
-    :class="`ingredient-tooltip-content--${variant}`"
-  >
-    <MinecraftTooltipText
-      v-if="ingredient.tooltipText"
-      :text="ingredient.tooltipText"
-    />
-    <div
-      v-else
-      class="ingredient-tooltip-fallback"
-    >
+  <div class="ingredient-tooltip-content" :class="`ingredient-tooltip-content--${variant}`">
+    <MinecraftTooltipText v-if="ingredient.tooltipText" :text="ingredient.tooltipText" />
+    <div v-else class="ingredient-tooltip-fallback">
       <div class="ingredient-tooltip-name">
         {{ ingredient.displayName }}
       </div>
       <slot />
-      <div
-        v-if="ingredient.modName"
-        class="ingredient-tooltip-mod"
-      >
+      <div v-if="ingredient.modName" class="ingredient-tooltip-mod">
         {{ ingredient.modName }}
       </div>
     </div>
-    <dl
-      v-if="context.amountLabel || context.probabilityLabel"
-      class="ingredient-tooltip-meta"
-    >
-      <div
-        v-if="context.amountLabel"
-        class="meta-chip"
-      >
+    <dl v-if="context.amountLabel || context.probabilityLabel" class="ingredient-tooltip-meta">
+      <div v-if="context.amountLabel" class="meta-chip">
         <dt>{{ t('common.amount') }}</dt>
         <dd>{{ context.amountLabel }}</dd>
       </div>
-      <div
-        v-if="context.probabilityLabel"
-        class="meta-chip probability"
-      >
+      <div v-if="context.probabilityLabel" class="meta-chip probability">
         <dt>{{ t('common.probability') }}</dt>
         <dd>{{ context.probabilityLabel }}</dd>
       </div>
     </dl>
-    <div
-      v-if="context.hint"
-      class="ingredient-tooltip-keys"
-    >
+    <div v-if="context.hint" class="ingredient-tooltip-keys">
       {{ context.hint }}
     </div>
   </div>
@@ -147,11 +123,8 @@ withDefaults(
   padding-bottom: 6px;
 }
 .ingredient-tooltip-mod {
-  color: var(--el-text-color-secondary);
-  font-size: 12px;
-}
-.ingredient-tooltip-content--fluid .ingredient-tooltip-mod {
   color: #5555ff;
+  font-size: 12px;
   font-style: italic;
   white-space: nowrap;
 }
