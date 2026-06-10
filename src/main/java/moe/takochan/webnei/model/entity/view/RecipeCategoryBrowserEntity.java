@@ -34,9 +34,6 @@ public class RecipeCategoryBrowserEntity {
     @Column(nullable = false)
     private boolean shapeless;
 
-    @Column(name = "icon_item_variant_id")
-    private String iconItemVariantId;
-
     @Column(name = "icon_display_name")
     private String iconDisplayName;
 
@@ -151,7 +148,6 @@ public class RecipeCategoryBrowserEntity {
     public String getHandlerId() { return handlerId; }
     public String getDisplayName() { return displayName; }
     public boolean isShapeless() { return shapeless; }
-    public String getIconItemVariantId() { return iconItemVariantId; }
     public String getIconDisplayName() { return iconDisplayName; }
     public String getIconAssetId() { return iconAssetId; }
     public String getIconAssetPath() { return iconAssetPath; }
