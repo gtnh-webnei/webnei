@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
+import { ArrowDown, ArrowUp } from '@element-plus/icons-vue';
 import { listCategoryApplicableItems, listCategoryVoltageTiers } from '@/api/recipes';
 import { useEntityNavigation } from '@/composables/useEntityNavigation';
 import type { CategoryApplicableItem, CategoryVoltageTier, LookupKind } from '@/api/recipes.types';
@@ -33,9 +34,54 @@ const entityNavigation = useEntityNavigation(
 );
 
 const applicableItems = ref<CategoryApplicableItem[]>([]);
+const applicableItemsExpanded = ref(false);
+const applicableItemsOverflow = ref(false);
+const visibleColumnCount = ref(1);
+const collapsedRowCount = ref(1);
+const listEl = ref<HTMLElement | null>(null);
 const tiers = ref<CategoryVoltageTier[]>([]);
 
 const tiersTotal = computed(() => tiers.value.reduce((sum, t) => sum + t.recipeCount, 0));
+const collapsedVisibleCount = computed(() => {
+  if (!applicableItemsOverflow.value) return applicableItems.value.length;
+  return Math.max(1, visibleColumnCount.value * collapsedRowCount.value - 1);
+});
+const visibleApplicableItems = computed(() =>
+  applicableItemsExpanded.value
+    ? applicableItems.value
+    : applicableItems.value.slice(0, collapsedVisibleCount.value),
+);
+const canToggleApplicableItems = computed(
+  () => applicableItemsOverflow.value || applicableItemsExpanded.value,
+);
+
+function measureLayout() {
+  const el = listEl.value;
+  if (!el) {
+    applicableItemsOverflow.value = false;
+    visibleColumnCount.value = 1;
+    collapsedRowCount.value = 1;
+    return;
+  }
+  const style = getComputedStyle(el);
+  const cellSize = Number.parseFloat(style.getPropertyValue('--applicable-cell-size')) || 44;
+  const gap = Number.parseFloat(style.columnGap || style.gap) || 6;
+  const columns = Math.max(1, Math.floor((el.clientWidth + gap) / (cellSize + gap)));
+  const rows = Math.max(1, Math.round((el.clientHeight + gap) / (cellSize + gap)));
+  visibleColumnCount.value = columns;
+  collapsedRowCount.value = rows;
+  applicableItemsOverflow.value = applicableItems.value.length > columns * rows;
+}
+
+let resizeObserver: ResizeObserver | null = null;
+function observeList(el: HTMLElement | null) {
+  resizeObserver?.disconnect();
+  if (!el) return;
+  resizeObserver = new ResizeObserver(() => measureLayout());
+  resizeObserver.observe(el);
+}
+watch(listEl, (el) => observeList(el));
+onBeforeUnmount(() => resizeObserver?.disconnect());
 
 const TIER_COLORS: Record<string, { fg: string; bg: string }> = {
   ULV: { fg: '#64748b', bg: 'rgba(100, 116, 139, 0.12)' },
@@ -68,6 +114,9 @@ async function fetchApplicableItems() {
   } catch {
     applicableItems.value = [];
   }
+  applicableItemsExpanded.value = false;
+  await nextTick();
+  measureLayout();
 }
 
 async function fetchTiers() {
@@ -97,7 +146,10 @@ function openApplicableItem(m: CategoryApplicableItem) {
 
 watch(
   () => [props.datasetId, props.categoryId, props.hideApplicableItems],
-  () => fetchApplicableItems(),
+  () => {
+    applicableItemsExpanded.value = false;
+    fetchApplicableItems();
+  },
   { immediate: true },
 );
 
@@ -115,22 +167,34 @@ watch(
         <span>{{ t('category.applicableItems') }}</span>
         <span class="row-count">{{ applicableItems.length }}</span>
       </div>
-      <div class="applicable-items">
-        <AppTooltip
-          v-for="m in applicableItems"
-          :key="m.itemVariantId"
-          :content="m.displayName ?? m.itemVariantId"
-        >
-          <button type="button" class="applicable-item-cell" @click="openApplicableItem(m)">
-            <img
-              v-if="m.assetUrl"
-              :src="m.assetUrl"
-              :alt="m.displayName ?? m.itemVariantId"
-              class="applicable-item-icon"
-            />
-            <span v-else class="applicable-item-icon placeholder" />
-          </button>
-        </AppTooltip>
+      <div class="applicable-block">
+        <div class="applicable-list-wrap">
+          <div ref="listEl" class="applicable-items" :class="{ expanded: applicableItemsExpanded }">
+            <AppTooltip
+              v-for="m in visibleApplicableItems"
+              :key="m.itemVariantId"
+              :content="m.displayName ?? m.itemVariantId"
+            >
+              <button type="button" class="applicable-item-cell" @click="openApplicableItem(m)">
+                <img
+                  v-if="m.assetUrl"
+                  :src="m.assetUrl"
+                  :alt="m.displayName ?? m.itemVariantId"
+                  class="applicable-item-icon"
+                />
+                <span v-else class="applicable-item-icon placeholder" />
+              </button>
+            </AppTooltip>
+            <button
+              v-if="canToggleApplicableItems"
+              type="button"
+              class="applicable-item-cell applicable-toggle-cell"
+              @click="applicableItemsExpanded = !applicableItemsExpanded"
+            >
+              <el-icon><ArrowUp v-if="applicableItemsExpanded" /><ArrowDown v-else /></el-icon>
+            </button>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -200,14 +264,26 @@ watch(
   color: var(--el-text-color-secondary);
   font-variant-numeric: tabular-nums;
 }
+.applicable-block {
+  min-width: 0;
+}
+.applicable-list-wrap {
+  position: relative;
+  min-width: 0;
+}
 .applicable-items {
+  --applicable-cell-size: 44px;
   display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 44px;
+  grid-template-columns: repeat(auto-fill, var(--applicable-cell-size));
+  grid-auto-rows: var(--applicable-cell-size);
   gap: 6px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: 2px 2px 4px;
+  max-height: var(--applicable-cell-size);
+  overflow: hidden;
+  padding: 0;
+}
+.applicable-items.expanded {
+  max-height: 194px;
+  overflow-y: auto;
   scrollbar-width: thin;
 }
 .applicable-item-cell {
@@ -228,6 +304,20 @@ watch(
 .applicable-item-cell:hover {
   border-color: var(--el-color-primary);
   background: var(--el-color-primary-light-9);
+}
+.applicable-toggle-cell {
+  color: var(--el-text-color-secondary);
+  background: var(--el-bg-color);
+  border-color: var(--el-border-color-lighter);
+}
+.applicable-toggle-cell:hover {
+  color: var(--el-color-primary);
+  border-color: var(--el-color-primary);
+  background: var(--el-color-primary-light-9);
+}
+.applicable-toggle-cell .el-icon {
+  font-size: 16px;
+  font-weight: 700;
 }
 .applicable-item-icon {
   width: 40px;
@@ -307,5 +397,43 @@ watch(
 .chip.tier-chip.active .chip-badge,
 .chip.tier-chip:hover .chip-badge {
   opacity: 1;
+}
+
+@media (max-width: 640px) {
+  .header-rows {
+    padding: 8px;
+  }
+  .row {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+    gap: 6px;
+  }
+  .applicable-items {
+    --applicable-cell-size: 40px;
+  }
+  .applicable-items.expanded {
+    max-height: 178px;
+  }
+  .applicable-toggle-cell .el-icon {
+    font-size: 18px;
+  }
+  .tier-chips {
+    display: block;
+    overflow-x: hidden;
+    overflow-y: visible;
+    padding: 2px 2px 0;
+  }
+  .tier-chips .chip {
+    margin: 0 6px 6px 0;
+    vertical-align: top;
+  }
+  .applicable-item-cell {
+    width: 40px;
+    height: 40px;
+  }
+  .applicable-item-icon {
+    width: 36px;
+    height: 36px;
+  }
 }
 </style>
