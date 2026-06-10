@@ -2,6 +2,7 @@ import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 import 'element-plus/dist/index.css';
 import 'element-plus/theme-chalk/dark/css-vars.css';
+import 'vue-virtual-scroller/dist/vue-virtual-scroller.css';
 import './styles/index.css';
 
 import App from './App.vue';

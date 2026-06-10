@@ -1,22 +1,22 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import type { Recipe, RecipeCategory } from '@/api/recipes.types'
-import { resolveRenderer } from './recipe/registry'
+import { computed } from 'vue';
+import type { Recipe, RecipeCategory } from '@/api/recipes.types';
+import { resolveRenderer } from './recipe/registry';
 
-type SlotPayload = { itemVariantId: string | null; fluidVariantId: string | null }
+type SlotPayload = { itemVariantId: string | null; fluidVariantId: string | null };
 
 const props = defineProps<{
-  recipe: Recipe
-  category?: RecipeCategory | null
-  pickHint?: string
-}>()
+  recipe: Recipe;
+  category?: RecipeCategory | null;
+  pickHint?: string;
+}>();
 
 const emit = defineEmits<{
-  (e: 'pick', payload: SlotPayload): void
-  (e: 'lookup', kind: 'recipe' | 'usage', payload: SlotPayload): void
-}>()
+  (e: 'pick', payload: SlotPayload): void;
+  (e: 'lookup', kind: 'recipe' | 'usage', payload: SlotPayload): void;
+}>();
 
-const Renderer = computed(() => resolveRenderer(props.recipe, props.category))
+const Renderer = computed(() => resolveRenderer(props.recipe));
 </script>
 
 <template>

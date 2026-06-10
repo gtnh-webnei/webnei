@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import { RecycleScroller } from 'vue-virtual-scroller';
 import { useI18n } from 'vue-i18n';
 import type { RecipeSlot, RecipeSlotCandidate } from '@/api/recipes.types';
 import { formatCompact, formatFluidCompact, formatFluidFull, formatFull } from '@/utils/format';
@@ -57,6 +58,13 @@ const direct = computed<RecipeSlotCandidate | null>(() => {
 });
 
 const candidates = computed(() => props.slot?.candidates ?? []);
+const candidateRows = computed(() =>
+  candidates.value.map((c, idx) => ({
+    ...c,
+    key: `${c.itemVariantId ?? ''}|${c.fluidVariantId ?? ''}|${idx}`,
+  })),
+);
+const candidateListHeight = computed(() => Math.min(candidateRows.value.length * 46, 320));
 const hasMultiple = computed(() => !direct.value && candidates.value.length > 1);
 const primary = computed<RecipeSlotCandidate | null>(() => {
   return direct.value ?? candidates.value[0] ?? null;
@@ -204,10 +212,15 @@ function candidateAmountLabel(c: RecipeSlotCandidate) {
           {{ displayPickHint }}
         </div>
       </div>
-      <div class="popover-items">
+      <RecycleScroller
+        v-slot="{ item: c }"
+        class="popover-items"
+        :items="candidateRows"
+        :item-size="46"
+        :style="{ height: candidateListHeight + 'px' }"
+        key-field="key"
+      >
         <AppTooltip
-          v-for="(c, idx) in candidates"
-          :key="`${c.itemVariantId ?? ''}|${c.fluidVariantId ?? ''}|${idx}`"
           :disabled="!hasCandidateHover(c)"
           placement="right"
         >
@@ -231,6 +244,7 @@ function candidateAmountLabel(c: RecipeSlotCandidate) {
           >
             <img
               v-if="c.assetUrl"
+              :key="c.assetUrl"
               :src="c.assetUrl"
               :alt="c.displayName ?? ''"
               loading="lazy"
@@ -258,7 +272,7 @@ function candidateAmountLabel(c: RecipeSlotCandidate) {
             </div>
           </div>
         </AppTooltip>
-      </div>
+      </RecycleScroller>
     </div>
   </el-popover>
 
@@ -422,16 +436,16 @@ function candidateAmountLabel(c: RecipeSlotCandidate) {
   color: var(--el-text-color-secondary);
 }
 .popover-items {
+  width: 100%;
   max-height: 320px;
   overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
 }
 .popover-item {
   display: flex;
   gap: 8px;
   align-items: center;
+  height: 44px;
+  margin-bottom: 2px;
   padding: 6px 8px;
   border-radius: 4px;
   cursor: pointer;
