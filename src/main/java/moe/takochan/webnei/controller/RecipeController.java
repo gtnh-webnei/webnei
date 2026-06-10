@@ -2,7 +2,7 @@ package moe.takochan.webnei.controller;
 
 import java.util.List;
 import moe.takochan.webnei.common.PageResponse;
-import moe.takochan.webnei.model.dto.CategoryMachineDto;
+import moe.takochan.webnei.model.dto.CategoryApplicableItemDto;
 import moe.takochan.webnei.model.dto.CategoryVoltageTierDto;
 import moe.takochan.webnei.model.dto.HandlerBreakdownDto;
 import moe.takochan.webnei.model.dto.LookupTargetHeaderDto;
@@ -109,10 +109,10 @@ public class RecipeController {
                 datasetResolver.resolve(datasetId), categoryId, q, voltageTier, PageRequest.of(page, size, DEFAULT_CATEGORY_PAGE_SIZE, MAX_CATEGORY_PAGE_SIZE));
     }
 
-    @GetMapping("/categories/{categoryId}/machines")
-    public List<CategoryMachineDto> listCategoryMachines(
+    @GetMapping("/categories/{categoryId}/applicable-items")
+    public List<CategoryApplicableItemDto> listCategoryApplicableItems(
             @PathVariable String datasetId, @PathVariable String categoryId) {
-        return recipeCategoryService.listCategoryMachines(datasetResolver.resolve(datasetId), categoryId);
+        return recipeCategoryService.listCategoryApplicableItems(datasetResolver.resolve(datasetId), categoryId);
     }
 
     @GetMapping("/categories/{categoryId}/voltage-tiers")

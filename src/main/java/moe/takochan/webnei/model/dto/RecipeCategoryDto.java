@@ -15,7 +15,7 @@ public record RecipeCategoryDto(
         int fluidOutputWidth,
         int fluidOutputHeight,
         long recipeCount,
-        long machineCount,
+        long applicableItemCount,
         String modName,
         String handlerClass) {
 }

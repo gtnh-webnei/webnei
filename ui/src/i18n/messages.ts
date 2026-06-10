@@ -170,8 +170,8 @@ export interface MessageSchema {
     hideZeroRecipes: string;
     noMatch: string;
     recipeCount: string;
-    machineCount: string;
-    applicableMachines: string;
+    applicableItemCount: string;
+    applicableItems: string;
     voltage: string;
     allTiers: string;
     categorySearchPlaceholder: string;

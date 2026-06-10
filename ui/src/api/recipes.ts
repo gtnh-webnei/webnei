@@ -1,7 +1,7 @@
 import { http } from './client';
 import type { ModOption, PageResponse } from './types';
 import type {
-  CategoryMachine,
+  CategoryApplicableItem,
   CategoryVoltageTier,
   HandlerBreakdown,
   LookupKind,
@@ -116,12 +116,12 @@ export async function listRecipesByCategory(
   return data;
 }
 
-export async function listCategoryMachines(
+export async function listCategoryApplicableItems(
   datasetId: string,
   categoryId: string,
-): Promise<CategoryMachine[]> {
-  const { data } = await http.get<CategoryMachine[]>(
-    `/datasets/${encodeURIComponent(datasetId)}/categories/${encodeURIComponent(categoryId)}/machines`,
+): Promise<CategoryApplicableItem[]> {
+  const { data } = await http.get<CategoryApplicableItem[]>(
+    `/datasets/${encodeURIComponent(datasetId)}/categories/${encodeURIComponent(categoryId)}/applicable-items`,
   );
   return data;
 }

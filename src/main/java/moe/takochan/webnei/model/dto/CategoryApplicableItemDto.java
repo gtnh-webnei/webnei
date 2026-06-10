@@ -1,6 +1,6 @@
 package moe.takochan.webnei.model.dto;
 
-public record CategoryMachineDto(
+public record CategoryApplicableItemDto(
         String itemVariantId,
         String displayName,
         String assetUrl,

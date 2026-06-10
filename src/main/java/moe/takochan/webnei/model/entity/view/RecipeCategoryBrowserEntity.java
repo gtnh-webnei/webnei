@@ -94,8 +94,8 @@ public class RecipeCategoryBrowserEntity {
     @Column(name = "recipe_count", nullable = false)
     private long recipeCount;
 
-    @Column(name = "machine_count", nullable = false)
-    private long machineCount;
+    @Column(name = "applicable_item_count", nullable = false)
+    private long applicableItemCount;
 
     @Column(name = "mod_id", nullable = false)
     private String modId;
@@ -168,7 +168,7 @@ public class RecipeCategoryBrowserEntity {
     public String getBackgroundAssetId() { return backgroundAssetId; }
     public String getBackgroundAssetPath() { return backgroundAssetPath; }
     public long getRecipeCount() { return recipeCount; }
-    public long getMachineCount() { return machineCount; }
+    public long getApplicableItemCount() { return applicableItemCount; }
     public String getModId() { return modId; }
     public String getModName() { return modName; }
     public String getHandlerClass() { return handlerClass; }

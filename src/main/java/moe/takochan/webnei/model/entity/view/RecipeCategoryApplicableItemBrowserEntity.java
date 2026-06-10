@@ -10,9 +10,9 @@ import org.hibernate.annotations.Immutable;
 
 @Entity
 @Immutable
-@IdClass(RecipeCategoryMachineBrowserEntity.MachineBrowserId.class)
-@Table(name = "v_recipe_category_machine_browser")
-public class RecipeCategoryMachineBrowserEntity {
+@IdClass(RecipeCategoryApplicableItemBrowserEntity.ApplicableItemBrowserId.class)
+@Table(name = "v_recipe_category_applicable_item_browser")
+public class RecipeCategoryApplicableItemBrowserEntity {
 
     @Id
     @Column(name = "dataset_id", nullable = false)
@@ -45,7 +45,7 @@ public class RecipeCategoryMachineBrowserEntity {
     @Column(name = "source_ref", nullable = false)
     private String sourceRef;
 
-    protected RecipeCategoryMachineBrowserEntity() {}
+    protected RecipeCategoryApplicableItemBrowserEntity() {}
 
     public String getDatasetId() { return datasetId; }
     public String getCategoryId() { return categoryId; }
@@ -57,18 +57,18 @@ public class RecipeCategoryMachineBrowserEntity {
     public int getDisplayOrder() { return displayOrder; }
     public String getSourceRef() { return sourceRef; }
 
-    public static class MachineBrowserId {
+    public static class ApplicableItemBrowserId {
         private String datasetId;
         private String categoryId;
         private String itemVariantId;
         private String role;
 
-        public MachineBrowserId() {}
+        public ApplicableItemBrowserId() {}
 
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (!(o instanceof MachineBrowserId other)) return false;
+            if (!(o instanceof ApplicableItemBrowserId other)) return false;
             return datasetId.equals(other.datasetId)
                     && categoryId.equals(other.categoryId)
                     && itemVariantId.equals(other.itemVariantId)

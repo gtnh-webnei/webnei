@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Objects;
 import moe.takochan.webnei.asset.AssetUrlBuilder;
 import moe.takochan.webnei.common.PageResponse;
-import moe.takochan.webnei.model.dto.CategoryMachineDto;
+import moe.takochan.webnei.model.dto.CategoryApplicableItemDto;
 import moe.takochan.webnei.model.dto.CategoryVoltageTierDto;
 import moe.takochan.webnei.model.dto.DatasetSummary;
 import moe.takochan.webnei.model.dto.ModOptionDto;
@@ -19,7 +19,7 @@ import moe.takochan.webnei.model.entity.view.RecipeCategoryBrowserEntity;
 import moe.takochan.webnei.repository.table.NeiTextureExportRepository;
 import moe.takochan.webnei.repository.table.RecipeFilterTagRepository;
 import moe.takochan.webnei.repository.view.RecipeCategoryBrowserRepository;
-import moe.takochan.webnei.repository.view.RecipeCategoryMachineBrowserRepository;
+import moe.takochan.webnei.repository.view.RecipeCategoryApplicableItemBrowserRepository;
 import moe.takochan.webnei.repository.view.RecipeCategoryVoltageTierRepository;
 import moe.takochan.webnei.repository.view.RecipeLookupVoltageTierRepository;
 import org.springframework.data.domain.Page;
@@ -32,7 +32,7 @@ import org.springframework.stereotype.Service;
 public class RecipeCategoryService {
 
     private final RecipeCategoryBrowserRepository categoryRepo;
-    private final RecipeCategoryMachineBrowserRepository machineRepo;
+    private final RecipeCategoryApplicableItemBrowserRepository applicableItemRepo;
     private final RecipeCategoryVoltageTierRepository voltageTierRepo;
     private final RecipeLookupVoltageTierRepository lookupVoltageTierRepo;
     private final RecipeFilterTagRepository filterTagRepo;
@@ -40,14 +40,14 @@ public class RecipeCategoryService {
     private final AssetUrlBuilder assetUrlBuilder;
 
     public RecipeCategoryService(RecipeCategoryBrowserRepository categoryRepo,
-                                 RecipeCategoryMachineBrowserRepository machineRepo,
+                                 RecipeCategoryApplicableItemBrowserRepository applicableItemRepo,
                                  RecipeCategoryVoltageTierRepository voltageTierRepo,
                                  RecipeLookupVoltageTierRepository lookupVoltageTierRepo,
                                  RecipeFilterTagRepository filterTagRepo,
                                  NeiTextureExportRepository textureRepo,
                                  AssetUrlBuilder assetUrlBuilder) {
         this.categoryRepo = categoryRepo;
-        this.machineRepo = machineRepo;
+        this.applicableItemRepo = applicableItemRepo;
         this.voltageTierRepo = voltageTierRepo;
         this.lookupVoltageTierRepo = lookupVoltageTierRepo;
         this.filterTagRepo = filterTagRepo;
@@ -95,14 +95,14 @@ public class RecipeCategoryService {
                 .toList();
     }
 
-    public List<CategoryMachineDto> listCategoryMachines(DatasetSummary dataset, String categoryId) {
+    public List<CategoryApplicableItemDto> listCategoryApplicableItems(DatasetSummary dataset, String categoryId) {
         String datasetId = dataset.datasetId();
-        return machineRepo.findByDatasetIdAndCategoryId(
+        return applicableItemRepo.findByDatasetIdAndCategoryId(
                         datasetId,
                         categoryId,
                         Sort.by("displayOrder").ascending().and(Sort.by("itemVariantId").ascending()))
                 .stream()
-                .map(e -> new CategoryMachineDto(
+                .map(e -> new CategoryApplicableItemDto(
                         e.getItemVariantId(),
                         e.getDisplayName(),
                         assetUrlBuilder.build(dataset, e.getAssetPath(), null),
@@ -185,7 +185,7 @@ public class RecipeCategoryService {
                 e.getFluidOutputWidth(),
                 e.getFluidOutputHeight(),
                 e.getRecipeCount(),
-                e.getMachineCount(),
+                e.getApplicableItemCount(),
                 e.getModName(),
                 e.getHandlerClass());
     }

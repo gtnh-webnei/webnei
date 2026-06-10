@@ -29,45 +29,31 @@ defineEmits<{
           v-if="category.iconAssetUrl"
           :src="category.iconAssetUrl"
           :alt="category.displayName"
-        >
+        />
       </div>
       <div class="meta">
         <div class="name-row">
-          <div
-            class="name"
-            :title="category.displayName"
-          >
+          <div class="name" :title="category.displayName">
             {{ category.displayName }}
           </div>
           <div class="stats">
-            <el-tag
-              size="small"
-              effect="plain"
-              round
-              class="stat-tag"
-            >
+            <el-tag size="small" effect="plain" round class="stat-tag">
               {{ t('category.recipeCount', { count: category.recipeCount.toLocaleString() }) }}
             </el-tag>
             <el-tag
-              v-if="category.machineCount > 0"
+              v-if="category.applicableItemCount > 0"
               size="small"
               type="warning"
               effect="plain"
               round
               class="stat-tag"
             >
-              {{ t('category.machineCount', { count: category.machineCount }) }}
+              {{ t('category.applicableItemCount', { count: category.applicableItemCount }) }}
             </el-tag>
           </div>
         </div>
         <div class="mod-row">
-          <el-tag
-            size="small"
-            type="info"
-            effect="plain"
-            round
-            class="mod-tag"
-          >
+          <el-tag size="small" type="info" effect="plain" round class="mod-tag">
             {{ category.modName }}
           </el-tag>
         </div>

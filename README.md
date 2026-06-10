@@ -72,7 +72,7 @@ All endpoints are read-only and live under `/api`.
 | **Items** | `GET .../items?q=&modId=&page=&size=`, `.../items/{variantId}`, `.../mods` |
 | **Fluids** | `GET .../fluids?q=&modId=&page=&size=`, `.../fluids/{variantId}`, `.../fluid-mods` |
 | **Mobs** | `GET .../mobs?q=&modId=&page=&size=`, `.../mobs/{variantId}`, `.../mobs/mods` |
-| **Recipes** | `GET .../recipe-categories/page?q=&modId=&hideEmpty=`, `.../recipes/lookup?target=&kind=`, `.../recipes/lookup/breakdown`, `.../recipes/{id}`, `.../categories/{id}/recipes`, `.../categories/{id}/machines`, `.../categories/{id}/voltage-tiers` |
+| **Recipes** | `GET .../recipe-categories/page?q=&modId=&hideEmpty=`, `.../recipes/lookup?target=&kind=`, `.../recipes/lookup/breakdown`, `.../recipes/{id}`, `.../categories/{id}/recipes`, `.../categories/{id}/applicable-items`, `.../categories/{id}/voltage-tiers` |
 | **Quests** | `GET .../quest-lines`, `.../quest-lines/{id}`, `.../quests/{id}` |
 | **Extras** | `GET .../items/{id}/extras`, `.../items/{id}/containers`, `.../fluids/{id}/extras` |
 | **GT Ore** | `GET .../gt/ore-veins?q=&dimension=`, `.../gt/small-ores`, `.../gt/underground-fluids`, `.../gt/bartworks-ores`, plus detail endpoints |

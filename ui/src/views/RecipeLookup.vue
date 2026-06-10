@@ -330,7 +330,7 @@ onMounted(async () => {
         :dataset-id="datasetId"
         :category-id="selectedCategoryId"
         :active-tier="selectedTier"
-        :hide-machines="true"
+        :hide-applicable-items="true"
         :target="target"
         :kind="tab as LookupKind"
         @update:active-tier="selectedTier = $event"

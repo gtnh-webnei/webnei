@@ -2,9 +2,9 @@
 import { computed, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import { listCategoryMachines, listCategoryVoltageTiers } from '@/api/recipes';
+import { listCategoryApplicableItems, listCategoryVoltageTiers } from '@/api/recipes';
 import { useEntityNavigation } from '@/composables/useEntityNavigation';
-import type { CategoryMachine, CategoryVoltageTier, LookupKind } from '@/api/recipes.types';
+import type { CategoryApplicableItem, CategoryVoltageTier, LookupKind } from '@/api/recipes.types';
 import AppTooltip from '@/components/AppTooltip.vue';
 
 const props = withDefaults(
@@ -12,12 +12,12 @@ const props = withDefaults(
     datasetId: string;
     categoryId: string;
     activeTier: string | null;
-    hideMachines?: boolean;
+    hideApplicableItems?: boolean;
     target?: string | null;
     kind?: LookupKind | null;
     query?: string;
   }>(),
-  { hideMachines: false, target: null, kind: null, query: '' },
+  { hideApplicableItems: false, target: null, kind: null, query: '' },
 );
 
 const { t } = useI18n();
@@ -32,7 +32,7 @@ const entityNavigation = useEntityNavigation(
   computed(() => props.datasetId),
 );
 
-const machines = ref<CategoryMachine[]>([]);
+const applicableItems = ref<CategoryApplicableItem[]>([]);
 const tiers = ref<CategoryVoltageTier[]>([]);
 
 const tiersTotal = computed(() => tiers.value.reduce((sum, t) => sum + t.recipeCount, 0));
@@ -58,15 +58,15 @@ function tierColor(tier: string) {
   return TIER_COLORS[tier] ?? TIER_COLORS.LV;
 }
 
-async function fetchMachines() {
-  if (props.hideMachines || !props.datasetId || !props.categoryId) {
-    machines.value = [];
+async function fetchApplicableItems() {
+  if (props.hideApplicableItems || !props.datasetId || !props.categoryId) {
+    applicableItems.value = [];
     return;
   }
   try {
-    machines.value = await listCategoryMachines(props.datasetId, props.categoryId);
+    applicableItems.value = await listCategoryApplicableItems(props.datasetId, props.categoryId);
   } catch {
-    machines.value = [];
+    applicableItems.value = [];
   }
 }
 
@@ -91,13 +91,13 @@ function selectTier(tier: string | null) {
   emit('update:activeTier', tier);
 }
 
-function openMachine(m: CategoryMachine) {
+function openApplicableItem(m: CategoryApplicableItem) {
   entityNavigation.pick(m.itemVariantId);
 }
 
 watch(
-  () => [props.datasetId, props.categoryId, props.hideMachines],
-  () => fetchMachines(),
+  () => [props.datasetId, props.categoryId, props.hideApplicableItems],
+  () => fetchApplicableItems(),
   { immediate: true },
 );
 
@@ -109,48 +109,32 @@ watch(
 </script>
 
 <template>
-  <div
-    v-if="machines.length > 0 || tiers.length > 0"
-    class="header-rows"
-  >
-    <section
-      v-if="!hideMachines && machines.length > 0"
-      class="row"
-    >
+  <div v-if="applicableItems.length > 0 || tiers.length > 0" class="header-rows">
+    <section v-if="!hideApplicableItems && applicableItems.length > 0" class="row">
       <div class="row-label">
-        <span>{{ t('category.applicableMachines') }}</span>
-        <span class="row-count">{{ machines.length }}</span>
+        <span>{{ t('category.applicableItems') }}</span>
+        <span class="row-count">{{ applicableItems.length }}</span>
       </div>
-      <div class="machines">
+      <div class="applicable-items">
         <AppTooltip
-          v-for="m in machines"
+          v-for="m in applicableItems"
           :key="m.itemVariantId"
           :content="m.displayName ?? m.itemVariantId"
         >
-          <button
-            type="button"
-            class="machine-cell"
-            @click="openMachine(m)"
-          >
+          <button type="button" class="applicable-item-cell" @click="openApplicableItem(m)">
             <img
               v-if="m.assetUrl"
               :src="m.assetUrl"
               :alt="m.displayName ?? m.itemVariantId"
-              class="machine-icon"
-            >
-            <span
-              v-else
-              class="machine-icon placeholder"
+              class="applicable-item-icon"
             />
+            <span v-else class="applicable-item-icon placeholder" />
           </button>
         </AppTooltip>
       </div>
     </section>
 
-    <section
-      v-if="tiers.length > 0"
-      class="row"
-    >
+    <section v-if="tiers.length > 0" class="row">
       <div class="row-label">
         <span>{{ t('category.voltage') }}</span>
         <span class="row-count">{{ tiers.length }}</span>
@@ -216,7 +200,7 @@ watch(
   color: var(--el-text-color-secondary);
   font-variant-numeric: tabular-nums;
 }
-.machines {
+.applicable-items {
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: 44px;
@@ -226,7 +210,7 @@ watch(
   padding: 2px 2px 4px;
   scrollbar-width: thin;
 }
-.machine-cell {
+.applicable-item-cell {
   width: 44px;
   height: 44px;
   display: flex;
@@ -241,16 +225,16 @@ watch(
     border-color 0.12s,
     background-color 0.12s;
 }
-.machine-cell:hover {
+.applicable-item-cell:hover {
   border-color: var(--el-color-primary);
   background: var(--el-color-primary-light-9);
 }
-.machine-icon {
+.applicable-item-icon {
   width: 40px;
   height: 40px;
   image-rendering: pixelated;
 }
-.machine-icon.placeholder {
+.applicable-item-icon.placeholder {
   background: var(--el-fill-color-darker);
   border-radius: 3px;
 }

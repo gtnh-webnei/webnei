@@ -91,7 +91,7 @@ export interface RecipeCategory {
   fluidOutputWidth: number;
   fluidOutputHeight: number;
   recipeCount: number;
-  machineCount: number;
+  applicableItemCount: number;
   modName: string;
   handlerClass: string;
 }
@@ -127,7 +127,7 @@ export interface HandlerBreakdown {
   categories: CategoryBreakdown[];
 }
 
-export interface CategoryMachine {
+export interface CategoryApplicableItem {
   itemVariantId: string;
   displayName: string | null;
   assetUrl: string | null;
