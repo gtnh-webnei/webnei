@@ -12,6 +12,7 @@ export interface IngredientTooltipContext {
   hint?: string | null;
   amountLabel?: string | null;
   probabilityLabel?: string | null;
+  extraLines?: Array<{ label: string; value: string }>;
 }
 
 const { t } = useI18n();
@@ -30,52 +31,35 @@ withDefaults(
 </script>
 
 <template>
-  <div
-    class="ingredient-tooltip-content"
-    :class="`ingredient-tooltip-content--${variant}`"
-  >
-    <MinecraftTooltipText
-      v-if="ingredient.tooltipText"
-      :text="ingredient.tooltipText"
-    />
-    <div
-      v-else
-      class="ingredient-tooltip-fallback"
-    >
+  <div class="ingredient-tooltip-content" :class="`ingredient-tooltip-content--${variant}`">
+    <MinecraftTooltipText v-if="ingredient.tooltipText" :text="ingredient.tooltipText" />
+    <div v-else class="ingredient-tooltip-fallback">
       <div class="ingredient-tooltip-name">
         {{ ingredient.displayName }}
       </div>
       <slot />
-      <div
-        v-if="ingredient.modName"
-        class="ingredient-tooltip-mod"
-      >
+      <div v-if="ingredient.modName" class="ingredient-tooltip-mod">
         {{ ingredient.modName }}
       </div>
     </div>
     <dl
-      v-if="context.amountLabel || context.probabilityLabel"
+      v-if="context.amountLabel || context.probabilityLabel || context.extraLines?.length"
       class="ingredient-tooltip-meta"
     >
-      <div
-        v-if="context.amountLabel"
-        class="meta-chip"
-      >
+      <div v-if="context.amountLabel" class="meta-chip">
         <dt>{{ t('common.amount') }}</dt>
         <dd>{{ context.amountLabel }}</dd>
       </div>
-      <div
-        v-if="context.probabilityLabel"
-        class="meta-chip probability"
-      >
+      <div v-if="context.probabilityLabel" class="meta-chip probability">
         <dt>{{ t('common.probability') }}</dt>
         <dd>{{ context.probabilityLabel }}</dd>
       </div>
+      <div v-for="line in context.extraLines ?? []" :key="line.label" class="meta-chip">
+        <dt>{{ line.label }}</dt>
+        <dd>{{ line.value }}</dd>
+      </div>
     </dl>
-    <div
-      v-if="context.hint"
-      class="ingredient-tooltip-keys"
-    >
+    <div v-if="context.hint" class="ingredient-tooltip-keys">
       {{ context.hint }}
     </div>
   </div>

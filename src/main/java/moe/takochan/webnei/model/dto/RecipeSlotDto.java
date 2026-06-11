@@ -1,6 +1,7 @@
 package moe.takochan.webnei.model.dto;
 
 import java.util.List;
+import java.util.Map;
 
 public record RecipeSlotDto(
         String role,
@@ -18,5 +19,9 @@ public record RecipeSlotDto(
         String tooltipText,
         String assetUrl,
         List<RecipeSlotCandidateDto> candidates,
-        String placement) {
+        String placement,
+        String slotGroupKey,
+        int slotGroupOrder,
+        String slotGroupLabel,
+        Map<String, MetadataValueDto> metadata) {
 }

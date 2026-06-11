@@ -42,6 +42,15 @@ public class RecipeSlotBrowserEntity {
     @Column(nullable = false)
     private double probability;
 
+    @Column(name = "slot_group_key", nullable = false)
+    private String slotGroupKey;
+
+    @Column(name = "slot_group_order", nullable = false)
+    private int slotGroupOrder;
+
+    @Column(name = "slot_group_label", nullable = false)
+    private String slotGroupLabel;
+
     @Column(name = "item_variant_id")
     private String itemVariantId;
 
@@ -58,6 +67,9 @@ public class RecipeSlotBrowserEntity {
     public String getGroupId() { return groupId; }
     public int getAmount() { return amount; }
     public double getProbability() { return probability; }
+    public String getSlotGroupKey() { return slotGroupKey; }
+    public int getSlotGroupOrder() { return slotGroupOrder; }
+    public String getSlotGroupLabel() { return slotGroupLabel; }
     public String getItemVariantId() { return itemVariantId; }
     public String getFluidVariantId() { return fluidVariantId; }
 

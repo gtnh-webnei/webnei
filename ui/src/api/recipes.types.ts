@@ -28,6 +28,10 @@ export interface RecipeSlot {
   assetUrl: string | null;
   candidates: RecipeSlotCandidate[];
   placement?: string | null;
+  slotGroupKey?: string | null;
+  slotGroupOrder?: number;
+  slotGroupLabel?: string | null;
+  metadata: Record<string, MetadataValue>;
 }
 
 export type GregTechRecipeKind = 'PROCESSING' | 'FUEL';

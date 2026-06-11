@@ -195,6 +195,10 @@ const en_US: MessageSchema = {
     output: 'Output',
     specialOutput: 'Special Output',
     candidates: '{count} candidates',
+    expectedAmount: 'Expected Amount',
+    slotTag: 'Tag',
+    fillerBlock: 'Filler Block',
+    requiredReagents: 'Required Reagents',
     tier: 'TIER',
   },
 

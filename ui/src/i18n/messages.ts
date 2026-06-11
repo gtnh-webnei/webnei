@@ -199,6 +199,10 @@ export interface MessageSchema {
     output: string;
     specialOutput: string;
     candidates: string;
+    expectedAmount: string;
+    slotTag: string;
+    fillerBlock: string;
+    requiredReagents: string;
     tier: string;
   };
 

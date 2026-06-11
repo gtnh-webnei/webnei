@@ -31,6 +31,7 @@ import moe.takochan.webnei.model.entity.table.RecipeFilterTagEntity;
 import moe.takochan.webnei.model.entity.table.RecipeMetadataEntity;
 import moe.takochan.webnei.model.entity.table.RecipeSearchDocumentEntity;
 import moe.takochan.webnei.model.entity.table.RecipeSlotLayoutEntity;
+import moe.takochan.webnei.model.entity.table.RecipeSlotMetadataEntity;
 import moe.takochan.webnei.model.entity.view.RecipeBrowserEntity;
 import moe.takochan.webnei.model.entity.view.RecipeLookupBreakdownEntity;
 import moe.takochan.webnei.model.entity.view.RecipeLookupBrowserEntity;
@@ -40,6 +41,7 @@ import moe.takochan.webnei.repository.table.IngredientEntryRepository;
 import moe.takochan.webnei.repository.table.RecipeLookupCountRepository;
 import moe.takochan.webnei.repository.table.RecipeMetadataRepository;
 import moe.takochan.webnei.repository.table.RecipeSlotLayoutRepository;
+import moe.takochan.webnei.repository.table.RecipeSlotMetadataRepository;
 import moe.takochan.webnei.repository.view.RecipeBrowserRepository;
 import moe.takochan.webnei.repository.view.RecipeLookupBreakdownRepository;
 import moe.takochan.webnei.repository.view.RecipeLookupBrowserRepository;
@@ -65,6 +67,7 @@ public class RecipeService {
     private final IngredientEntryRepository ingredientEntryRepo;
     private final RecipeSlotLayoutRepository slotLayoutRepo;
     private final RecipeMetadataRepository metadataRepo;
+    private final RecipeSlotMetadataRepository slotMetadataRepo;
     private final EntityRefService entityRefService;
     private final AssetUrlBuilder assetUrlBuilder;
     private final ObjectMapper objectMapper;
@@ -77,6 +80,7 @@ public class RecipeService {
                         IngredientEntryRepository ingredientEntryRepo,
                         RecipeSlotLayoutRepository slotLayoutRepo,
                         RecipeMetadataRepository metadataRepo,
+                        RecipeSlotMetadataRepository slotMetadataRepo,
                         EntityRefService entityRefService,
                         AssetUrlBuilder assetUrlBuilder,
                         ObjectMapper objectMapper) {
@@ -88,6 +92,7 @@ public class RecipeService {
         this.ingredientEntryRepo = ingredientEntryRepo;
         this.slotLayoutRepo = slotLayoutRepo;
         this.metadataRepo = metadataRepo;
+        this.slotMetadataRepo = slotMetadataRepo;
         this.entityRefService = entityRefService;
         this.assetUrlBuilder = assetUrlBuilder;
         this.objectMapper = objectMapper;
@@ -303,6 +308,7 @@ public class RecipeService {
         for (RecipeSlotBrowserEntity r : rows) {
             categoryByRecipe.putIfAbsent(r.getRecipeId(), r.getCategoryId());
         }
+        Map<String, Map<String, MetadataValueDto>> slotMetadata = loadSlotMetadata(datasetId, recipeIds);
 
         Map<String, List<RecipeSlotDto>> byRecipe = new LinkedHashMap<>();
         for (RecipeSlotBrowserEntity r : rows) {
@@ -332,7 +338,11 @@ public class RecipeService {
                             tooltipText,
                             assetUrl,
                             nullIfEmpty(r.getGroupId()) == null ? List.of() : candidatesByGroup.getOrDefault(r.getGroupId(), List.of()),
-                            placementForSlot(placementByCategoryRoleSlot, r)));
+                            placementForSlot(placementByCategoryRoleSlot, r),
+                            nullIfEmpty(r.getSlotGroupKey()),
+                            r.getSlotGroupOrder(),
+                            nullIfEmpty(r.getSlotGroupLabel()),
+                            slotMetadata.getOrDefault(slotMetadataKey(r.getRecipeId(), r.getRole(), r.getSlotIndex()), Map.of())));
         }
         byRecipe.values().forEach(list -> list.sort(Comparator
                 .comparing(RecipeSlotDto::role)
@@ -411,6 +421,31 @@ public class RecipeService {
                     .add(new SlotLayoutDto(e.getRole(), e.getSlotIndex(), e.getX(), e.getY(), e.getWidth(), e.getHeight(), e.getSlotStyle(), e.getPlacement()));
         }
         return map;
+    }
+
+    private Map<String, Map<String, MetadataValueDto>> loadSlotMetadata(String datasetId, List<String> recipeIds) {
+        if (recipeIds.isEmpty()) return Map.of();
+        Map<String, Map<String, MetadataValueDto>> out = new LinkedHashMap<>();
+        for (RecipeSlotMetadataEntity e : slotMetadataRepo.findByDatasetIdAndRecipeIdIn(
+                datasetId,
+                recipeIds,
+                Sort.by("recipeId").ascending()
+                        .and(Sort.by("role").ascending())
+                        .and(Sort.by("slotIndex").ascending())
+                        .and(Sort.by("metadataKey").ascending()))) {
+            out.computeIfAbsent(
+                            slotMetadataKey(e.getRecipeId(), e.getRole(), e.getSlotIndex()),
+                            ignored -> new LinkedHashMap<>())
+                    .put(e.getMetadataKey(), new MetadataValueDto(
+                            e.getValueType(),
+                            e.getValueText(),
+                            parseMetadataJson(e.getValueJson(), e.getRecipeId(), e.getMetadataKey())));
+        }
+        return out;
+    }
+
+    private static String slotMetadataKey(String recipeId, String role, int slotIndex) {
+        return recipeId + '\n' + role + '\n' + slotIndex;
     }
 
     private Map<String, Map<String, MetadataValueDto>> loadMetadata(String datasetId, List<String> recipeIds) {

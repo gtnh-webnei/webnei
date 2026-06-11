@@ -46,6 +46,39 @@ const itemOutputs = computed(() => filterRole('item_output'));
 const fluidInputs = computed(() => filterRole('fluid_input'));
 const fluidOutputs = computed(() => filterRole('fluid_output'));
 
+interface SlotGroup {
+  key: string;
+  order: number;
+  label: string | null;
+  slots: RecipeSlot[];
+}
+
+function slotGroups(slots: RecipeSlot[]): SlotGroup[] {
+  if (!slots.some((s) => !!s.slotGroupKey)) {
+    return [{ key: '', order: 0, label: null, slots }];
+  }
+  const map = new Map<string, SlotGroup>();
+  for (const slot of slots) {
+    const key = slot.slotGroupKey || '';
+    const group = map.get(key) ?? {
+      key,
+      order: slot.slotGroupOrder ?? 0,
+      label: slot.slotGroupLabel || null,
+      slots: [],
+    };
+    group.order = slot.slotGroupOrder ?? group.order;
+    group.label = slot.slotGroupLabel || group.label;
+    group.slots.push(slot);
+    map.set(key, group);
+  }
+  return [...map.values()].sort((a, b) => a.order - b.order || a.key.localeCompare(b.key));
+}
+
+const itemInputGroups = computed(() => slotGroups(itemInputs.value));
+const itemOutputGroups = computed(() => slotGroups(itemOutputs.value));
+const fluidInputGroups = computed(() => slotGroups(fluidInputs.value));
+const fluidOutputGroups = computed(() => slotGroups(fluidOutputs.value));
+
 // Special items: filter by placement field
 const specialInputs = computed(() =>
   props.slots
@@ -89,10 +122,7 @@ function onLookup(
 </script>
 
 <template>
-  <section
-    v-if="specialInputs.length"
-    class="side special-inputs"
-  >
+  <section v-if="specialInputs.length" class="side special-inputs">
     <div class="side-header">
       <div class="side-label">
         {{ t('recipe.specialInput') }}
@@ -117,50 +147,40 @@ function onLookup(
     </div>
   </section>
 
-  <section
-    v-if="hasInputs"
-    class="side inputs"
-  >
+  <section v-if="hasInputs" class="side inputs">
     <div class="side-header">
       <div class="side-label">
         {{ t('recipe.input') }}
       </div>
       <div class="side-meta">
-        <span
-          v-if="itemInputs.length"
-          class="meta-chip"
-        >
+        <span v-if="itemInputs.length" class="meta-chip">
           <span class="dot item" />{{ t('recipe.itemCountLabel', { count: itemInputs.length }) }}
         </span>
-        <span
-          v-if="fluidInputs.length"
-          class="meta-chip"
-        >
+        <span v-if="fluidInputs.length" class="meta-chip">
           <span class="dot fluid" />{{ t('recipe.fluidCountLabel', { count: fluidInputs.length }) }}
         </span>
       </div>
     </div>
-    <div
-      v-if="itemInputs.length"
-      class="group"
-    >
-      <SlotGrid
-        :slots="itemInputs"
-        :declared-w="inputDims.w"
-        :declared-h="inputDims.h"
-        :shapeless="shapeless"
-        :pick-hint="pickHint"
-        :show-probability-badge="showProbabilityBadge"
-        @pick="onPick"
-        @lookup="onLookup"
-      />
+    <div v-if="itemInputs.length" class="group-stack">
+      <div v-for="group in itemInputGroups" :key="group.key" class="group">
+        <div v-if="group.label" class="group-label">{{ group.label }}</div>
+        <SlotGrid
+          :slots="group.slots"
+          :declared-w="inputDims.w"
+          :declared-h="inputDims.h"
+          :shapeless="shapeless"
+          :pick-hint="pickHint"
+          :show-probability-badge="showProbabilityBadge"
+          @pick="onPick"
+          @lookup="onLookup"
+        />
+      </div>
     </div>
-    <div
-      v-if="fluidInputs.length"
-      class="group"
-    >
+    <div v-if="fluidInputs.length" class="group-stack">
       <SlotGrid
-        :slots="fluidInputs"
+        v-for="group in fluidInputGroups"
+        :key="group.key"
+        :slots="group.slots"
         :declared-w="fluidInputDims.w"
         :declared-h="fluidInputDims.h"
         :shapeless="shapeless"
@@ -184,61 +204,48 @@ function onLookup(
     </div>
   </section>
 
-  <div
-    v-if="hasInputs && hasOutputs"
-    class="divider"
-  >
+  <div v-if="hasInputs && hasOutputs" class="divider">
     <span class="divider-line" />
     <span class="divider-label">{{ t('recipe.outputDivider') }}</span>
     <span class="divider-line" />
   </div>
 
-  <section
-    v-if="hasOutputs"
-    class="side outputs"
-  >
+  <section v-if="hasOutputs" class="side outputs">
     <div class="side-header">
       <div class="side-label">
         {{ t('recipe.output') }}
       </div>
       <div class="side-meta">
-        <span
-          v-if="itemOutputs.length"
-          class="meta-chip"
-        >
+        <span v-if="itemOutputs.length" class="meta-chip">
           <span class="dot item" />{{ t('recipe.itemCountLabel', { count: itemOutputs.length }) }}
         </span>
-        <span
-          v-if="fluidOutputs.length"
-          class="meta-chip"
-        >
+        <span v-if="fluidOutputs.length" class="meta-chip">
           <span class="dot fluid" />{{
             t('recipe.fluidCountLabel', { count: fluidOutputs.length })
           }}
         </span>
       </div>
     </div>
-    <div
-      v-if="itemOutputs.length"
-      class="group"
-    >
-      <SlotGrid
-        :slots="itemOutputs"
-        :declared-w="category?.itemOutputWidth"
-        :declared-h="category?.itemOutputHeight"
-        :shapeless="shapeless"
-        :pick-hint="pickHint"
-        :show-probability-badge="showProbabilityBadge"
-        @pick="onPick"
-        @lookup="onLookup"
-      />
+    <div v-if="itemOutputs.length" class="group-stack">
+      <div v-for="group in itemOutputGroups" :key="group.key" class="group">
+        <div v-if="group.label" class="group-label">{{ group.label }}</div>
+        <SlotGrid
+          :slots="group.slots"
+          :declared-w="category?.itemOutputWidth"
+          :declared-h="category?.itemOutputHeight"
+          :shapeless="shapeless"
+          :pick-hint="pickHint"
+          :show-probability-badge="showProbabilityBadge"
+          @pick="onPick"
+          @lookup="onLookup"
+        />
+      </div>
     </div>
-    <div
-      v-if="fluidOutputs.length"
-      class="group"
-    >
+    <div v-if="fluidOutputs.length" class="group-stack">
       <SlotGrid
-        :slots="fluidOutputs"
+        v-for="group in fluidOutputGroups"
+        :key="group.key"
+        :slots="group.slots"
         :declared-w="fluidOutputDims.w"
         :declared-h="fluidOutputDims.h"
         :shapeless="shapeless"
@@ -262,10 +269,7 @@ function onLookup(
     </div>
   </section>
 
-  <section
-    v-if="specialOutputs.length"
-    class="side special-outputs"
-  >
+  <section v-if="specialOutputs.length" class="side special-outputs">
     <div class="side-header">
       <div class="side-label">
         {{ t('recipe.specialOutput') }}
@@ -345,10 +349,16 @@ function onLookup(
 .meta-chip .dot.special {
   background: rgba(230, 162, 60, 0.85);
 }
+.group-stack,
 .group {
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+.group-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--el-text-color-secondary);
 }
 .divider {
   display: flex;

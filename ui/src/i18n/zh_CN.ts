@@ -193,6 +193,10 @@ const zh_CN: MessageSchema = {
     output: '输出',
     specialOutput: '特殊输出',
     candidates: '{count} 个候选',
+    expectedAmount: '期望数量',
+    slotTag: '标记',
+    fillerBlock: '填充方块',
+    requiredReagents: '所需试剂',
     tier: 'TIER',
   },
 
