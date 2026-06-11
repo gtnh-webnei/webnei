@@ -332,12 +332,26 @@ public class RecipeService {
                             tooltipText,
                             assetUrl,
                             nullIfEmpty(r.getGroupId()) == null ? List.of() : candidatesByGroup.getOrDefault(r.getGroupId(), List.of()),
-                            placementByCategoryRoleSlot.get(r.getCategoryId() + ":" + r.getRole() + ":" + r.getSlotIndex())));
+                            placementForSlot(placementByCategoryRoleSlot, r)));
         }
         byRecipe.values().forEach(list -> list.sort(Comparator
                 .comparing(RecipeSlotDto::role)
                 .thenComparingInt(RecipeSlotDto::slotIndex)));
         return byRecipe;
+    }
+
+    private String placementForSlot(
+            Map<String, String> placementByCategoryRoleSlot,
+            RecipeSlotBrowserEntity row) {
+        String exact = placementByCategoryRoleSlot.get(
+                row.getCategoryId() + ":" + row.getRole() + ":" + row.getSlotIndex());
+        if (exact != null) {
+            return exact;
+        }
+        if ("special_item".equals(row.getRole())) {
+            return placementByCategoryRoleSlot.get(row.getCategoryId() + ":special_item:0");
+        }
+        return null;
     }
 
     private Map<String, List<RecipeSlotCandidateDto>> loadCandidates(
