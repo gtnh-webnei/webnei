@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import type { Recipe, RecipeCategory } from '@/api/recipes.types'
+import { getQuestLineForQuest } from '@/api/quests'
 import { useDatasetStore } from '@/stores/dataset'
 import RecipePanelShell from '../RecipePanelShell.vue'
 import SidesLayout from '../SidesLayout.vue'
@@ -22,6 +24,7 @@ const emit = defineEmits<{
 const declaredCols = computed(() => props.category?.itemInputWidth ?? null)
 const declaredRows = computed(() => props.category?.itemInputHeight ?? null)
 
+const router = useRouter()
 const datasetStore = useDatasetStore()
 const displaySpecUrl = computed(() => datasetStore.active?.displaySpecUrl ?? null)
 const displaySpecMessagesUrl = computed(() => datasetStore.active?.displaySpecMessagesUrl ?? null)
@@ -50,6 +53,17 @@ const unhandledSpecialItems = computed(() =>
 )
 
 const hasMetadata = computed(() => Object.keys(props.recipe.metadata ?? {}).length > 0)
+
+async function openQuest(questId: string) {
+  const datasetId = datasetStore.activeDatasetId
+  if (!datasetId) return
+  const line = await getQuestLineForQuest(datasetId, questId)
+  await router.push({
+    name: 'quest-line',
+    params: { datasetId },
+    query: { id: line.questLineId, questId },
+  })
+}
 </script>
 
 <template>
@@ -87,6 +101,7 @@ const hasMetadata = computed(() => Object.keys(props.recipe.metadata ?? {}).leng
             :spec-url="displaySpecUrl"
             :spec-messages-url="displaySpecMessagesUrl"
             :handler-id="category?.handlerId"
+            @open-quest="openQuest"
           />
           <GregTechSpecialItems
             v-if="unhandledSpecialItems.length"

@@ -23,6 +23,7 @@ public class QuestLineNodeBrowserEntity {
     @Column(name = "size_x", nullable = false) private int sizeX;
     @Column(name = "size_y", nullable = false) private int sizeY;
     protected QuestLineNodeBrowserEntity() {}
+    public String getQuestLineId() { return questLineId; }
     public String getQuestId() { return questId; }
     public String getName() { return name; }
     public String getDescription() { return description; }

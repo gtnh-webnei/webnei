@@ -31,3 +31,13 @@ export async function getQuestDetail(
   )
   return data
 }
+
+export async function getQuestLineForQuest(
+  datasetId: string,
+  questId: string,
+): Promise<QuestLineSummary> {
+  const { data } = await http.get<QuestLineSummary>(
+    `/datasets/${encodeURIComponent(datasetId)}/quests/${encodeURIComponent(questId)}/line`,
+  )
+  return data
+}

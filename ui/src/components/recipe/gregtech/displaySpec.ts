@@ -81,6 +81,8 @@ export interface SpecLine {
   templateArgs?: Record<string, string>;
   color_code?: string;
   preserveNewlines?: boolean;
+  action?: 'open_quest';
+  targetMetadataKey?: string;
   // 显示条件
   show_if_true?: boolean;
   show_if_present?: boolean;
@@ -113,6 +115,8 @@ export interface DisplayItem {
   value: string;
   colorCode?: string;
   preserveNewlines?: boolean;
+  action?: 'open_quest';
+  targetId?: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────
@@ -509,6 +513,10 @@ function renderLine(
       value: valueText,
       colorCode: line.color_code,
       preserveNewlines: line.preserveNewlines,
+      action: line.action,
+      targetId: line.targetMetadataKey
+        ? String(ctx.metadata[line.targetMetadataKey] ?? '')
+        : undefined,
     },
   ];
 }

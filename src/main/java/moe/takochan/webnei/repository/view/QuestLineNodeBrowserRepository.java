@@ -8,4 +8,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface QuestLineNodeBrowserRepository extends JpaRepository<QuestLineNodeBrowserEntity, QuestLineNodeBrowserEntity.QuestLineNodeId> {
     List<QuestLineNodeBrowserEntity> findByDatasetIdAndQuestLineIdOrderByPosYAscPosXAsc(String datasetId, String questLineId);
+    List<QuestLineNodeBrowserEntity> findByDatasetIdAndQuestIdOrderByQuestLineIdAsc(String datasetId, String questId);
 }

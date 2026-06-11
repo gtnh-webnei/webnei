@@ -23,6 +23,10 @@ const props = defineProps<{
   handlerId: string | null | undefined;
 }>();
 
+const emit = defineEmits<{
+  (e: 'openQuest', questId: string): void;
+}>();
+
 const spec = ref<DisplaySpec | null>(null);
 const { t, locale } = useI18n();
 watchEffect(async () => {
@@ -44,6 +48,12 @@ const items = computed<DisplayItem[]>(() => {
 
 function stripColorCode(s: string): string {
   return s.replace(/§[0-9a-fk-or]/gi, '');
+}
+
+function openAction(item: DisplayItem) {
+  if (item.action === 'open_quest' && item.targetId) {
+    emit('openQuest', item.targetId);
+  }
 }
 
 function colorCodeToCss(code: string | undefined): string {
@@ -86,8 +96,16 @@ function colorCodeToCss(code: string | undefined): string {
           <dt class="label freetext-label" />
           <dd
             class="value freetext"
-            :class="{ 'preserve-newlines': item.preserveNewlines }"
+            :class="{
+              'preserve-newlines': item.preserveNewlines,
+              actionable: item.action && item.targetId,
+            }"
             :style="colorCodeToCss(item.colorCode)"
+            :role="item.action && item.targetId ? 'button' : undefined"
+            :tabindex="item.action && item.targetId ? 0 : undefined"
+            @click="openAction(item)"
+            @keydown.enter.prevent="openAction(item)"
+            @keydown.space.prevent="openAction(item)"
           >
             {{ stripColorCode(item.value) }}
           </dd>
@@ -98,8 +116,16 @@ function colorCodeToCss(code: string | undefined): string {
           </dt>
           <dd
             class="value"
-            :class="{ 'preserve-newlines': item.preserveNewlines }"
+            :class="{
+              'preserve-newlines': item.preserveNewlines,
+              actionable: item.action && item.targetId,
+            }"
             :style="colorCodeToCss(item.colorCode)"
+            :role="item.action && item.targetId ? 'button' : undefined"
+            :tabindex="item.action && item.targetId ? 0 : undefined"
+            @click="openAction(item)"
+            @keydown.enter.prevent="openAction(item)"
+            @keydown.space.prevent="openAction(item)"
           >
             {{ stripColorCode(item.value) }}
           </dd>
@@ -150,5 +176,11 @@ function colorCodeToCss(code: string | undefined): string {
   overflow-wrap: anywhere;
   overflow: visible;
   text-overflow: clip;
+}
+.value.actionable {
+  color: var(--el-color-primary);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 </style>

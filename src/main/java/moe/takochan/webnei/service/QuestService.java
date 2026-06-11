@@ -96,6 +96,18 @@ public class QuestService {
         return new QuestDetail(toNode(quest, dataset), tasks, rewards, quest.getQuestLogic(), quest.getTaskLogic());
     }
 
+    public QuestLineSummary questLineForQuest(DatasetSummary dataset, String questId) {
+        String datasetId = dataset.datasetId();
+        List<QuestLineNodeBrowserEntity> nodes = nodeRepo.findByDatasetIdAndQuestIdOrderByQuestLineIdAsc(datasetId, questId);
+        if (nodes.isEmpty()) {
+            throw new NotFoundException("Quest line not found for quest: " + questId);
+        }
+        String questLineId = nodes.get(0).getQuestLineId();
+        QuestLineBrowserEntity line = lineRepo.findById(new QuestLineBrowserEntity.QuestLineId(datasetId, questLineId))
+                .orElseThrow(() -> new NotFoundException("Quest line not found: " + questLineId));
+        return toLineSummary(line, dataset);
+    }
+
     private List<QuestTaskDetail> loadTasks(DatasetSummary dataset, String questId) {
         List<QuestTaskEntity> tasks = taskRepo.findByDatasetIdAndQuestIdOrderByListIndexAsc(dataset.datasetId(), questId);
         if (tasks.isEmpty()) return List.of();

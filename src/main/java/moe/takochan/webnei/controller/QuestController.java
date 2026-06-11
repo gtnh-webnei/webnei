@@ -41,4 +41,11 @@ public class QuestController {
             @PathVariable String questId) {
         return questService.questDetail(datasetResolver.resolve(datasetId), questId);
     }
+
+    @GetMapping("/quests/{questId}/line")
+    public QuestLineSummary questLineForQuest(
+            @PathVariable String datasetId,
+            @PathVariable String questId) {
+        return questService.questLineForQuest(datasetResolver.resolve(datasetId), questId);
+    }
 }

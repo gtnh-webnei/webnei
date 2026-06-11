@@ -77,6 +77,8 @@ async function loadLine() {
   try {
     lineDetail.value = await getQuestLineDetail(datasetId.value, lineId.value);
     await renderGraph();
+    const questId = typeof route.query.questId === 'string' ? route.query.questId : '';
+    if (questId) await openQuest(questId);
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e);
   } finally {
