@@ -79,19 +79,14 @@ function colorCodeToCss(code: string | undefined): string {
 </script>
 
 <template>
-  <div
-    v-if="items.length"
-    class="display-strip"
-  >
+  <div v-if="items.length" class="display-strip">
     <dl class="meta-list">
-      <template
-        v-for="(item, idx) in items"
-        :key="idx"
-      >
+      <template v-for="(item, idx) in items" :key="idx">
         <template v-if="item.label === null">
           <dt class="label freetext-label" />
           <dd
             class="value freetext"
+            :class="{ 'preserve-newlines': item.preserveNewlines }"
             :style="colorCodeToCss(item.colorCode)"
           >
             {{ stripColorCode(item.value) }}
@@ -103,6 +98,7 @@ function colorCodeToCss(code: string | undefined): string {
           </dt>
           <dd
             class="value"
+            :class="{ 'preserve-newlines': item.preserveNewlines }"
             :style="colorCodeToCss(item.colorCode)"
           >
             {{ stripColorCode(item.value) }}
@@ -148,5 +144,11 @@ function colorCodeToCss(code: string | undefined): string {
   grid-column: 1 / -1;
   color: var(--el-text-color-regular);
   font-weight: 600;
+}
+.value.preserve-newlines {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  overflow: visible;
+  text-overflow: clip;
 }
 </style>

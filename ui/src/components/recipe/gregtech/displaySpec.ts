@@ -80,6 +80,7 @@ export interface SpecLine {
   valueTemplateKey?: string;
   templateArgs?: Record<string, string>;
   color_code?: string;
+  preserveNewlines?: boolean;
   // 显示条件
   show_if_true?: boolean;
   show_if_present?: boolean;
@@ -111,6 +112,7 @@ export interface DisplayItem {
   label: string | null;
   value: string;
   colorCode?: string;
+  preserveNewlines?: boolean;
 }
 
 // ─────────────────────────────────────────────────────────────────────
@@ -506,6 +508,7 @@ function renderLine(
       label: resolveLabel(line.labelKey, t),
       value: valueText,
       colorCode: line.color_code,
+      preserveNewlines: line.preserveNewlines,
     },
   ];
 }
