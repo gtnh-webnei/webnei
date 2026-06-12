@@ -49,13 +49,12 @@ const fluidOutputs = computed(() => filterRole('fluid_output'));
 interface SlotGroup {
   key: string;
   order: number;
-  label: string | null;
   slots: RecipeSlot[];
 }
 
 function slotGroups(slots: RecipeSlot[]): SlotGroup[] {
   if (!slots.some((s) => !!s.slotGroupKey)) {
-    return [{ key: '', order: 0, label: null, slots }];
+    return [{ key: '', order: 0, slots }];
   }
   const map = new Map<string, SlotGroup>();
   for (const slot of slots) {
@@ -63,11 +62,9 @@ function slotGroups(slots: RecipeSlot[]): SlotGroup[] {
     const group = map.get(key) ?? {
       key,
       order: slot.slotGroupOrder ?? 0,
-      label: slot.slotGroupLabel || null,
       slots: [],
     };
     group.order = slot.slotGroupOrder ?? group.order;
-    group.label = slot.slotGroupLabel || group.label;
     group.slots.push(slot);
     map.set(key, group);
   }
@@ -163,7 +160,6 @@ function onLookup(
     </div>
     <div v-if="itemInputs.length" class="group-stack">
       <div v-for="group in itemInputGroups" :key="group.key" class="group">
-        <div v-if="group.label" class="group-label">{{ group.label }}</div>
         <SlotGrid
           :slots="group.slots"
           :declared-w="inputDims.w"
@@ -228,7 +224,6 @@ function onLookup(
     </div>
     <div v-if="itemOutputs.length" class="group-stack">
       <div v-for="group in itemOutputGroups" :key="group.key" class="group">
-        <div v-if="group.label" class="group-label">{{ group.label }}</div>
         <SlotGrid
           :slots="group.slots"
           :declared-w="category?.itemOutputWidth"

@@ -22,6 +22,5 @@ public record RecipeSlotDto(
         String placement,
         String slotGroupKey,
         int slotGroupOrder,
-        String slotGroupLabel,
         Map<String, MetadataValueDto> metadata) {
 }

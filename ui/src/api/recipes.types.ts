@@ -30,7 +30,6 @@ export interface RecipeSlot {
   placement?: string | null;
   slotGroupKey?: string | null;
   slotGroupOrder?: number;
-  slotGroupLabel?: string | null;
   metadata: Record<string, MetadataValue>;
 }
 

@@ -341,7 +341,6 @@ public class RecipeService {
                             placementForSlot(placementByCategoryRoleSlot, r),
                             nullIfEmpty(r.getSlotGroupKey()),
                             r.getSlotGroupOrder(),
-                            nullIfEmpty(r.getSlotGroupLabel()),
                             slotMetadata.getOrDefault(slotMetadataKey(r.getRecipeId(), r.getRole(), r.getSlotIndex()), Map.of())));
         }
         byRecipe.values().forEach(list -> list.sort(Comparator
