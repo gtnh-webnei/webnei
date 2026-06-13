@@ -200,6 +200,12 @@ const en_US: MessageSchema = {
     fillerBlock: 'Filler Block',
     requiredReagents: 'Required Reagents',
     tier: 'TIER',
+    weight: 'Weight',
+    accumulatedWeight: 'Accumulated Weight',
+    fortuneChance: 'Fortune Chance',
+    amountRange: 'Amount Range',
+    dropGroup: 'Drop Group',
+    limitedDropCount: 'Limited Drops',
   },
 
   lookup: {

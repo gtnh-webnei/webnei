@@ -7,6 +7,12 @@
   unicode-range: U+2070, U+207A-207B, U+2080-2089, U+E000-E020;
 }
 
+html:not(.dark) {
+  --el-bg-color: #f7f8fb;
+  --el-bg-color-page: #edf0f5;
+  --el-fill-color-blank: #f7f8fb;
+}
+
 html,
 body,
 #app {

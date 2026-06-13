@@ -104,6 +104,36 @@ function metadataText(key: string): string | null {
   return null;
 }
 
+function formatMetadataNumber(raw: string): string {
+  const value = Number(raw);
+  if (!Number.isFinite(value)) return raw;
+  return value.toFixed(2).replace(/\.?0+$/, '');
+}
+
+function metadataPercent(key: string): string | null {
+  const raw = metadataText(key);
+  if (!raw) return null;
+  return `${formatMetadataNumber(raw)}%`;
+}
+
+function metadataAmountRange(): string | null {
+  const min = metadataText('amount_min');
+  const max = metadataText('amount_max');
+  if (!min && !max) return null;
+  if (min && max && min !== max) return `${formatMetadataNumber(min)}-${formatMetadataNumber(max)}`;
+  return formatMetadataNumber(max ?? min ?? '');
+}
+
+function metadataFortuneChance(): string | null {
+  const values = [0, 1, 2, 3]
+    .map((level) => {
+      const chance = metadataPercent(`chance_fortune_${level}`);
+      return chance ? `F${level} ${chance}` : null;
+    })
+    .filter((value): value is string => !!value);
+  return values.length ? values.join(' / ') : null;
+}
+
 const extraLines = computed(() => {
   const lines: Array<{ label: string; value: string }> = [];
   const expectedAmount = metadataText('expected_amount');
@@ -114,6 +144,28 @@ const extraLines = computed(() => {
   const requiredReagents = metadataText('required_reagents');
   if (requiredReagents) {
     lines.push({ label: t('recipe.requiredReagents'), value: requiredReagents });
+  }
+  const weight = metadataText('weight');
+  if (weight) lines.push({ label: t('recipe.weight'), value: formatMetadataNumber(weight) });
+  const accumulatedWeight = metadataText('accumulated_weight');
+  if (accumulatedWeight && accumulatedWeight !== weight) {
+    lines.push({
+      label: t('recipe.accumulatedWeight'),
+      value: formatMetadataNumber(accumulatedWeight),
+    });
+  }
+  const fortuneChance = metadataFortuneChance();
+  if (fortuneChance) lines.push({ label: t('recipe.fortuneChance'), value: fortuneChance });
+  const amountRange = metadataAmountRange();
+  if (amountRange) lines.push({ label: t('recipe.amountRange'), value: amountRange });
+  const dropGroup = metadataText('drop_group');
+  if (dropGroup) lines.push({ label: t('recipe.dropGroup'), value: dropGroup });
+  const limitedDropCount = metadataText('limited_drop_count');
+  if (limitedDropCount) {
+    lines.push({
+      label: t('recipe.limitedDropCount'),
+      value: formatMetadataNumber(limitedDropCount),
+    });
   }
   return lines;
 });
@@ -240,12 +292,12 @@ function candidateAmountLabel(c: RecipeSlotCandidate) {
             <FluidTooltipContent
               v-if="c.fluidVariantId"
               :fluid="c"
-              :context="{ amountLabel: candidateAmountLabel(c) }"
+              :context="{ amountLabel: candidateAmountLabel(c), extraLines }"
             />
             <ItemTooltipContent
               v-else
               :item="c"
-              :context="{ amountLabel: candidateAmountLabel(c) }"
+              :context="{ amountLabel: candidateAmountLabel(c), extraLines }"
             />
           </template>
           <div
@@ -324,7 +376,7 @@ function candidateAmountLabel(c: RecipeSlotCandidate) {
 <style scoped>
 .cell {
   position: relative;
-  background: var(--el-fill-color-light);
+  background: var(--recipe-slot-bg, #dddddd);
   border: 1px solid var(--el-border-color);
   border-radius: 6px;
   display: inline-flex;
@@ -335,6 +387,9 @@ function candidateAmountLabel(c: RecipeSlotCandidate) {
   transition:
     border-color 0.15s,
     transform 0.05s;
+}
+:global(html.dark) .cell {
+  --recipe-slot-bg: #2b2f36;
 }
 .cell.clickable {
   cursor: pointer;

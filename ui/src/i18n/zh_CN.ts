@@ -198,6 +198,12 @@ const zh_CN: MessageSchema = {
     fillerBlock: '填充方块',
     requiredReagents: '所需试剂',
     tier: 'TIER',
+    weight: '权重',
+    accumulatedWeight: '累计权重',
+    fortuneChance: '时运概率',
+    amountRange: '数量范围',
+    dropGroup: '掉落组',
+    limitedDropCount: '限量掉落',
   },
 
   lookup: {

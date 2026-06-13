@@ -204,6 +204,12 @@ export interface MessageSchema {
     fillerBlock: string;
     requiredReagents: string;
     tier: string;
+    weight: string;
+    accumulatedWeight: string;
+    fortuneChance: string;
+    amountRange: string;
+    dropGroup: string;
+    limitedDropCount: string;
   };
 
   // ---- Recipe Lookup ----
