@@ -1,0 +1,34 @@
+// element-plus 全局主题：编译期覆盖 SCSS 变量并输出全量主题样式。
+// 先带配置加载 common/var.scss（sass 模块单例），index.scss 内部各组件再 @use 同模块时复用该配置，
+// 从而全部 el- 组件按此主题编译，取代运行期 --el-* 覆盖。
+// 取值与项目当前配色一致（中性偏暗砂色 + NEI 绿、2px 直角）。
+@use 'element-plus/theme-chalk/src/common/var.scss' as * with (
+  $colors: (
+    'primary': (
+      'base': #44b86a,
+    ),
+  ),
+  $bg-color: (
+    '': #d7d1bd,
+    'page': #9a9280,
+    'overlay': #d7d1bd,
+  ),
+  $text-color: (
+    'primary': #211f1a,
+    'regular': #363228,
+    'secondary': #625b4b,
+  ),
+  $border-color: (
+    '': #6f6b61,
+    'lighter': #e4dfd0,
+  ),
+  $fill-color: (
+    'blank': #c6c6c6,
+    'light': #c2bca8,
+    'lighter': #cdc8b6,
+  ),
+  $border-radius: (
+    'base': 2px,
+  )
+);
+@use 'element-plus/theme-chalk/src/index.scss';

@@ -1,18 +1,16 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-import 'element-plus/dist/index.css'
-import 'element-plus/theme-chalk/dark/css-vars.css'
+import './styles/element.scss'
 import './styles/index.css'
 
 import App from './App.vue'
+import { i18n } from './i18n'
 import { router } from './router'
-import { useThemeStore } from './stores/theme'
 
 const app = createApp(App)
 const pinia = createPinia()
 
 app.use(pinia)
 app.use(router)
+app.use(i18n)
 app.mount('#app')
-
-useThemeStore().apply()

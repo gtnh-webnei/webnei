@@ -1,10 +1,16 @@
+<script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+</script>
+
 <template>
   <section class="not-found-page">
     <div class="mc-panel not-found-card">
-      <p>404</p>
+      <p>{{ t('common.notFound') }}</p>
       <router-link to="/">
         <el-button type="primary">
-          返回
+          {{ t('common.back') }}
         </el-button>
       </router-link>
     </div>
@@ -27,7 +33,7 @@
 
 p {
   margin: 0;
-  color: #202020;
+  color: var(--mc-panel-text);
   font-size: 24px;
   font-weight: 800;
 }

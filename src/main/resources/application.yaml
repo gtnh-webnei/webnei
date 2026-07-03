@@ -1,6 +1,11 @@
 spring:
   application:
     name: webnei
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: ${WEBNEI_DATASOURCE_URL:jdbc:postgresql://localhost:5432/webnei}
+    username: ${WEBNEI_DATASOURCE_USERNAME:postgres}
+    password: ${WEBNEI_DATASOURCE_PASSWORD:postgres}
   mvc:
     problemdetails:
       enabled: true
@@ -10,3 +15,7 @@ management:
     web:
       exposure:
         include: health,info
+
+webnei:
+  dataset:
+    default-id: ${WEBNEI_DEFAULT_DATASET_ID:}

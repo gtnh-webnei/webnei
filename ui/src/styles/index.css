@@ -25,6 +25,8 @@
   --mc-lapis: #4f72d8;
   --mc-text: #f7f3df;
   --mc-text-muted: #b7becb;
+  --mc-panel-text: #202020;
+  --mc-outline: var(--mc-bedrock);
   --mc-grid-size: 32px;
   --mc-panel-radius: 2px;
   --mc-pixel-shadow: 0 4px 0 rgb(0 0 0 / 0.42);
@@ -40,43 +42,10 @@
   --nei-slot-border-right: var(--mc-slot-hi);
   --nei-slot-border-bottom: var(--mc-slot-hi);
   --nei-slot-border-left: var(--mc-slot-low);
-  --el-color-primary: var(--mc-emerald);
-  --el-color-primary-light-3: #70ca8d;
-  --el-color-primary-light-5: #9addaf;
-  --el-color-primary-light-7: #c2eccd;
-  --el-color-primary-light-9: #e7f8ec;
-  --el-color-primary-dark-2: #2b8f4b;
-  --el-border-radius-base: var(--mc-panel-radius);
-}
-
-html:not(.dark) {
-  --el-bg-color: #d7d1bd;
-  --el-bg-color-page: #9a9280;
-  --el-fill-color-blank: var(--mc-panel);
-  --el-border-color: #6f6b61;
-  --el-border-color-lighter: #e4dfd0;
-  --el-text-color-primary: #211f1a;
-  --el-text-color-regular: #363228;
-  --el-text-color-secondary: #625b4b;
   --app-surface: #c6c6c6;
   --app-surface-text: #211f1a;
   --app-surface-muted: #4f4a3f;
   --app-grid-line: rgb(49 45 37 / 0.2);
-}
-
-html.dark {
-  --el-bg-color: #2a2f38;
-  --el-bg-color-page: #1d2129;
-  --el-fill-color-blank: #2f3540;
-  --el-border-color: #5b6472;
-  --el-border-color-lighter: #444c58;
-  --el-text-color-primary: var(--mc-text);
-  --el-text-color-regular: #e2dcc9;
-  --el-text-color-secondary: #c4c9d4;
-  --app-surface: #2f3540;
-  --app-surface-text: var(--mc-text);
-  --app-surface-muted: #c4c9d4;
-  --app-grid-line: rgb(255 255 255 / 0.075);
 }
 
 html,
@@ -144,7 +113,7 @@ button:focus-visible,
     var(--nei-panel-border-left);
   border-radius: var(--mc-panel-radius);
   background: var(--nei-panel-bg);
-  color: #202020;
+  color: var(--mc-panel-text);
   box-shadow: var(--mc-pixel-shadow);
 }
 
@@ -171,5 +140,28 @@ button:focus-visible,
   background: var(--nei-slot-bg);
   color: #ffffff;
   image-rendering: pixelated;
+}
+
+/* dataset 切换弹层：popper 挂在 body 上，无法用 scoped 样式，这里统一皮肤 */
+.el-popover.dataset-popover {
+  padding: 12px;
+  border: 2px solid var(--mc-bedrock);
+  border-radius: var(--mc-panel-radius);
+  background: var(--mc-deepslate);
+  box-shadow: var(--mc-pixel-shadow);
+}
+
+.el-popover.dataset-popover .el-popper__arrow::before {
+  border: 2px solid var(--mc-bedrock);
+  background: var(--mc-deepslate);
+}
+
+.el-drawer.app-drawer {
+  background: var(--mc-deepslate);
+  border-right: 3px solid var(--mc-bedrock);
+}
+
+.el-drawer.app-drawer .el-drawer__body {
+  padding: 0;
 }
 
