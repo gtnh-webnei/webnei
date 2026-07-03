@@ -7,15 +7,80 @@
   unicode-range: U+2070, U+207A-207B, U+2080-2089, U+E000-E020;
 }
 
+:root {
+  --mc-bedrock: #111318;
+  --mc-deepslate: #20232a;
+  --mc-stone: #555861;
+  --mc-stone-light: #8d929c;
+  --mc-panel: #c6c6c6;
+  --mc-panel-hi: #f4f4f4;
+  --mc-panel-mid: #a8a8a8;
+  --mc-panel-low: #555555;
+  --mc-slot: #373737;
+  --mc-slot-hi: #8b8b8b;
+  --mc-slot-low: #111111;
+  --mc-emerald: #44b86a;
+  --mc-gold: #f2c14e;
+  --mc-redstone: #d84a3a;
+  --mc-lapis: #4f72d8;
+  --mc-text: #f7f3df;
+  --mc-text-muted: #b7becb;
+  --mc-grid-size: 32px;
+  --mc-panel-radius: 2px;
+  --mc-pixel-shadow: 0 4px 0 rgb(0 0 0 / 0.42);
+  --nei-panel-bg: var(--mc-panel);
+  --nei-panel-border-top: var(--mc-panel-hi);
+  --nei-panel-border-right: var(--mc-panel-low);
+  --nei-panel-border-bottom: var(--mc-panel-low);
+  --nei-panel-border-left: var(--mc-panel-hi);
+  --nei-slot-bg: var(--mc-slot);
+  --nei-slot-border-top: var(--mc-slot-low);
+  --nei-slot-border-right: var(--mc-slot-hi);
+  --nei-slot-border-bottom: var(--mc-slot-hi);
+  --nei-slot-border-left: var(--mc-slot-low);
+  --el-color-primary: var(--mc-emerald);
+  --el-color-primary-light-3: #70ca8d;
+  --el-color-primary-light-5: #9addaf;
+  --el-color-primary-light-7: #c2eccd;
+  --el-color-primary-light-9: #e7f8ec;
+  --el-color-primary-dark-2: #2b8f4b;
+  --el-border-radius-base: var(--mc-panel-radius);
+}
+
 html:not(.dark) {
-  --el-bg-color: #f8fafc;
-  --el-bg-color-page: #eef2f7;
-  --el-fill-color-blank: #ffffff;
+  --el-bg-color: #d7d1bd;
+  --el-bg-color-page: #9a9280;
+  --el-fill-color-blank: var(--mc-panel);
+  --el-border-color: #6f6b61;
+  --el-border-color-lighter: #e4dfd0;
+  --el-text-color-primary: #211f1a;
+  --el-text-color-regular: #363228;
+  --el-text-color-secondary: #625b4b;
+  --app-surface: #c6c6c6;
+  --app-surface-text: #211f1a;
+  --app-surface-muted: #4f4a3f;
+  --app-grid-line: rgb(49 45 37 / 0.2);
+}
+
+html.dark {
+  --el-bg-color: #2a2f38;
+  --el-bg-color-page: #1d2129;
+  --el-fill-color-blank: #2f3540;
+  --el-border-color: #5b6472;
+  --el-border-color-lighter: #444c58;
+  --el-text-color-primary: var(--mc-text);
+  --el-text-color-regular: #e2dcc9;
+  --el-text-color-secondary: #c4c9d4;
+  --app-surface: #2f3540;
+  --app-surface-text: var(--mc-text);
+  --app-surface-muted: #c4c9d4;
+  --app-grid-line: rgb(255 255 255 / 0.075);
 }
 
 html,
 body,
 #app {
+  min-width: 320px;
   height: 100%;
   margin: 0;
   font-family:
@@ -29,15 +94,70 @@ body,
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: var(--el-bg-color);
+  background: var(--el-bg-color-page);
   color: var(--el-text-color-primary);
+}
+
+body {
+  background-image:
+    linear-gradient(90deg, var(--app-grid-line) 1px, transparent 1px),
+    linear-gradient(var(--app-grid-line) 1px, transparent 1px),
+    radial-gradient(circle at 20% 18%, rgb(255 255 255 / 0.08), transparent 20%),
+    radial-gradient(circle at 80% 70%, rgb(0 0 0 / 0.18), transparent 24%);
+  background-size:
+    var(--mc-grid-size) var(--mc-grid-size),
+    var(--mc-grid-size) var(--mc-grid-size),
+    640px 640px,
+    720px 720px;
 }
 
 * {
   box-sizing: border-box;
 }
 
+::selection {
+  background: var(--mc-gold);
+  color: #1f1a10;
+}
+
 a {
   color: var(--el-color-primary);
   text-decoration: none;
 }
+
+a:focus-visible,
+button:focus-visible,
+[role='button']:focus-visible {
+  outline: 2px solid var(--mc-gold);
+  outline-offset: 3px;
+}
+
+.mc-panel {
+  border: 2px solid;
+  border-color:
+    var(--nei-panel-border-top)
+    var(--nei-panel-border-right)
+    var(--nei-panel-border-bottom)
+    var(--nei-panel-border-left);
+  border-radius: var(--mc-panel-radius);
+  background: var(--nei-panel-bg);
+  color: #202020;
+  box-shadow: var(--mc-pixel-shadow);
+}
+
+.nei-slot {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 2px solid;
+  border-color:
+    var(--nei-slot-border-top)
+    var(--nei-slot-border-right)
+    var(--nei-slot-border-bottom)
+    var(--nei-slot-border-left);
+  background: var(--nei-slot-bg);
+  color: #ffffff;
+  image-rendering: pixelated;
+}
+

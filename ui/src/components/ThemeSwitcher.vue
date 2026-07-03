@@ -8,7 +8,7 @@ const store = useThemeStore()
 const { effective } = storeToRefs(store)
 
 const isDark = computed(() => effective.value === 'dark')
-const title = computed(() => (isDark.value ? '切换到浅色模式' : '切换到深色模式'))
+const title = '切换主题'
 
 function setDark(value: boolean | string | number) {
   store.setMode(value ? 'dark' : 'light')
@@ -32,14 +32,21 @@ function setDark(value: boolean | string | number) {
 .theme-switch {
   display: inline-grid;
   align-items: center;
-  width: 56px;
+  width: 58px;
   height: 32px;
-  --el-switch-on-color: #2e333b;
-  --el-switch-off-color: #e9ecef;
-  --el-switch-border-color: var(--el-border-color);
+  --el-switch-on-color: #111318;
+  --el-switch-off-color: #8d929c;
+  --el-switch-border-color: #111318;
+}
+
+.theme-switch :deep(.el-switch__core) {
+  border: 2px solid #111318;
+  border-radius: 2px;
+  box-shadow: 0 2px 0 rgb(0 0 0 / 0.4);
 }
 
 .theme-switch :deep(.el-switch__action) {
-  color: #3c3c43;
+  border-radius: 1px;
+  color: #202020;
 }
 </style>
