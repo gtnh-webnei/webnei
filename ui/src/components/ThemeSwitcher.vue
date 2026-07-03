@@ -49,4 +49,11 @@ function setDark(value: boolean | string | number) {
   border-radius: 1px;
   color: #202020;
 }
+
+@media (max-width: 640px) {
+  .theme-switch {
+    width: 52px;
+    height: 30px;
+  }
+}
 </style>

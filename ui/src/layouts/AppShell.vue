@@ -35,8 +35,8 @@ import ThemeSwitcher from '@/components/ThemeSwitcher.vue'
   grid-template-columns: max-content minmax(0, 1fr) max-content;
   align-items: center;
   gap: 16px;
-  height: 64px;
-  padding: 0 18px;
+  min-height: var(--app-header-height);
+  padding: 0 var(--app-page-padding);
   border-bottom: 3px solid #111318;
   background:
     linear-gradient(180deg, rgb(255 255 255 / 0.08), transparent 42%),
@@ -80,16 +80,31 @@ import ThemeSwitcher from '@/components/ThemeSwitcher.vue'
 }
 
 .app-main {
-  min-height: calc(100vh - 64px);
-  padding: clamp(16px, 3vw, 36px);
+  min-height: calc(100dvh - var(--app-header-height));
+  padding: var(--app-page-padding);
   background: transparent;
 }
 
 @media (max-width: 640px) {
   .app-header {
-    height: auto;
-    min-height: 64px;
-    padding: 12px;
+    gap: 10px;
+  }
+
+  .brand-link {
+    grid-template-columns: 32px max-content;
+    gap: 8px;
+  }
+
+  .brand-mark {
+    width: 32px;
+    height: 32px;
+  }
+
+  .brand-title {
+    max-width: 160px;
+    overflow: hidden;
+    font-size: 18px;
+    text-overflow: ellipsis;
   }
 }
 </style>

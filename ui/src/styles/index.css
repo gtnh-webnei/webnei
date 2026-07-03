@@ -28,6 +28,8 @@
   --mc-grid-size: 32px;
   --mc-panel-radius: 2px;
   --mc-pixel-shadow: 0 4px 0 rgb(0 0 0 / 0.42);
+  --app-header-height: 64px;
+  --app-page-padding: clamp(16px, 3vw, 36px);
   --nei-panel-bg: var(--mc-panel);
   --nei-panel-border-top: var(--mc-panel-hi);
   --nei-panel-border-right: var(--mc-panel-low);
@@ -99,6 +101,7 @@ body,
 }
 
 body {
+  overflow-x: hidden;
   background-image:
     linear-gradient(90deg, var(--app-grid-line) 1px, transparent 1px),
     linear-gradient(var(--app-grid-line) 1px, transparent 1px),
@@ -143,6 +146,15 @@ button:focus-visible,
   background: var(--nei-panel-bg);
   color: #202020;
   box-shadow: var(--mc-pixel-shadow);
+}
+
+@media (max-width: 720px) {
+  :root {
+    --mc-grid-size: 24px;
+    --mc-pixel-shadow: 0 3px 0 rgb(0 0 0 / 0.42);
+    --app-header-height: 56px;
+    --app-page-padding: 12px;
+  }
 }
 
 .nei-slot {
