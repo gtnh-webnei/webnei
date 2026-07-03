@@ -19,10 +19,7 @@ repositories {
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-actuator")
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-    implementation("org.springframework.boot:spring-boot-starter-jdbc")
     implementation("org.springframework.boot:spring-boot-starter-web")
-    runtimeOnly("org.postgresql:postgresql")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
 
@@ -36,19 +33,19 @@ val uiPresent = uiDir.resolve("package.json").exists()
 
 tasks.register<Exec>("uiInstall") {
     onlyIf { uiPresent }
-    configureUiNpmTask("install")
+    configureUiPnpmTask("install")
     description = "Install UI dependencies"
 }
 
 tasks.register<Exec>("uiBuild") {
     onlyIf { uiPresent }
-    configureUiNpmTask("run", "build")
+    configureUiPnpmTask("build")
     description = "Build the UI for production"
 }
 
 tasks.register<Exec>("uiDev") {
     onlyIf { uiPresent }
-    configureUiNpmTask("run", "dev")
+    configureUiPnpmTask("dev")
     description = "Run the UI development server"
 }
 
@@ -72,24 +69,24 @@ tasks.named<ProcessResources>("processResources") {
     }
 }
 
-fun Exec.configureUiNpmTask(vararg npmArgs: String) {
+fun Exec.configureUiPnpmTask(vararg pnpmArgs: String) {
     group = uiGroup
     workingDir = uiDir
-    commandLine(npmCommand(*npmArgs))
+    commandLine(pnpmCommand(*pnpmArgs))
 }
 
-fun npmCommand(vararg args: String): List<String> {
+fun pnpmCommand(vararg args: String): List<String> {
     val osName = System.getProperty("os.name").lowercase()
-    val npmArgs = args.joinToString(" ")
+    val pnpmArgs = args.joinToString(" ")
 
     return when {
         osName.contains("windows") ->
-            listOf("cmd", "/c", "npm", *args)
+            listOf("cmd", "/c", "pnpm", *args)
 
         osName.contains("mac") || osName.contains("darwin") ->
-            listOf("/bin/zsh", "-lc", "npm $npmArgs")
+            listOf("/bin/zsh", "-lc", "pnpm $pnpmArgs")
 
         else ->
-            listOf("/bin/bash", "-lc", "npm $npmArgs")
+            listOf("/bin/bash", "-lc", "pnpm $pnpmArgs")
     }
 }

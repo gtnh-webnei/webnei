@@ -1,97 +1,20 @@
-import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
-import AppShell from '@/layouts/AppShell.vue';
-import DatasetIndex from '@/views/DatasetIndex.vue';
-import ItemBrowser from '@/views/ItemBrowser.vue';
-import FluidBrowser from '@/views/FluidBrowser.vue';
-import ModBrowser from '@/views/ModBrowser.vue';
-import RecipeLookup from '@/views/RecipeLookup.vue';
-import CategoryGallery from '@/views/CategoryGallery.vue';
-import CategoryDetail from '@/views/CategoryDetail.vue';
-import RecipeDetail from '@/views/RecipeDetail.vue';
-import QuestLineList from '@/views/QuestLineList.vue';
-import QuestLineCanvas from '@/views/QuestLineCanvas.vue';
-import MobBrowser from '@/views/MobBrowser.vue';
-import MobDetail from '@/views/MobDetail.vue';
-import GtResourceView from '@/views/GtResourceView.vue';
+import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
+import AppShell from '@/layouts/AppShell.vue'
+import FoundationView from '@/views/FoundationView.vue'
+import NotFoundView from '@/views/NotFoundView.vue'
 
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
     component: AppShell,
     children: [
-      { path: '', name: 'home', component: DatasetIndex },
-      {
-        path: 'datasets/:datasetId/items',
-        name: 'items',
-        component: ItemBrowser,
-        meta: { keepAlive: true },
-      },
-      {
-        path: 'datasets/:datasetId/mods',
-        name: 'mods',
-        component: ModBrowser,
-        meta: { keepAlive: true },
-      },
-      {
-        path: 'datasets/:datasetId/fluids',
-        name: 'fluids',
-        component: FluidBrowser,
-        meta: { keepAlive: true },
-      },
-      {
-        path: 'datasets/:datasetId/categories',
-        name: 'categories',
-        component: CategoryGallery,
-        meta: { keepAlive: true },
-      },
-      {
-        path: 'datasets/:datasetId/categories/:categoryId',
-        name: 'category',
-        component: CategoryDetail,
-      },
-      {
-        path: 'datasets/:datasetId/recipes/:recipeId',
-        name: 'recipe',
-        component: RecipeDetail,
-      },
-      {
-        path: 'datasets/:datasetId/lookup',
-        name: 'lookup',
-        component: RecipeLookup,
-      },
-      {
-        path: 'datasets/:datasetId/quest-lines',
-        name: 'quest-lines',
-        component: QuestLineList,
-        meta: { keepAlive: true },
-      },
-      {
-        path: 'datasets/:datasetId/quest-lines/view',
-        name: 'quest-line',
-        component: QuestLineCanvas,
-        meta: { fullHeight: true },
-      },
-      {
-        path: 'datasets/:datasetId/mobs',
-        name: 'mobs',
-        component: MobBrowser,
-        meta: { keepAlive: true },
-      },
-      {
-        path: 'datasets/:datasetId/mobs/:mobVariantId',
-        name: 'mob',
-        component: MobDetail,
-      },
-      {
-        path: 'datasets/:datasetId/gt/:section?',
-        name: 'gt',
-        component: GtResourceView,
-      },
+      { path: '', name: 'home', component: FoundationView },
+      { path: ':pathMatch(.*)*', name: 'not-found', component: NotFoundView },
     ],
   },
-];
+]
 
 export const router = createRouter({
   history: createWebHistory(),
   routes,
-});
+})

@@ -12,17 +12,13 @@
     "typecheck": "vue-tsc --noEmit -p tsconfig.app.json"
   },
   "dependencies": {
-    "@antv/g6": "^5.1.1",
     "@element-plus/icons-vue": "^2.3.1",
     "@vueuse/core": "^11.1.0",
     "axios": "^1.7.7",
     "element-plus": "^2.8.6",
-    "expr-eval": "^2.0.2",
     "pinia": "^2.2.4",
     "vue": "^3.5.12",
-    "vue-i18n": "^11.4.4",
-    "vue-router": "^4.4.5",
-    "vue-virtual-scroller": "2.0.0-beta.8"
+    "vue-router": "^4.4.5"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
