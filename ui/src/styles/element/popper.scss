@@ -1,0 +1,31 @@
+// Element 弹层（popover/tooltip）皮肤统一入口。popper 挂在 body 上，scoped 样式管不到，
+// 所以所有弹层皮肤集中在此，共用「深色底 + 立体边」基调，各弹层只覆盖差异。
+@use '@/styles/mixins' as nei;
+
+// dataset 切换弹层
+.el-popover.dataset-popover {
+  @include nei.pixel-shadow;
+
+  padding: 12px;
+  border: 2px solid var(--mc-bedrock);
+  border-radius: var(--mc-panel-radius);
+  background: var(--mc-deepslate);
+}
+
+.el-popover.dataset-popover .el-popper__arrow::before {
+  border: 2px solid var(--mc-bedrock);
+  background: var(--mc-deepslate);
+}
+
+// 通用 MC tooltip：深紫黑半透明底 + 紫色渐变细边
+.el-popper.mc-tooltip.is-dark {
+  max-width: 360px;
+  padding: 10px;
+  border: 2px solid transparent;
+  border-radius: 5px;
+  background:
+    linear-gradient(var(--mc-tooltip-bg), var(--mc-tooltip-bg)) padding-box,
+    linear-gradient(to bottom, var(--mc-tooltip-border-start), var(--mc-tooltip-border-end)) border-box;
+  box-shadow: none;
+  color: var(--mc-tooltip-text);
+}

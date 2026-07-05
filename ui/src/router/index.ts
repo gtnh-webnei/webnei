@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import AppShell from '@/layouts/AppShell.vue'
-import FoundationView from '@/views/FoundationView.vue'
+import FluidListView from '@/views/FluidListView.vue'
+import ItemListView from '@/views/ItemListView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
 
 const routes: RouteRecordRaw[] = [
@@ -8,7 +9,9 @@ const routes: RouteRecordRaw[] = [
     path: '/',
     component: AppShell,
     children: [
-      { path: '', name: 'home', component: FoundationView },
+      { path: '', redirect: { name: 'items' } },
+      { path: 'items', name: 'items', component: ItemListView },
+      { path: 'fluids', name: 'fluids', component: FluidListView },
       { path: ':pathMatch(.*)*', name: 'not-found', component: NotFoundView },
     ],
   },

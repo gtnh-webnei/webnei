@@ -1,0 +1,17 @@
+// 可复用视觉基元。凡是需要 NEI 立体边框/像素阴影的地方，@use 本文件，不再手抄。
+
+// NEI 立体边框：raised = 凸起（上左亮、下右暗），sunken = 凹陷（反向）。
+// 用法：@include nei.bevel($hi, $low);  // 传该元素的亮/暗色
+@mixin bevel($hi, $low, $dir: raised) {
+  border-style: solid;
+  @if $dir == raised {
+    border-color: $hi $low $low $hi;
+  } @else {
+    border-color: $low $hi $hi $low;
+  }
+}
+
+// 像素风硬阴影
+@mixin pixel-shadow {
+  box-shadow: var(--mc-pixel-shadow);
+}

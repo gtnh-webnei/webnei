@@ -1,19 +1,20 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
+import McPanel from '@/components/ui/McPanel.vue'
 
 const { t } = useI18n()
 </script>
 
 <template>
   <section class="not-found-page">
-    <div class="mc-panel not-found-card">
+    <McPanel class="not-found-card">
       <p>{{ t('common.notFound') }}</p>
       <router-link to="/">
         <el-button type="primary">
           {{ t('common.back') }}
         </el-button>
       </router-link>
-    </div>
+    </McPanel>
   </section>
 </template>
 

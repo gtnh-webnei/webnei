@@ -1,0 +1,9 @@
+// Element 抽屉皮肤。
+.el-drawer.app-drawer {
+  border-right: 3px solid var(--mc-bedrock);
+  background: var(--mc-deepslate);
+}
+
+.el-drawer.app-drawer .el-drawer__body {
+  padding: 0;
+}

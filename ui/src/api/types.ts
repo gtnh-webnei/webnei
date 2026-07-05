@@ -26,3 +26,39 @@ export interface PageResponse<T> {
   size: number
   total: number
 }
+
+export interface IconAsset {
+  url: string
+  width: number | null
+  height: number | null
+  metadataJson: string | null
+}
+
+export type CatalogKind = 'item' | 'fluid'
+
+export interface CatalogEntryBase {
+  id: string
+  displayName: string
+  modId: string
+  modName: string | null
+  registryName: string
+  icon: IconAsset | null
+}
+
+export interface ItemListEntry extends CatalogEntryBase {
+  itemVariantId: string
+  itemId: string
+  damage: number
+  listIndex: number
+  tooltipText: string
+  chemicalExpression: string
+}
+
+export interface FluidListEntry extends CatalogEntryBase {
+  fluidId: string
+  chemicalExpression: string
+  temperature: number
+  gaseous: boolean
+}
+
+export type CatalogEntry = ItemListEntry | FluidListEntry
