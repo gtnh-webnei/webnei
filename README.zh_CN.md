@@ -2,30 +2,30 @@
 
 语言：[English](README.md) | [中文](README.zh_CN.md)
 
-Spring Boot + JPA 后端 + Vue 3 / Vite 前端，用于浏览 NESQL 导出数据 —
-物品、流体、怪物、配方、任务、Thaumcraft 要素、GT 矿石/世界生成数据。
+Spring Boot + MyBatis-Plus 后端 + Vue 3 / Vite 前端，用于浏览 WebNEI 导出数据 —
+当前包括数据集、物品和流体。
 
-> 本项目消费 [nesql-exporter](https://github.com/gtnh-webnei/nesql-exporter)
-> 导出的数据。数据库必须先用 NESQL 导出包灌入数据，后端才能提供 API。
+> 后端是只读查询服务。数据库必须先由 exporter 灌入数据，API 才能提供内容。
 
 ## 架构
 
 ```text
 PostgreSQL（只读）
-  -> Spring Boot + JPA（读模型视图与实体）
+  -> Spring Boot + MyBatis-Plus（导出表与读模型视图）
   -> JSON API（/api/**）
   -> Vue 3 + Vite SPA（pnpm）
 ```
 
-- 后端是**只读查询服务**，基于 JPA 实体映射到 NESQL 导出表和读模型视图。
+- 后端是**只读查询服务**，基于 MyBatis-Plus mapper 映射到导出表和读模型视图。
 - 前端是独立 Vite 项目，位于 `ui/`。
-- 静态资源（渲染图标、纹理）**不由** Spring Boot 提供。开发时 Vite 中间件
-  从本地导出目录提供 `/assets/**`，生产环境由 nginx 或静态文件服务器处理。
+- 静态资源（渲染图标、纹理）**不由** Spring Boot 提供。API 返回每个资源的
+  URL/路径，前端直接使用该值。部署时应通过 nginx、静态文件服务器或 CDN 保证
+  返回的 URL 可访问。
 
 ## 环境要求
 
 - Java 21
-- 装有 `pg_trgm` 扩展的 PostgreSQL（NESQL schema 需要）
+- 已灌入 WebNEI 导出 schema 的 PostgreSQL
 - Node.js 22+ 及 pnpm
 
 ## 配置
@@ -34,17 +34,17 @@ PostgreSQL（只读）
 
 | 变量 | 默认值 | 用途 |
 | --- | --- | --- |
-| `WEBNEI_DATASOURCE_URL` | `jdbc:postgresql://localhost:5432/nesql` | NESQL 数据库连接 URL |
+| `WEBNEI_DATASOURCE_URL` | `jdbc:postgresql://localhost:5432/webnei` | PostgreSQL 数据库连接 URL |
 | `WEBNEI_DATASOURCE_USERNAME` | `postgres` | 数据库用户 |
 | `WEBNEI_DATASOURCE_PASSWORD` | `postgres` | 数据库密码 |
-| `WEBNEI_ASSETS_PUBLIC_URL` | `/assets` | 资源链接的公开 URL 前缀 |
-| `WEBNEI_CORS_ALLOWED_ORIGINS` | `http://localhost:5173` | CORS 允许的来源 |
+| `WEBNEI_DEFAULT_DATASET_ID` | 空 | 可选的默认数据集 ID |
+| `WEBNEI_ASSETS_PUBLIC_URL` | `/assets` | API 返回的资源 URL 前缀 |
 
 以上默认值假设 PostgreSQL 运行在本地 `localhost:5432`。开发时如需连接远程数据库，
 可在运行时设置环境变量：
 
 ```bash
-WEBNEI_DATASOURCE_URL='jdbc:postgresql://<host>:5432/nesql' \
+WEBNEI_DATASOURCE_URL='jdbc:postgresql://<host>:5432/webnei' \
 WEBNEI_DATASOURCE_USERNAME='<user>' \
 WEBNEI_DATASOURCE_PASSWORD='<password>' \
 ./gradlew bootRun
@@ -63,32 +63,20 @@ WEBNEI_DATASOURCE_PASSWORD='<password>' \
 
 | 控制器 | 端点 |
 | --- | --- |
-| **Datasets** | `GET /api/datasets`、`/api/datasets/{id}`、`/api/datasets/{id}/mods/page` |
-| **Items** | `GET .../items?q=&modId=&page=&size=`、`.../items/{variantId}`、`.../mods` |
-| **Fluids** | `GET .../fluids?q=&modId=&page=&size=`、`.../fluids/{variantId}`、`.../fluid-mods` |
-| **Mobs** | `GET .../mobs?q=&modId=&page=&size=`、`.../mobs/{variantId}`、`.../mobs/mods` |
-| **Recipes** | `GET .../recipe-categories/page?q=&modId=&hideEmpty=`、`.../recipes/lookup?target=&kind=`、`.../recipes/lookup/breakdown`、`.../recipes/{id}`、`.../categories/{id}/recipes`、`.../categories/{id}/applicable-items`、`.../categories/{id}/voltage-tiers` |
-| **Quests** | `GET .../quest-lines`、`.../quest-lines/{id}`、`.../quests/{id}` |
-| **Extras** | `GET .../items/{id}/extras`、`.../items/{id}/containers`、`.../fluids/{id}/extras` |
-| **GT Ore** | `GET .../gt/ore-veins?q=&dimension=`、`.../gt/small-ores`、`.../gt/underground-fluids`、`.../gt/bartworks-ores`，及各详情端点 |
+| **Datasets** | `GET /api/datasets`、`GET /api/datasets/default` |
+| **Catalog items** | `GET /api/datasets/{datasetId}/items?q=&page=&size=` |
+| **Catalog fluids** | `GET /api/datasets/{datasetId}/fluids?q=&page=&size=` |
 
-## 资源目录布局
+## 资源 URL
 
-将 NESQL 导出包解压到 `WEBNEI_ASSETS_DIR` 指向的目录（Vite 开发服务器使用）：
+资源路径由后端在 API DTO 中返回，前端不会改写或重新拼接。
 
-```text
-{存放目录}/
-  {pack_slug}/{pack_version}/{variant}/{language}/
-    item/...   （渲染的物品图标）
-    mob/...    （实体渲染图）
-    spec/...   （展示 spec 文件）
-    ...
-```
-
-后端生成的资源 URL 格式：
+通过 `WEBNEI_ASSETS_PUBLIC_URL` 控制后端返回的资源 URL 前缀。它可以是
+`/assets` 这样的相对路径，也可以是 CDN/静态文件源站这样的绝对 URL。使用默认值时，
+后端生成的 URL 格式：
 
 ```text
-/assets/{packSlug}/{packVersion}/{variant}/{language}/{assetPath}?v={sha256}
+/assets/{packSlug}/{packVersion}/{variant}/{assetPath}
 ```
 
 ## 开发
@@ -100,16 +88,15 @@ cd webnei
 ./gradlew bootRun
 ```
 
-启动前端开发服务器（需要设置 `WEBNEI_ASSETS_DIR`）：
+启动前端开发服务器：
 
 ```bash
 cd webnei/ui
 pnpm install
-WEBNEI_ASSETS_DIR=/path/to/exports pnpm dev
+pnpm dev
 ```
 
-Vite 开发服务器将 `/api` 代理到 `localhost:8080`，并从本地导出目录
-提供 `/assets/**`。
+Vite 开发服务器将 `/api` 代理到 `localhost:8080`。
 
 验证后端健康状态：
 

@@ -19,3 +19,5 @@ management:
 webnei:
   dataset:
     default-id: ${WEBNEI_DEFAULT_DATASET_ID:}
+  assets:
+    public-url: ${WEBNEI_ASSETS_PUBLIC_URL:/assets}

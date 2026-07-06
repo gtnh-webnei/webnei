@@ -2,35 +2,33 @@
 
 Language: [English](README.md) | [中文](README.zh_CN.md)
 
-Spring Boot + JPA backend with a Vue 3 / Vite frontend for browsing NESQL
-export data — items, fluids, mobs, recipes, quests, Thaumcraft aspects, and
-GT ore/worldgen data.
+Spring Boot + MyBatis-Plus backend with a Vue 3 / Vite frontend for browsing
+exported WebNEI data — currently datasets, items, and fluids.
 
-> This project consumes data exported by
-> [nesql-exporter](https://github.com/gtnh-webnei/nesql-exporter).
-> The database must be populated with a NESQL export bundle before the
-> backend can serve any data.
+> The backend is a read-only query service. The database must be populated by
+> the exporter before the API can serve data.
 
 ## Architecture
 
 ```text
 PostgreSQL (read-only)
-  -> Spring Boot + JPA (read-model views & entities)
+  -> Spring Boot + MyBatis-Plus (export tables & read-model views)
   -> JSON API (/api/**)
   -> Vue 3 + Vite SPA (pnpm)
 ```
 
-- The backend is a **read-only query service** backed by JPA entities mapped
-  to NESQL export tables and read-model views.
+- The backend is a **read-only query service** backed by MyBatis-Plus mappers
+  mapped to exported tables and read-model views.
 - The frontend is a separate Vite project in `ui/`.
 - Static assets (rendered icons, textures) are **not** served by Spring Boot.
-  In dev, the Vite middleware serves `/assets/**` from a local export directory.
-  In prod, nginx or a static file server handles them.
+  The API returns each asset URL/path, and the frontend uses that value
+  directly. Deployments should make the returned URLs resolvable via nginx, a
+  static file server, or a CDN.
 
 ## Requirements
 
 - Java 21
-- PostgreSQL with the `pg_trgm` extension (the NESQL schema requires it)
+- PostgreSQL populated with the WebNEI export schema
 - Node.js 22+ with pnpm
 
 ## Configuration
@@ -39,17 +37,17 @@ All settings can be overridden via environment variables.
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `WEBNEI_DATASOURCE_URL` | `jdbc:postgresql://localhost:5432/nesql` | NESQL database URL |
+| `WEBNEI_DATASOURCE_URL` | `jdbc:postgresql://localhost:5432/webnei` | PostgreSQL database URL |
 | `WEBNEI_DATASOURCE_USERNAME` | `postgres` | Database user |
 | `WEBNEI_DATASOURCE_PASSWORD` | `postgres` | Database password |
-| `WEBNEI_ASSETS_PUBLIC_URL` | `/assets` | Public URL prefix for asset links |
-| `WEBNEI_CORS_ALLOWED_ORIGINS` | `http://localhost:5173` | CORS allowed origins |
+| `WEBNEI_DEFAULT_DATASET_ID` | empty | Optional default dataset id |
+| `WEBNEI_ASSETS_PUBLIC_URL` | `/assets` | Asset URL prefix returned by the API |
 
 The defaults assume a local PostgreSQL on `localhost:5432`. For development
 against a remote database, either set the variables when running:
 
 ```bash
-WEBNEI_DATASOURCE_URL='jdbc:postgresql://<host>:5432/nesql' \
+WEBNEI_DATASOURCE_URL='jdbc:postgresql://<host>:5432/webnei' \
 WEBNEI_DATASOURCE_USERNAME='<user>' \
 WEBNEI_DATASOURCE_PASSWORD='<password>' \
 ./gradlew bootRun
@@ -68,33 +66,22 @@ All endpoints are read-only and live under `/api`.
 
 | Controller | Endpoints |
 | --- | --- |
-| **Datasets** | `GET /api/datasets`, `/api/datasets/{id}`, `/api/datasets/{id}/mods/page` |
-| **Items** | `GET .../items?q=&modId=&page=&size=`, `.../items/{variantId}`, `.../mods` |
-| **Fluids** | `GET .../fluids?q=&modId=&page=&size=`, `.../fluids/{variantId}`, `.../fluid-mods` |
-| **Mobs** | `GET .../mobs?q=&modId=&page=&size=`, `.../mobs/{variantId}`, `.../mobs/mods` |
-| **Recipes** | `GET .../recipe-categories/page?q=&modId=&hideEmpty=`, `.../recipes/lookup?target=&kind=`, `.../recipes/lookup/breakdown`, `.../recipes/{id}`, `.../categories/{id}/recipes`, `.../categories/{id}/applicable-items`, `.../categories/{id}/voltage-tiers` |
-| **Quests** | `GET .../quest-lines`, `.../quest-lines/{id}`, `.../quests/{id}` |
-| **Extras** | `GET .../items/{id}/extras`, `.../items/{id}/containers`, `.../fluids/{id}/extras` |
-| **GT Ore** | `GET .../gt/ore-veins?q=&dimension=`, `.../gt/small-ores`, `.../gt/underground-fluids`, `.../gt/bartworks-ores`, plus detail endpoints |
+| **Datasets** | `GET /api/datasets`, `GET /api/datasets/default` |
+| **Catalog items** | `GET /api/datasets/{datasetId}/items?q=&page=&size=` |
+| **Catalog fluids** | `GET /api/datasets/{datasetId}/fluids?q=&page=&size=` |
 
-## Asset Layout
+## Asset URLs
 
-Extract the NESQL export bundle into a directory pointed to by
-`WEBNEI_ASSETS_DIR` (used by the Vite dev server):
+Asset paths are returned by the backend in API DTOs. The frontend does not
+rewrite or reconstruct them.
 
-```text
-{packs}/
-  {pack_slug}/{pack_version}/{variant}/{language}/
-    item/...   (rendered item icons)
-    mob/...    (entity portrait renders)
-    spec/...   (display spec files)
-    ...
-```
-
-The backend generates asset URLs of the form:
+Configure `WEBNEI_ASSETS_PUBLIC_URL` to control the returned asset URL prefix.
+The value may be a relative path such as `/assets` or an absolute URL such as a
+CDN/static-file origin. With the default value, the backend generates URLs of
+the form:
 
 ```text
-/assets/{packSlug}/{packVersion}/{variant}/{language}/{assetPath}?v={sha256}
+/assets/{packSlug}/{packVersion}/{variant}/{assetPath}
 ```
 
 ## Development
@@ -106,16 +93,15 @@ cd webnei
 ./gradlew bootRun
 ```
 
-Start the frontend dev server (requires `WEBNEI_ASSETS_DIR`):
+Start the frontend dev server:
 
 ```bash
 cd webnei/ui
 pnpm install
-WEBNEI_ASSETS_DIR=/path/to/exports pnpm dev
+pnpm dev
 ```
 
-The Vite dev server proxies `/api` to `localhost:8080` and serves
-`/assets/**` from the local export directory.
+The Vite dev server proxies `/api` to `localhost:8080`.
 
 Verify the backend is healthy:
 

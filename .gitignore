@@ -52,6 +52,7 @@ ui/.vite
 ui/.tmp
 ui/*.log
 ui/package-lock.json
+ui/public/assets
 ui/components.d.ts
 ui/auto-imports.d.ts
 ui/coverage/
