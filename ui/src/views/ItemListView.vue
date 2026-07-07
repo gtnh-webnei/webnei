@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import CatalogBrowser from '@/components/catalog/CatalogBrowser.vue'
-import { listItems, type CatalogQueryParams } from '@/api/catalog'
-import type { CatalogEntry, PageResponse } from '@/api/types'
+import { listItems } from '@/api/item'
+import type { CatalogEntry, CatalogQueryParams, PageResponse } from '@/api/types'
 
 const { t } = useI18n()
 

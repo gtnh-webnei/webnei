@@ -1,18 +1,18 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import { fetchDefaultDatasetId, listDatasets } from '@/api/datasets'
-import type { DatasetSummary } from '@/api/types'
+import { listDatasets } from '@/api/datasets'
+import type { DatasetListEntry } from '@/api/types'
 import { browserLocale, setLocale } from '@/i18n'
 
 const STORAGE_KEY = 'webnei.activeDatasetId'
 
-function findById(datasets: DatasetSummary[], datasetId: string | null): DatasetSummary | null {
+function findById(datasets: DatasetListEntry[], datasetId: string | null): DatasetListEntry | null {
   if (!datasetId) return null
   return datasets.find((dataset) => dataset.datasetId === datasetId) ?? null
 }
 
 // 无存储时的默认解析：优先后端配置的默认 id，其次列表中语言最贴合浏览器的最新数据集。
-function resolveDefault(datasets: DatasetSummary[], configuredId: string | null): DatasetSummary | null {
+function resolveDefault(datasets: DatasetListEntry[], configuredId: string | null): DatasetListEntry | null {
   const configured = findById(datasets, configuredId)
   if (configured) return configured
 
@@ -21,7 +21,7 @@ function resolveDefault(datasets: DatasetSummary[], configuredId: string | null)
 }
 
 export const useDatasetStore = defineStore('dataset', () => {
-  const datasets = ref<DatasetSummary[]>([])
+  const datasets = ref<DatasetListEntry[]>([])
   const activeDatasetId = ref<string | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
@@ -29,7 +29,7 @@ export const useDatasetStore = defineStore('dataset', () => {
 
   const activeDataset = computed(() => findById(datasets.value, activeDatasetId.value))
 
-  function applyActiveDataset(dataset: DatasetSummary | null) {
+  function applyActiveDataset(dataset: DatasetListEntry | null) {
     activeDatasetId.value = dataset?.datasetId ?? null
     setLocale(dataset?.language ?? browserLocale())
   }
@@ -39,16 +39,16 @@ export const useDatasetStore = defineStore('dataset', () => {
     loading.value = true
     error.value = null
     try {
-      const [rows, configuredId] = await Promise.all([listDatasets(), fetchDefaultDatasetId()])
-      datasets.value = rows
+      const { defaultId, items } = await listDatasets()
+      datasets.value = items
 
       const storedId = localStorage.getItem(STORAGE_KEY)
-      const storedDataset = findById(rows, storedId)
+      const storedDataset = findById(items, storedId)
       if (storedId && !storedDataset) {
         localStorage.removeItem(STORAGE_KEY)
       }
 
-      applyActiveDataset(storedDataset ?? resolveDefault(rows, configuredId))
+      applyActiveDataset(storedDataset ?? resolveDefault(items, defaultId))
       loaded.value = true
     } catch (err) {
       error.value = err instanceof Error ? err.message : String(err)

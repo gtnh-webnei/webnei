@@ -1,12 +1,7 @@
 import { http } from './client'
-import type { DatasetDefault, DatasetSummary } from './types'
+import type { DatasetListResponse } from './types'
 
-export async function listDatasets(): Promise<DatasetSummary[]> {
-  const response = await http.get<DatasetSummary[]>('/datasets')
+export async function listDatasets(): Promise<DatasetListResponse> {
+  const response = await http.get<DatasetListResponse>('/dataset/list')
   return response.data
-}
-
-export async function fetchDefaultDatasetId(): Promise<string | null> {
-  const response = await http.get<DatasetDefault>('/datasets/default')
-  return response.data.datasetId
 }

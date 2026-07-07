@@ -10,7 +10,7 @@ import McInput from '@/components/ui/McInput.vue'
 import McTooltip from '@/components/ui/McTooltip.vue'
 import { useDatasetStore } from '@/stores/dataset'
 import type { CatalogEntry, CatalogKind, PageResponse } from '@/api/types'
-import type { CatalogQueryParams } from '@/api/catalog'
+import type { CatalogQueryParams } from '@/api/types'
 
 const props = defineProps<{
   kind: CatalogKind
@@ -48,6 +48,7 @@ const searchHelpItems = computed(() => {
     { token: '&text', key: 'catalog.searchHelpIdentifier' },
     { token: '|', key: 'catalog.searchHelpOr' },
     { token: '-text / !text', key: 'catalog.searchHelpNegate' },
+    { token: '"text"', key: 'catalog.searchHelpQuote' },
   )
   return items
 })

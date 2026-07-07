@@ -1,4 +1,4 @@
-export interface DatasetSummary {
+export interface DatasetListEntry {
   datasetId: string
   packSlug: string
   packVersion: string
@@ -11,8 +11,9 @@ export interface DatasetSummary {
   minecraftVersion: string
 }
 
-export interface DatasetDefault {
-  datasetId: string | null
+export interface DatasetListResponse {
+  defaultId: string | null
+  items: DatasetListEntry[]
 }
 
 export interface ApiError {
@@ -25,6 +26,13 @@ export interface PageResponse<T> {
   page: number
   size: number
   total: number
+}
+
+export interface CatalogQueryParams {
+  datasetId: string
+  q?: string
+  page: number
+  size: number
 }
 
 export interface IconAsset {

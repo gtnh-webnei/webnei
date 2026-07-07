@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import { useDatasetStore } from '@/stores/dataset'
-import type { DatasetSummary } from '@/api/types'
+import type { DatasetListEntry } from '@/api/types'
 
 const emit = defineEmits<{ (event: 'select'): void }>()
 
@@ -14,7 +14,7 @@ const { datasets, activeDataset, loading, error } = storeToRefs(store)
 interface PackOption {
   key: string
   title: string
-  datasets: DatasetSummary[]
+  datasets: DatasetListEntry[]
 }
 
 // 按整合包分组（slug+version+variant），语言从属于包。
@@ -36,7 +36,7 @@ const packs = computed<PackOption[]>(() => {
   return [...map.values()]
 })
 
-function packKeyOf(dataset: DatasetSummary): string {
+function packKeyOf(dataset: DatasetListEntry): string {
   return `${dataset.packSlug}:${dataset.packVersion}:${dataset.variant}`
 }
 
