@@ -1,5 +1,6 @@
 <script setup lang="ts" generic="T">
 import { computed } from 'vue'
+import { useMediaQuery } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 import McPanel from '@shared/ui/McPanel.vue'
 import McInput from '@shared/ui/McInput.vue'
@@ -17,10 +18,16 @@ const props = defineProps<{
 // 布局只读 state 的其余字段，不回写 prop（满足 vue/no-mutating-props）。
 const queryModel = defineModel<string>('query', { required: true })
 
+const COMPACT_PAGER_QUERY = '(max-width: 520px)'
+const COMPACT_PAGER_COUNT = 5
+const DEFAULT_PAGER_COUNT = 7
+
 const { t } = useI18n()
+const isCompactPager = useMediaQuery(COMPACT_PAGER_QUERY)
 
 const totalLabel = computed(() => t('catalog.resultCount', { count: props.state.total.value }))
 const hasItems = computed(() => props.state.items.value.length > 0)
+const pagerCount = computed(() => (isCompactPager.value ? COMPACT_PAGER_COUNT : DEFAULT_PAGER_COUNT))
 </script>
 
 <template>
@@ -46,25 +53,24 @@ const hasItems = computed(() => props.state.items.value.length > 0)
         </div>
       </header>
 
-      <p
-        v-if="!hasDataset"
-        class="search-hint"
-      >
-        {{ t('dataset.empty') }}
-      </p>
-      <p
-        v-else-if="state.error.value"
-        class="search-hint is-error"
-      >
-        {{ state.error.value }}
-      </p>
       <div
-        v-else
         class="search-body"
         :class="{ 'is-loading': state.loading.value && hasItems }"
       >
         <p
-          v-if="state.loading.value && !hasItems"
+          v-if="!hasDataset"
+          class="search-hint"
+        >
+          {{ t('dataset.empty') }}
+        </p>
+        <p
+          v-else-if="state.error.value"
+          class="search-hint is-error"
+        >
+          {{ state.error.value }}
+        </p>
+        <p
+          v-else-if="state.loading.value && !hasItems"
           class="search-hint"
         >
           {{ t('catalog.loading') }}
@@ -88,6 +94,7 @@ const hasItems = computed(() => props.state.items.value.length > 0)
           :current-page="state.page.value + 1"
           :page-size="state.size"
           :total="state.total.value"
+          :pager-count="pagerCount"
           @current-change="state.onPageChange"
         />
       </footer>
@@ -106,6 +113,7 @@ const hasItems = computed(() => props.state.items.value.length > 0)
   grid-template-rows: auto minmax(0, 1fr) auto;
   gap: 14px;
   height: 100%;
+  min-width: 0;
   min-height: 0;
   padding: 16px;
   overflow: hidden;
@@ -221,6 +229,7 @@ const hasItems = computed(() => props.state.items.value.length > 0)
 
 .search-pagination {
   display: flex;
+  min-width: 0;
   justify-content: center;
 }
 
@@ -270,11 +279,23 @@ const hasItems = computed(() => props.state.items.value.length > 0)
 
   .search-toolbar {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     align-items: stretch;
   }
 
   .search-group {
     width: 100%;
+  }
+
+  .search-body {
+    padding-right: 0;
+    scrollbar-width: none;
+  }
+
+  .search-body::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
   }
 }
 </style>

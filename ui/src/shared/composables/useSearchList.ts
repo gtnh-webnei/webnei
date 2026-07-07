@@ -1,5 +1,6 @@
 import { ref, watch, type Ref } from 'vue'
 import { watchDebounced } from '@vueuse/core'
+import { pageSizeForViewport } from '@shared/utils/pageSize'
 import type { PageResponse, SearchListParams } from '@shared/types'
 
 export interface SearchListState<T> {
@@ -14,23 +15,21 @@ export interface SearchListState<T> {
 }
 
 interface Options {
-  size?: number
   debounce?: number
 }
 
 /**
  * 搜索 + 分页 + 竞态 + 防抖 的通用列表逻辑，与具体领域无关。
- * 传入活动数据集 id 的 ref 与 fetcher（按 SearchListParams 取一页数据），
- * 返回可直接绑定到布局的响应式状态。query 变更重置到首页；翻页与数据集切换触发重取；
- * 仅采纳最新一次请求的结果。
+ * 每页条数在初始化时按窗口宽度分档取一次（pageSizeForViewport），之后固定。
+ * query 变更重置到首页；翻页/数据集切换触发重取；仅采纳最新一次请求的结果。
  */
 export function useSearchList<T>(
   activeDatasetId: Ref<string | null>,
   fetcher: (params: SearchListParams) => Promise<PageResponse<T>>,
   options: Options = {},
 ): SearchListState<T> {
-  const size = options.size ?? 60
   const debounce = options.debounce ?? 250
+  const size = pageSizeForViewport()
 
   const query = ref('')
   const page = ref(0)
