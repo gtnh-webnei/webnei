@@ -1,4 +1,4 @@
-import { http } from './client'
+import { http } from '@shared/api/client'
 import type { DatasetListResponse } from './types'
 
 export async function listDatasets(): Promise<DatasetListResponse> {

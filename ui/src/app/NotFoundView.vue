@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import McPanel from '@/components/ui/McPanel.vue'
+import McPanel from '@shared/ui/McPanel.vue'
 
 const { t } = useI18n()
 </script>

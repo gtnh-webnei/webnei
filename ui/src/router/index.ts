@@ -1,8 +1,8 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
-import AppShell from '@/layouts/AppShell.vue'
-import FluidListView from '@/views/FluidListView.vue'
-import ItemListView from '@/views/ItemListView.vue'
-import NotFoundView from '@/views/NotFoundView.vue'
+import AppShell from '@/app/AppShell.vue'
+import FluidListView from '@features/fluid/views/FluidListView.vue'
+import ItemListView from '@features/item/views/ItemListView.vue'
+import NotFoundView from '@/app/NotFoundView.vue'
 
 const routes: RouteRecordRaw[] = [
   {

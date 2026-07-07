@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { parseMcFormat, type FormattedSegment } from '@/utils/mcFormat'
+import { parseMcFormat, type FormattedSegment } from '@shared/utils/mcFormat'
 
 // 渲染带 Minecraft §格式码的文本。凡是可能含 §码的文字（物品名、tooltip 等）都用它。
 const props = defineProps<{

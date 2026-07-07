@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import CatalogEntryCard from './CatalogEntryCard.vue'
-import type { CatalogEntry, CatalogKind } from '@/api/types'
+import EntryCard from './EntryCard.vue'
+import type { EntryBase, EntryKind } from '@shared/types'
 
 defineProps<{
-  kind: CatalogKind
-  items: CatalogEntry[]
+  kind: EntryKind
+  items: EntryBase[]
 }>()
 </script>
 
 <template>
-  <div class="catalog-grid">
-    <CatalogEntryCard
+  <div class="entry-grid">
+    <EntryCard
       v-for="entry in items"
       :key="entry.id"
       :kind="kind"
@@ -20,7 +20,7 @@ defineProps<{
 </template>
 
 <style scoped>
-.catalog-grid {
+.entry-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   grid-auto-rows: 68px;
@@ -29,7 +29,7 @@ defineProps<{
 }
 
 @media (max-width: 520px) {
-  .catalog-grid {
+  .entry-grid {
     grid-template-columns: 1fr;
   }
 }

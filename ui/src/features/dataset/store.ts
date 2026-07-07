@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import { listDatasets } from '@/api/datasets'
-import type { DatasetListEntry } from '@/api/types'
+import { listDatasets } from './api'
+import type { DatasetListEntry } from './types'
 import { browserLocale, setLocale } from '@/i18n'
 
 const STORAGE_KEY = 'webnei.activeDatasetId'

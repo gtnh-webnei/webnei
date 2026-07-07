@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { CatalogKind, IconAsset } from '@/api/types'
+import type { EntryKind, IconAsset } from '@shared/types'
 
 interface IconAnimationMetadata {
   animation?: {
@@ -14,7 +14,7 @@ interface IconAnimationMetadata {
 }
 
 const props = defineProps<{
-  kind: CatalogKind
+  kind: EntryKind
   icon: IconAsset | null
   alt: string
   size: number

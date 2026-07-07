@@ -3,9 +3,9 @@ import { computed, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import { ArrowDown, Menu as MenuIcon } from '@element-plus/icons-vue'
-import DatasetPicker from '@/components/DatasetPicker.vue'
-import McButton from '@/components/ui/McButton.vue'
-import { useDatasetStore } from '@/stores/dataset'
+import DatasetPicker from '@features/dataset/components/DatasetPicker.vue'
+import McButton from '@shared/ui/McButton.vue'
+import { useDatasetStore } from '@features/dataset/store'
 
 const { t, te } = useI18n()
 const store = useDatasetStore()

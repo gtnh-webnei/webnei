@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import EntryIcon from './EntryIcon.vue'
-import McSlot from '@/components/ui/McSlot.vue'
-import McCard from '@/components/ui/McCard.vue'
-import { stripMcFormat } from '@/utils/mcFormat'
-import type { CatalogEntry, CatalogKind } from '@/api/types'
+import McSlot from '@shared/ui/McSlot.vue'
+import McCard from '@shared/ui/McCard.vue'
+import { stripMcFormat } from '@shared/utils/mcFormat'
+import type { EntryBase, EntryKind } from '@shared/types'
 
 const props = defineProps<{
-  kind: CatalogKind
-  entry: CatalogEntry
+  kind: EntryKind
+  entry: EntryBase
 }>()
 
 const slotSize = 40

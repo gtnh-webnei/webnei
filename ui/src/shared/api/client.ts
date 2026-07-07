@@ -1,5 +1,5 @@
 import axios, { AxiosError } from 'axios'
-import type { ApiError } from './types'
+import type { ApiError } from '@shared/types'
 
 export const http = axios.create({
   baseURL: '/api',

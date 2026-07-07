@@ -2,8 +2,8 @@
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
-import { useDatasetStore } from '@/stores/dataset'
-import type { DatasetListEntry } from '@/api/types'
+import { useDatasetStore } from '@features/dataset/store'
+import type { DatasetListEntry } from '@features/dataset/types'
 
 const emit = defineEmits<{ (event: 'select'): void }>()
 
