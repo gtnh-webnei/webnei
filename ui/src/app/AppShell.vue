@@ -11,6 +11,14 @@ const { t, te } = useI18n()
 const store = useDatasetStore()
 const { activeDataset, loading } = storeToRefs(store)
 
+// 单一菜单来源：桌面顶栏与移动抽屉共用，新增页面只改这里。
+const navLinks = [
+  { to: '/items', label: 'nav.items' },
+  { to: '/fluids', label: 'nav.fluids' },
+  { to: '/recipe/categories', label: 'nav.recipeCategories' },
+  { to: '/mods', label: 'nav.mods' },
+] as const
+
 const desktopPickerOpen = ref(false)
 const drawerOpen = ref(false)
 const drawerSize = 'min(82vw, 300px)'
@@ -69,25 +77,13 @@ onMounted(() => {
         :aria-label="t('common.menu')"
       >
         <router-link
-          to="/items"
+          v-for="link in navLinks"
+          :key="link.to"
+          :to="link.to"
           class="nav-link"
           active-class="is-active"
         >
-          {{ t('nav.items') }}
-        </router-link>
-        <router-link
-          to="/fluids"
-          class="nav-link"
-          active-class="is-active"
-        >
-          {{ t('nav.fluids') }}
-        </router-link>
-        <router-link
-          to="/recipe/categories"
-          class="nav-link"
-          active-class="is-active"
-        >
-          {{ t('nav.recipeCategories') }}
+          {{ t(link.label) }}
         </router-link>
       </nav>
 
@@ -135,28 +131,14 @@ onMounted(() => {
       </p>
       <div class="drawer-nav">
         <router-link
-          to="/items"
+          v-for="link in navLinks"
+          :key="link.to"
+          :to="link.to"
           class="nav-link"
           active-class="is-active"
           @click="closeDrawer"
         >
-          {{ t('nav.items') }}
-        </router-link>
-        <router-link
-          to="/fluids"
-          class="nav-link"
-          active-class="is-active"
-          @click="closeDrawer"
-        >
-          {{ t('nav.fluids') }}
-        </router-link>
-        <router-link
-          to="/recipe/categories"
-          class="nav-link"
-          active-class="is-active"
-          @click="closeDrawer"
-        >
-          {{ t('nav.recipeCategories') }}
+          {{ t(link.label) }}
         </router-link>
       </div>
       <DatasetPicker @select="closeDrawer" />

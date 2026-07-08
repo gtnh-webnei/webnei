@@ -1,6 +1,7 @@
 import { ref, watch, type Ref } from 'vue'
 import { watchDebounced } from '@vueuse/core'
 import { pageSizeForViewport } from '@shared/utils/pageSize'
+import { useRacedLoader } from '@shared/composables/useRacedLoader'
 import type { PageResponse, SearchListParams } from '@shared/types'
 
 export interface SearchListState<T> {
@@ -19,8 +20,8 @@ interface Options {
 }
 
 /**
- * 搜索 + 分页 + 竞态 + 防抖 的通用列表逻辑，与具体领域无关。
- * 每页条数在初始化时按窗口宽度分档取一次（pageSizeForViewport），之后固定。
+ * 分页搜索列表逻辑：在 useRacedLoader（防抖+竞态+loading/error 内核）之上叠加分页。
+ * 每页条数在初始化时按窗口宽度分档取一次，之后固定。
  * query 变更重置到首页；翻页/数据集切换触发重取；仅采纳最新一次请求的结果。
  */
 export function useSearchList<T>(
@@ -35,9 +36,7 @@ export function useSearchList<T>(
   const page = ref(0)
   const total = ref(0)
   const items = ref<T[]>([]) as Ref<T[]>
-  const loading = ref(false)
-  const error = ref<string | null>(null)
-  let requestId = 0
+  const { loading, error, run } = useRacedLoader()
 
   async function load() {
     const datasetId = activeDatasetId.value
@@ -46,25 +45,17 @@ export function useSearchList<T>(
       total.value = 0
       return
     }
-
-    const currentRequest = ++requestId
-    loading.value = true
-    error.value = null
-    try {
-      const response = await fetcher({ datasetId, q: query.value, page: page.value, size })
-      if (currentRequest !== requestId) return
-      items.value = response.items
-      total.value = response.total
-    } catch (err) {
-      if (currentRequest !== requestId) return
-      error.value = err instanceof Error ? err.message : String(err)
-      items.value = []
-      total.value = 0
-    } finally {
-      if (currentRequest === requestId) {
-        loading.value = false
-      }
-    }
+    await run(
+      () => fetcher({ datasetId, q: query.value, page: page.value, size }),
+      (response) => {
+        items.value = response.items
+        total.value = response.total
+      },
+      () => {
+        items.value = []
+        total.value = 0
+      },
+    )
   }
 
   function resetAndLoad() {

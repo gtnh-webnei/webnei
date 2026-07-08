@@ -31,10 +31,16 @@ const helpItems: SearchHelpItem[] = [
 <template>
   <SearchListLayout
     v-model:query="state.query.value"
-    :state="state"
     :title="t('catalog.items')"
     :help-items="helpItems"
     :has-dataset="hasDataset"
+    :total="state.total.value"
+    :loading="state.loading.value"
+    :error="state.error.value"
+    :has-items="state.items.value.length > 0"
+    :page="state.page.value"
+    :size="state.size"
+    :on-page-change="state.onPageChange"
   >
     <EntryGrid
       kind="item"

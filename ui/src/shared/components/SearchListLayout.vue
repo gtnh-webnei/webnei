@@ -1,21 +1,35 @@
-<script setup lang="ts" generic="T">
+<script setup lang="ts">
 import { computed } from 'vue'
 import { useMediaQuery } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 import McPanel from '@shared/ui/McPanel.vue'
 import McInput from '@shared/ui/McInput.vue'
 import SearchHelp, { type SearchHelpItem } from './SearchHelp.vue'
-import type { SearchListState } from '@shared/composables/useSearchList'
 
-const props = defineProps<{
-  state: SearchListState<T>
-  title: string
-  helpItems: SearchHelpItem[]
-  hasDataset: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    title: string
+    total: number
+    loading: boolean
+    error: string | null
+    hasItems: boolean
+    hasDataset: boolean
+    // help 可选：不传则不显示帮助问号。
+    helpItems?: SearchHelpItem[]
+    // 分页可选：page/size/onPageChange 齐备且 total>size 时才渲染分页 footer；不分页的列表不传。
+    page?: number
+    size?: number
+    onPageChange?: (currentPage: number) => void
+  }>(),
+  {
+    helpItems: undefined,
+    page: undefined,
+    size: undefined,
+    onPageChange: undefined,
+  },
+)
 
-// query 由父组件通过 v-model:query 双向绑定到自身持有的 ref，
-// 布局只读 state 的其余字段，不回写 prop（满足 vue/no-mutating-props）。
+// query 由父组件通过 v-model:query 双向绑定到自身持有的 ref。
 const queryModel = defineModel<string>('query', { required: true })
 
 const COMPACT_PAGER_QUERY = '(max-width: 520px)'
@@ -25,9 +39,15 @@ const DEFAULT_PAGER_COUNT = 7
 const { t } = useI18n()
 const isCompactPager = useMediaQuery(COMPACT_PAGER_QUERY)
 
-const totalLabel = computed(() => t('catalog.resultCount', { count: props.state.total.value }))
-const hasItems = computed(() => props.state.items.value.length > 0)
+const totalLabel = computed(() => t('catalog.resultCount', { count: props.total }))
 const pagerCount = computed(() => (isCompactPager.value ? COMPACT_PAGER_COUNT : DEFAULT_PAGER_COUNT))
+const showPagination = computed(
+  () =>
+    props.page !== undefined &&
+    props.size !== undefined &&
+    props.onPageChange !== undefined &&
+    props.total > props.size,
+)
 </script>
 
 <template>
@@ -49,13 +69,16 @@ const pagerCount = computed(() => (isCompactPager.value ? COMPACT_PAGER_COUNT : 
             clearable
             :placeholder="t('catalog.searchPlaceholder')"
           />
-          <SearchHelp :items="helpItems" />
+          <SearchHelp
+            v-if="helpItems"
+            :items="helpItems"
+          />
         </div>
       </header>
 
       <div
         class="search-body"
-        :class="{ 'is-loading': state.loading.value && hasItems }"
+        :class="{ 'is-loading': loading && hasItems }"
       >
         <p
           v-if="!hasDataset"
@@ -64,13 +87,13 @@ const pagerCount = computed(() => (isCompactPager.value ? COMPACT_PAGER_COUNT : 
           {{ t('dataset.empty') }}
         </p>
         <p
-          v-else-if="state.error.value"
+          v-else-if="error"
           class="search-hint is-error"
         >
-          {{ state.error.value }}
+          {{ error }}
         </p>
         <p
-          v-else-if="state.loading.value && !hasItems"
+          v-else-if="loading && !hasItems"
           class="search-hint"
         >
           {{ t('catalog.loading') }}
@@ -85,17 +108,17 @@ const pagerCount = computed(() => (isCompactPager.value ? COMPACT_PAGER_COUNT : 
       </div>
 
       <footer
-        v-if="state.total.value > state.size"
+        v-if="showPagination"
         class="search-pagination"
       >
         <el-pagination
           background
           layout="prev, pager, next"
-          :current-page="state.page.value + 1"
-          :page-size="state.size"
-          :total="state.total.value"
+          :current-page="(page ?? 0) + 1"
+          :page-size="size"
+          :total="total"
           :pager-count="pagerCount"
-          @current-change="state.onPageChange"
+          @current-change="onPageChange"
         />
       </footer>
     </McPanel>
