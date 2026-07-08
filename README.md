@@ -3,7 +3,8 @@
 Language: [English](README.md) | [中文](README.zh_CN.md)
 
 Spring Boot + MyBatis-Plus backend with a Vue 3 / Vite frontend for browsing
-exported WebNEI data — currently datasets, items, and fluids.
+exported WebNEI data — currently datasets, items, fluids, and recipe
+categories.
 
 > The backend is a read-only query service. The database must be populated by
 > the exporter before the API can serve data.
@@ -44,7 +45,7 @@ All settings can be overridden via environment variables.
 | `WEBNEI_ASSETS_PUBLIC_URL` | `/assets` | Asset URL prefix returned by the API |
 
 The defaults assume a local PostgreSQL on `localhost:5432`. For development
-against a remote database, either set the variables when running:
+against another database, either set the variables when running:
 
 ```bash
 WEBNEI_DATASOURCE_URL='jdbc:postgresql://<host>:5432/webnei' \
@@ -64,11 +65,12 @@ then activate it:
 
 All endpoints are read-only and live under `/api`.
 
-| Controller | Endpoints |
-| --- | --- |
-| **Datasets** | `GET /api/datasets`, `GET /api/datasets/default` |
-| **Catalog items** | `GET /api/datasets/{datasetId}/items?q=&page=&size=` |
-| **Catalog fluids** | `GET /api/datasets/{datasetId}/fluids?q=&page=&size=` |
+| Controller | Endpoint | Notes |
+| --- | --- | --- |
+| **Datasets** | `GET /api/dataset/list` | Returns dataset list plus `defaultId`; there is no separate `/api/dataset/default` endpoint |
+| **Catalog items** | `POST /api/item/list` | JSON body: `datasetId`, `q`, `page`, `size` |
+| **Catalog fluids** | `POST /api/fluid/list` | JSON body: `datasetId`, `q`, `page`, `size` |
+| **Recipe categories** | `POST /api/recipe/categories/list` | JSON body: `datasetId`, `q`, `page`, `size` |
 
 ## Asset URLs
 
@@ -101,28 +103,42 @@ pnpm install
 pnpm dev
 ```
 
-The Vite dev server proxies `/api` to `localhost:8080`.
+The Vite dev server proxies `/api` to `http://127.0.0.1:8080`.
 
 Verify the backend is healthy:
 
 ```bash
-curl http://localhost:8080/api/datasets
+curl http://127.0.0.1:8080/api/dataset/list
 ```
+
+Note: the frontend dev server only proxies `/api`. Asset URLs returned by the
+backend must already be resolvable in your dev environment.
 
 ## Build
 
+Backend build:
+
 ```bash
+cd webnei
 ./gradlew build
 ```
 
-The Gradle build runs `vue-tsc` type-check, the Vite production build, and
-copies `ui/dist` into Spring Boot static resources for the fat JAR.
+Frontend production build:
+
+```bash
+cd webnei/ui
+pnpm build
+```
+
+These are currently separate. The Gradle backend build does not run the Vite
+build or copy `ui/dist` into Spring Boot resources automatically.
 
 ## Checks
 
 | Command | What it does |
 | --- | --- |
 | `./gradlew compileJava` | Compile backend |
+| `./gradlew build` | Build backend |
 | `pnpm typecheck` | Type-check frontend |
 | `pnpm lint` | Lint frontend |
 | `pnpm build` | Production frontend build |

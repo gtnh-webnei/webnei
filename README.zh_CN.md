@@ -3,7 +3,7 @@
 语言：[English](README.md) | [中文](README.zh_CN.md)
 
 Spring Boot + MyBatis-Plus 后端 + Vue 3 / Vite 前端，用于浏览 WebNEI 导出数据 —
-当前包括数据集、物品和流体。
+当前包括数据集、物品、流体和配方分类。
 
 > 后端是只读查询服务。数据库必须先由 exporter 灌入数据，API 才能提供内容。
 
@@ -40,7 +40,7 @@ PostgreSQL（只读）
 | `WEBNEI_DEFAULT_DATASET_ID` | 空 | 可选的默认数据集 ID |
 | `WEBNEI_ASSETS_PUBLIC_URL` | `/assets` | API 返回的资源 URL 前缀 |
 
-以上默认值假设 PostgreSQL 运行在本地 `localhost:5432`。开发时如需连接远程数据库，
+以上默认值假设 PostgreSQL 运行在本地 `localhost:5432`。开发时如需连接其他数据库，
 可在运行时设置环境变量：
 
 ```bash
@@ -61,11 +61,12 @@ WEBNEI_DATASOURCE_PASSWORD='<password>' \
 
 所有端点均为只读，位于 `/api` 下。
 
-| 控制器 | 端点 |
-| --- | --- |
-| **Datasets** | `GET /api/datasets`、`GET /api/datasets/default` |
-| **Catalog items** | `GET /api/datasets/{datasetId}/items?q=&page=&size=` |
-| **Catalog fluids** | `GET /api/datasets/{datasetId}/fluids?q=&page=&size=` |
+| 控制器 | 端点 | 说明 |
+| --- | --- | --- |
+| **Datasets** | `GET /api/dataset/list` | 返回数据集列表和 `defaultId`；当前没有独立的 `/api/dataset/default` 接口 |
+| **Catalog items** | `POST /api/item/list` | JSON 请求体：`datasetId`、`q`、`page`、`size` |
+| **Catalog fluids** | `POST /api/fluid/list` | JSON 请求体：`datasetId`、`q`、`page`、`size` |
+| **Recipe categories** | `POST /api/recipe/categories/list` | JSON 请求体：`datasetId`、`q`、`page`、`size` |
 
 ## 资源 URL
 
@@ -96,28 +97,42 @@ pnpm install
 pnpm dev
 ```
 
-Vite 开发服务器将 `/api` 代理到 `localhost:8080`。
+Vite 开发服务器将 `/api` 代理到 `http://127.0.0.1:8080`。
 
 验证后端健康状态：
 
 ```bash
-curl http://localhost:8080/api/datasets
+curl http://127.0.0.1:8080/api/dataset/list
 ```
+
+注意：前端开发服务器当前只代理 `/api`。后端返回的资源 URL 需要在你的开发环境里
+本身就可访问。
 
 ## 构建
 
+后端构建：
+
 ```bash
+cd webnei
 ./gradlew build
 ```
 
-Gradle 构建会执行 `vue-tsc` 类型检查、Vite 生产构建，并将 `ui/dist`
-复制到 Spring Boot 静态资源中以生成 fat JAR。
+前端生产构建：
+
+```bash
+cd webnei/ui
+pnpm build
+```
+
+这两者当前是分开的。Gradle 后端构建不会自动执行 Vite 构建，也不会自动把 `ui/dist`
+复制进 Spring Boot 资源目录。
 
 ## 检查
 
 | 命令 | 用途 |
 | --- | --- |
 | `./gradlew compileJava` | 编译后端 |
+| `./gradlew build` | 构建后端 |
 | `pnpm typecheck` | 前端类型检查 |
 | `pnpm lint` | 前端 lint |
 | `pnpm build` | 前端生产构建 |
