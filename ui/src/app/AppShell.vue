@@ -82,6 +82,13 @@ onMounted(() => {
         >
           {{ t('nav.fluids') }}
         </router-link>
+        <router-link
+          to="/recipe/categories"
+          class="nav-link"
+          active-class="is-active"
+        >
+          {{ t('nav.recipeCategories') }}
+        </router-link>
       </nav>
 
       <div class="header-spacer" />
@@ -142,6 +149,14 @@ onMounted(() => {
           @click="closeDrawer"
         >
           {{ t('nav.fluids') }}
+        </router-link>
+        <router-link
+          to="/recipe/categories"
+          class="nav-link"
+          active-class="is-active"
+          @click="closeDrawer"
+        >
+          {{ t('nav.recipeCategories') }}
         </router-link>
       </div>
       <DatasetPicker @select="closeDrawer" />

@@ -99,7 +99,7 @@ public class ItemCatalogService {
                 row.getItemId(),
                 row.getDisplayName(),
                 row.getModId(),
-                modName(row.getModId(), row.getModName()),
+                row.getModName(),
                 row.getRegistryName(),
                 row.getDamage(),
                 row.getListIndex(),
@@ -111,12 +111,5 @@ public class ItemCatalogService {
     private IconAsset icon(DatasetEntity dataset, ItemBrowserRow row) {
         String url = assetUrlService.assetUrl(dataset, row.getIconPath());
         return url == null ? null : new IconAsset(url, row.getIconWidth(), row.getIconHeight(), row.getIconMetadataJson());
-    }
-
-    private static String modName(String modId, String modName) {
-        if (modName == null && "minecraft".equals(modId)) {
-            return "Minecraft";
-        }
-        return modName;
     }
 }

@@ -35,5 +35,5 @@ export interface EntryBase {
   icon: IconAsset | null
 }
 
-/** 列表条目的图标渲染类别：item 为静态图，fluid 走精灵表动画分支。 */
-export type EntryKind = 'item' | 'fluid'
+/** 列表条目的图标渲染类别：item / recipeCategory 静态图走 <img>，fluid 走精灵表动画分支。 */
+export type EntryKind = 'item' | 'fluid' | 'recipeCategory'

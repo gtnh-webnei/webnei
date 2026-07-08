@@ -57,7 +57,7 @@ const spriteStyle = computed(() => {
 <template>
   <span class="entry-icon">
     <img
-      v-if="kind === 'item' && icon && !animation"
+      v-if="(kind === 'item' || kind === 'recipeCategory') && icon && !animation"
       class="entry-icon-image"
       :src="icon.url"
       :alt="alt"
