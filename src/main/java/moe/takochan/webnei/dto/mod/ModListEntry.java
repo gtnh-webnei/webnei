@@ -11,4 +11,7 @@ public class ModListEntry {
     private String modId;
     private String name;
     private String version;
+    private String sourceType;
+    private String sourceFileName;
+    private String sourceSha256;
 }

@@ -86,6 +86,9 @@ public class ModCatalogService {
             entity.getModId(),
             entity.getModId(),
             entity.getName(),
-            entity.getVersion());
+            entity.getVersion(),
+            entity.getSourceType(),
+            entity.getSourceFileName(),
+            entity.getSourceSha256());
     }
 }

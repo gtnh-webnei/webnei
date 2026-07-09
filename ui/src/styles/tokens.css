@@ -83,6 +83,27 @@
   --app-surface-text: #211f1a;
   --app-surface-muted: #4f4a3f;
   --app-grid-line: rgb(49 45 37 / 0.2);
+
+  /* Forge 1.7.10 GuiModList / GuiScrollingList */
+  --forge-screen-bg: #2b2b2b;
+  --forge-list-row-border: #111111;
+  --forge-list-selected-border: #8f8f8f;
+  --forge-list-selected-inner: #080808;
+  --forge-list-text: #ffffff;
+  --forge-list-muted: #cccccc;
+  --forge-detail-line: #d7edea;
+  --forge-description: #dddddd;
+  --forge-disabled: #ff2222;
+  --forge-scroll-track: #000000;
+  --forge-scroll-thumb: #808080;
+  --forge-scroll-thumb-hi: #c0c0c0;
+  --forge-slot-height: 64px;
+  --forge-slot-gap: 6px;
+  --forge-slot-line-height: 17px;
+  --forge-slot-font-size: 13px;
+  --forge-detail-title-size: 24px;
+  --forge-detail-line-size: 13px;
+  --forge-scrollbar-width: 8px;
 }
 
 @media (max-width: 720px) {
