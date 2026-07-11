@@ -8,11 +8,29 @@
   --aspect-muted: var(--app-surface-muted);
   --aspect-brass: #8a6d32;
   width: 100%;
+  height: calc(100dvh - var(--app-header-height) - var(--app-page-padding) - var(--app-page-padding));
   min-width: 0;
   min-height: 0;
 }
 
-.aspect-card:focus-visible,
+.aspect-research-shell.search-page {
+  height: 100%;
+}
+
+.aspect-research-shell.search-page .search-panel {
+  color: var(--mc-panel-text);
+}
+
+.aspect-research-shell.search-page .search-kicker {
+  font-family: Georgia, 'Times New Roman', serif;
+  letter-spacing: 0.035em;
+}
+
+.aspect-card:focus-visible {
+  outline: 2px solid var(--aspect-brass);
+  outline-offset: 2px;
+}
+
 .aspect-chip:focus-visible,
 .aspect-equation-term:focus-visible,
 .aspect-detail-back:focus-visible {
@@ -52,9 +70,9 @@
 
 .aspect-grid-heading h2 {
   color: var(--mc-panel-text);
-  font-size: 15px;
-  font-weight: 900;
-  letter-spacing: 0.03em;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 17px;
+  letter-spacing: 0.035em;
 }
 
 .aspect-grid-heading span {
@@ -77,21 +95,21 @@
   min-width: 0;
   min-height: 88px;
   padding: 8px 9px 8px 11px;
+  border: 1px solid var(--aspect-edge);
   background:
-    linear-gradient(100deg, color-mix(in srgb, var(--aspect-color) 10%, transparent), transparent 44%),
-    var(--mc-panel);
+    linear-gradient(100deg, color-mix(in srgb, var(--aspect-color) 8%, transparent), transparent 42%),
+    var(--aspect-paper);
   box-shadow:
     inset 3px 0 var(--aspect-color),
-    var(--mc-pixel-shadow);
+    2px 2px 0 rgb(51 47 39 / 0.16);
   color: var(--mc-panel-text);
   text-decoration: none;
 }
 
 .aspect-card:hover,
 .aspect-card:focus-visible {
-  background:
-    linear-gradient(100deg, color-mix(in srgb, var(--aspect-color) 14%, transparent), transparent 44%),
-    var(--mc-card-hover);
+  border-color: color-mix(in srgb, var(--aspect-color) 68%, var(--aspect-brass));
+  background-color: var(--aspect-paper-raised);
 }
 
 .aspect-card-copy,
@@ -118,8 +136,8 @@
 
 .aspect-card-title-row strong {
   color: var(--aspect-ink);
-  font-size: 14px;
-  font-weight: 900;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 15px;
 }
 
 .aspect-card-meta {
