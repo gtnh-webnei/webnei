@@ -15,6 +15,7 @@ const { activeDataset, loading } = storeToRefs(store)
 const navLinks = [
   { to: '/items', label: 'nav.items' },
   { to: '/fluids', label: 'nav.fluids' },
+  { to: '/aspects', label: 'nav.aspects' },
   { to: '/recipe/categories', label: 'nav.recipeCategories' },
   { to: '/mods', label: 'nav.mods' },
 ] as const

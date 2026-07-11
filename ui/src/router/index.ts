@@ -1,5 +1,7 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import AppShell from '@/app/AppShell.vue'
+import AspectDetailView from '@features/aspect/views/AspectDetailView.vue'
+import AspectListView from '@features/aspect/views/AspectListView.vue'
 import FluidListView from '@features/fluid/views/FluidListView.vue'
 import ItemListView from '@features/item/views/ItemListView.vue'
 import ModListView from '@features/mod/views/ModListView.vue'
@@ -14,6 +16,8 @@ const routes: RouteRecordRaw[] = [
       { path: '', redirect: { name: 'items' } },
       { path: 'items', name: 'items', component: ItemListView },
       { path: 'fluids', name: 'fluids', component: FluidListView },
+      { path: 'aspects', name: 'aspects', component: AspectListView },
+      { path: 'aspects/:aspectId', name: 'aspect-detail', component: AspectDetailView },
       { path: 'recipe/categories', name: 'recipe-categories', component: RecipeCategoryListView },
       { path: 'mods', name: 'mods', component: ModListView },
       { path: ':pathMatch(.*)*', name: 'not-found', component: NotFoundView },

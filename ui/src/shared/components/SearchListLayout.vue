@@ -77,7 +77,7 @@ const showPagination = computed(
       </header>
 
       <div
-        class="search-body"
+        class="search-body mc-scroll-area"
         :class="{ 'is-loading': loading && hasItems }"
       >
         <p
@@ -193,47 +193,6 @@ const showPagination = computed(
   min-height: 0;
   overflow: auto;
   padding-right: 6px;
-  scrollbar-color: var(--mc-scrollbar-thumb) var(--mc-scrollbar-track);
-  scrollbar-width: auto;
-}
-
-.search-body::-webkit-scrollbar {
-  width: 18px;
-  height: 18px;
-}
-
-.search-body::-webkit-scrollbar-track {
-  border: 2px solid;
-  border-color: var(--mc-panel-low) var(--mc-panel-hi) var(--mc-panel-hi) var(--mc-panel-low);
-  background: var(--mc-scrollbar-track);
-}
-
-.search-body::-webkit-scrollbar-thumb {
-  min-height: 42px;
-  border: 2px solid;
-  border-color: var(--mc-panel-hi) var(--mc-panel-low) var(--mc-panel-low) var(--mc-panel-hi);
-  background: var(--mc-scrollbar-thumb);
-}
-
-.search-body::-webkit-scrollbar-thumb:hover {
-  background: var(--mc-scrollbar-thumb-hover);
-}
-
-.search-body::-webkit-scrollbar-corner {
-  background: var(--mc-scrollbar-track);
-}
-
-.search-body::-webkit-scrollbar-button:single-button {
-  display: block;
-  width: 18px;
-  height: 18px;
-  border: 2px solid;
-  border-color: var(--mc-panel-hi) var(--mc-panel-low) var(--mc-panel-low) var(--mc-panel-hi);
-  background: var(--mc-scrollbar-button);
-}
-
-.search-body::-webkit-scrollbar-button:single-button:hover {
-  background: var(--mc-scrollbar-button-hover);
 }
 
 .search-body.is-loading {
@@ -312,13 +271,6 @@ const showPagination = computed(
 
   .search-body {
     padding-right: 0;
-    scrollbar-width: none;
-  }
-
-  .search-body::-webkit-scrollbar {
-    display: none;
-    width: 0;
-    height: 0;
   }
 }
 </style>

@@ -1,0 +1,638 @@
+.aspect-research-shell {
+  --aspect-paper: var(--nei-panel-bg);
+  --aspect-paper-raised: var(--mc-card-hover);
+  --aspect-edge: var(--mc-panel-low);
+  --aspect-ink: var(--mc-panel-text);
+  --aspect-muted: var(--app-surface-muted);
+  --aspect-brass: #8a6d32;
+  width: 100%;
+  height: calc(100dvh - var(--app-header-height) - var(--app-page-padding) - var(--app-page-padding));
+  min-width: 0;
+  min-height: 0;
+}
+
+.aspect-research-shell.search-page {
+  height: 100%;
+}
+
+.aspect-research-shell.search-page .search-panel {
+  color: var(--mc-panel-text);
+}
+
+.aspect-research-shell.search-page .search-kicker {
+  font-family: Georgia, 'Times New Roman', serif;
+  letter-spacing: 0.035em;
+}
+
+.aspect-detail-back:focus-visible,
+.aspect-card:focus-visible,
+.aspect-equation-term:focus-visible,
+.aspect-used-link:focus-visible {
+  outline: 2px solid var(--aspect-brass);
+  outline-offset: 2px;
+}
+
+.aspect-grid-sections,
+.aspect-grid-section {
+  display: grid;
+}
+
+.aspect-grid-sections {
+  gap: 18px;
+  padding: 2px;
+}
+
+.aspect-grid-section {
+  gap: 9px;
+}
+
+.aspect-grid-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 2px 6px;
+  border-bottom: 2px solid color-mix(in srgb, var(--aspect-brass) 62%, var(--mc-panel-low));
+}
+
+.aspect-grid-heading h2,
+.aspect-grid-heading span {
+  margin: 0;
+}
+
+.aspect-grid-heading h2 {
+  color: var(--mc-panel-text);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 17px;
+  letter-spacing: 0.035em;
+}
+
+.aspect-grid-heading span {
+  color: var(--app-surface-muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.aspect-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 8px;
+}
+
+.aspect-card {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  min-height: 88px;
+  padding: 8px 9px 8px 11px;
+  border: 1px solid var(--aspect-edge);
+  background:
+    linear-gradient(100deg, color-mix(in srgb, var(--aspect-color) 8%, transparent), transparent 42%),
+    var(--aspect-paper);
+  box-shadow:
+    inset 3px 0 var(--aspect-color),
+    2px 2px 0 rgb(51 47 39 / 0.16);
+  color: var(--mc-panel-text);
+  text-decoration: none;
+}
+
+.aspect-card:hover,
+.aspect-card:focus-visible {
+  border-color: color-mix(in srgb, var(--aspect-color) 68%, var(--aspect-brass));
+  background-color: var(--aspect-paper-raised);
+}
+
+.aspect-card-copy,
+.aspect-card-title-row {
+  display: grid;
+  min-width: 0;
+}
+
+.aspect-card-copy {
+  gap: 4px;
+}
+
+.aspect-card-title-row strong,
+.aspect-card-description,
+.aspect-card-meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.aspect-card-title-row strong,
+.aspect-card-meta {
+  white-space: nowrap;
+}
+
+.aspect-card-title-row strong {
+  color: var(--aspect-ink);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 15px;
+}
+
+.aspect-card-meta {
+  color: var(--aspect-muted);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.aspect-card-description {
+  min-height: 17px;
+  color: var(--aspect-muted);
+  font-size: 11px;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+.aspect-card-footer,
+.aspect-card-components {
+  display: flex;
+  align-items: center;
+}
+
+.aspect-card-footer {
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.aspect-card-components {
+  flex: 0 0 auto;
+  gap: 3px;
+  color: var(--aspect-brass);
+  font-weight: 900;
+}
+
+.aspect-sigil {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: calc(var(--aspect-sigil-size) + 8px);
+  height: calc(var(--aspect-sigil-size) + 8px);
+  border-radius: 50%;
+}
+
+.aspect-sigil-ring {
+  position: absolute;
+  inset: 2px;
+  border: 1px solid var(--aspect-color);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 2px rgb(42 40 36 / 0.72),
+    0 0 0 3px color-mix(in srgb, var(--aspect-color) 72%, #fff),
+    0 2px 4px rgb(0 0 0 / 0.35);
+}
+
+.aspect-sigil-ring::after {
+  position: absolute;
+  inset: 4px;
+  border: 1px solid color-mix(in srgb, var(--aspect-color) 58%, transparent);
+  border-radius: 50%;
+  content: '';
+}
+
+.aspect-sigil-icon {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: var(--aspect-sigil-size);
+  height: var(--aspect-sigil-size);
+  overflow: hidden;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(255 255 255 / 0.16), rgb(0 0 0 / 0.08) 72%);
+}
+
+.aspect-card:hover .aspect-sigil-ring,
+.aspect-card:focus-visible .aspect-sigil-ring,
+.aspect-equation-term:hover .aspect-sigil-ring,
+.aspect-equation-term:focus-visible .aspect-sigil-ring,
+.aspect-used-link:hover .aspect-sigil-ring,
+.aspect-used-link:focus-visible .aspect-sigil-ring {
+  box-shadow:
+    0 0 0 2px rgb(42 40 36 / 0.72),
+    0 0 0 3px var(--aspect-color),
+    0 0 9px color-mix(in srgb, var(--aspect-color) 52%, transparent);
+}
+.aspect-detail-page {
+  display: grid;
+  grid-template-rows: auto auto auto minmax(0, 1fr);
+  gap: 12px;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  padding: 2px;
+  overflow: hidden;
+}
+
+.aspect-detail-back {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 7px;
+  min-height: 34px;
+  padding: 5px 10px;
+  border: 2px solid;
+  border-color: var(--nei-panel-border-top) var(--nei-panel-border-right)
+    var(--nei-panel-border-right) var(--nei-panel-border-top);
+  background: var(--nei-panel-bg);
+  color: var(--mc-panel-text);
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.aspect-detail-back:hover,
+.aspect-detail-back:focus-visible {
+  border-color: var(--aspect-brass);
+  background: var(--aspect-paper-raised);
+}
+
+.aspect-panel {
+  min-width: 0;
+  padding: 14px;
+}
+
+.aspect-items-panel {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  min-height: 0;
+}
+
+.aspect-panel-heading {
+  display: grid;
+  grid-template-columns: minmax(12px, 1fr) auto minmax(12px, 1fr);
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 13px;
+}
+
+.aspect-panel-heading h2 {
+  margin: 0;
+  color: var(--aspect-ink);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 16px;
+  letter-spacing: 0.05em;
+  text-align: center;
+}
+
+.aspect-panel-rule {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--aspect-brass));
+}
+
+.aspect-panel-rule:last-child {
+  background: linear-gradient(90deg, var(--aspect-brass), transparent);
+}
+
+.aspect-detail-hero {
+  display: grid;
+  grid-template-columns: 116px minmax(0, 1fr);
+  align-items: center;
+  gap: 18px;
+}
+
+.aspect-detail-hero > .aspect-sigil {
+  justify-self: center;
+}
+
+.aspect-detail-intro {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+.aspect-detail-intro h2,
+.aspect-detail-intro p {
+  margin: 0;
+}
+
+.aspect-detail-intro h2 {
+  color: var(--aspect-ink);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(25px, 4vw, 38px);
+  line-height: 1;
+}
+
+.aspect-detail-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 9px;
+  color: var(--aspect-brass);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.aspect-detail-intro p:last-child {
+  max-width: 72ch;
+  color: var(--aspect-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.aspect-detail-middle {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  align-items: stretch;
+  gap: 12px;
+}
+
+.aspect-equation {
+  display: grid;
+  grid-template-columns: minmax(82px, 1fr) auto minmax(74px, 1fr) auto minmax(74px, 1fr);
+  align-items: center;
+  gap: 7px;
+}
+
+.aspect-equation-term {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 6px;
+  color: var(--aspect-ink);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+}
+
+.aspect-equation-term > span:last-child {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.aspect-equation-symbol {
+  color: var(--aspect-brass);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 23px;
+  font-weight: 700;
+}
+
+.aspect-primal-empty,
+.aspect-section-empty {
+  margin: 0;
+  color: var(--aspect-muted);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.aspect-primal-empty {
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  border: 1px dashed var(--aspect-edge);
+  text-align: center;
+}
+
+.aspect-section-empty.is-error {
+  color: #7b2626;
+}
+
+.aspect-used-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 7px;
+}
+
+.aspect-used-link {
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr);
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  padding: 7px;
+  border: 1px solid color-mix(in srgb, var(--aspect-edge) 66%, var(--mc-panel-low));
+  background: var(--aspect-paper);
+  color: var(--aspect-ink);
+  text-decoration: none;
+}
+
+.aspect-used-link:hover,
+.aspect-used-link:focus-visible {
+  border-color: var(--aspect-brass);
+  background: var(--aspect-paper-raised);
+}
+
+.aspect-used-link strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--aspect-ink);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.aspect-item-toolbar {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto;
+  align-items: end;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.aspect-item-search {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 34px;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.aspect-item-total {
+  margin: 0 0 8px;
+  color: var(--aspect-muted);
+  font-size: 11px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.aspect-item-results {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding-right: 6px;
+}
+
+.aspect-item-results.is-loading {
+  opacity: 0.65;
+}
+
+.aspect-item-amount {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 1px;
+  width: 40px;
+  height: 100%;
+  padding-left: 4px;
+  border-left: 2px solid var(--mc-panel-low);
+  color: var(--mc-panel-text);
+}
+
+.aspect-item-amount strong {
+  font-size: 14px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.aspect-item-amount span {
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.aspect-item-pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
+}
+
+.aspect-item-pagination .el-pagination {
+  gap: 7px;
+}
+
+.aspect-item-pagination .el-pagination.is-background .btn-prev,
+.aspect-item-pagination .el-pagination.is-background .btn-next,
+.aspect-item-pagination .el-pagination.is-background .el-pager li {
+  margin: 0;
+  border: 2px solid;
+  border-color: var(--nei-panel-border-top) var(--nei-panel-border-right)
+    var(--nei-panel-border-right) var(--nei-panel-border-top);
+  border-radius: var(--mc-panel-radius);
+  background: var(--nei-panel-bg);
+  color: var(--mc-panel-text);
+  font-weight: 800;
+}
+
+.aspect-item-pagination .el-pagination.is-background .el-pager li.is-active {
+  border-color: var(--mc-emerald-hi) var(--mc-emerald-low) var(--mc-emerald-lower)
+    var(--mc-emerald-highest);
+  background: var(--mc-emerald);
+  color: var(--mc-emerald-text);
+}
+
+.aspect-page-state {
+  display: grid;
+  place-items: center;
+  gap: 12px;
+  height: 100%;
+  min-height: 180px;
+  padding: 24px;
+  border: 1px solid var(--aspect-edge);
+  background: var(--aspect-paper);
+  color: var(--aspect-ink);
+  font-weight: 800;
+  text-align: center;
+}
+
+.aspect-page-state a {
+  padding: 7px 11px;
+  border: 2px solid;
+  border-color: var(--nei-panel-border-top) var(--nei-panel-border-right)
+    var(--nei-panel-border-right) var(--nei-panel-border-top);
+  background: var(--aspect-paper);
+  color: var(--aspect-ink);
+  text-decoration: none;
+}
+
+.aspect-page-state.is-error strong {
+  color: #7b2626;
+}
+
+@media (max-width: 1040px) {
+  .aspect-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .aspect-used-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .aspect-detail-page {
+    grid-template-rows: none;
+    align-content: start;
+    overflow: auto;
+    padding-right: 0;
+  }
+
+  .aspect-items-panel {
+    display: block;
+  }
+
+  .aspect-item-results {
+    overflow: visible;
+    padding-right: 0;
+  }
+
+  .aspect-detail-middle {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .aspect-used-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .aspect-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .aspect-detail-hero {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    text-align: center;
+  }
+
+  .aspect-used-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 520px) {
+  .aspect-item-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .aspect-panel {
+    padding: 11px;
+  }
+
+  .aspect-equation {
+    grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr);
+    gap: 4px;
+  }
+
+  .aspect-equation-term.is-current {
+    grid-column: 1 / -1;
+  }
+
+  .aspect-equation-symbol {
+    font-size: 20px;
+  }
+
+  .aspect-item-total {
+    grid-column: auto;
+  }
+
+  .aspect-item-pagination .el-pagination {
+    gap: 3px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aspect-card,
+  .aspect-equation-term,
+  .aspect-used-link {
+    transition: none;
+  }
+}

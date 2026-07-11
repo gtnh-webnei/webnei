@@ -62,3 +62,59 @@ button:focus-visible,
   outline: 2px solid var(--mc-gold);
   outline-offset: 3px;
 }
+
+.mc-scroll-area {
+  scrollbar-color: var(--mc-scrollbar-thumb) var(--mc-scrollbar-track);
+  scrollbar-width: auto;
+}
+
+.mc-scroll-area::-webkit-scrollbar {
+  width: 18px;
+  height: 18px;
+}
+
+.mc-scroll-area::-webkit-scrollbar-track {
+  border: 2px solid;
+  border-color: var(--mc-panel-low) var(--mc-panel-hi) var(--mc-panel-hi) var(--mc-panel-low);
+  background: var(--mc-scrollbar-track);
+}
+
+.mc-scroll-area::-webkit-scrollbar-thumb {
+  min-height: 42px;
+  border: 2px solid;
+  border-color: var(--mc-panel-hi) var(--mc-panel-low) var(--mc-panel-low) var(--mc-panel-hi);
+  background: var(--mc-scrollbar-thumb);
+}
+
+.mc-scroll-area::-webkit-scrollbar-thumb:hover {
+  background: var(--mc-scrollbar-thumb-hover);
+}
+
+.mc-scroll-area::-webkit-scrollbar-corner {
+  background: var(--mc-scrollbar-track);
+}
+
+.mc-scroll-area::-webkit-scrollbar-button:single-button {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid;
+  border-color: var(--mc-panel-hi) var(--mc-panel-low) var(--mc-panel-low) var(--mc-panel-hi);
+  background: var(--mc-scrollbar-button);
+}
+
+.mc-scroll-area::-webkit-scrollbar-button:single-button:hover {
+  background: var(--mc-scrollbar-button-hover);
+}
+
+@media (max-width: 720px) {
+  .mc-scroll-area {
+    scrollbar-width: none;
+  }
+
+  .mc-scroll-area::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+}

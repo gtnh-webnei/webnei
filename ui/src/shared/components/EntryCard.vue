@@ -11,6 +11,10 @@ const props = defineProps<{
   entry: EntryBase
 }>()
 
+defineSlots<{
+  trailing?: () => unknown
+}>()
+
 const slotSize = 40
 
 const displayName = computed(() => stripMcFormat(props.entry.displayName))
@@ -19,7 +23,10 @@ const detailLabel = computed(() => `${props.entry.modId}:${props.entry.registryN
 </script>
 
 <template>
-  <McCard class="catalog-card">
+  <McCard
+    class="catalog-card"
+    :class="{ 'has-trailing': $slots.trailing }"
+  >
     <McSlot
       class="catalog-card-slot"
       :size="slotSize"
@@ -36,6 +43,12 @@ const detailLabel = computed(() => `${props.entry.modId}:${props.entry.registryN
       <span class="catalog-card-mod">{{ modLabel }}</span>
       <span class="catalog-card-detail">{{ detailLabel }}</span>
     </span>
+    <span
+      v-if="$slots.trailing"
+      class="catalog-card-trailing"
+    >
+      <slot name="trailing" />
+    </span>
   </McCard>
 </template>
 
@@ -48,6 +61,10 @@ const detailLabel = computed(() => `${props.entry.modId}:${props.entry.registryN
   min-width: 0;
   height: 68px;
   padding: 8px;
+}
+
+.catalog-card.has-trailing {
+  grid-template-columns: 44px minmax(0, 1fr) auto;
 }
 
 .catalog-card:hover .catalog-card-name {
@@ -63,6 +80,12 @@ const detailLabel = computed(() => `${props.entry.modId}:${props.entry.registryN
   display: grid;
   min-width: 0;
   gap: 1px;
+}
+
+.catalog-card-trailing {
+  display: grid;
+  min-width: 0;
+  align-self: stretch;
 }
 
 .catalog-card-name,

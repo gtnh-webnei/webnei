@@ -3,8 +3,14 @@ import { ref, type Ref } from 'vue'
 export interface RacedLoader {
   loading: Ref<boolean>
   error: Ref<string | null>
+  /** 使当前请求失效并清理加载状态。 */
+  cancel: () => void
   /** 执行一次异步加载，只有最新一次的结果会被采纳（竞态保护）。 */
-  run: <T>(fetch: () => Promise<T>, onSuccess: (value: T) => void, onError: () => void) => Promise<void>
+  run: <T>(
+    fetch: () => Promise<T>,
+    onSuccess: (value: T) => void,
+    onError: (error: unknown) => void,
+  ) => Promise<void>
 }
 
 /**
@@ -16,7 +22,17 @@ export function useRacedLoader(): RacedLoader {
   const error = ref<string | null>(null)
   let requestId = 0
 
-  async function run<T>(fetch: () => Promise<T>, onSuccess: (value: T) => void, onError: () => void) {
+  function cancel() {
+    requestId += 1
+    loading.value = false
+    error.value = null
+  }
+
+  async function run<T>(
+    fetch: () => Promise<T>,
+    onSuccess: (value: T) => void,
+    onError: (error: unknown) => void,
+  ) {
     const currentRequest = ++requestId
     loading.value = true
     error.value = null
@@ -27,7 +43,7 @@ export function useRacedLoader(): RacedLoader {
     } catch (err) {
       if (currentRequest !== requestId) return
       error.value = err instanceof Error ? err.message : String(err)
-      onError()
+      onError(err)
     } finally {
       if (currentRequest === requestId) {
         loading.value = false
@@ -35,5 +51,5 @@ export function useRacedLoader(): RacedLoader {
     }
   }
 
-  return { loading, error, run }
+  return { loading, error, cancel, run }
 }

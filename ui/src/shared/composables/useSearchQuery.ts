@@ -29,11 +29,12 @@ export function useSearchQuery<T>(
   const query = ref('')
   const items = ref<T[]>([]) as Ref<T[]>
   const total = ref(0)
-  const { loading, error, run } = useRacedLoader()
+  const { loading, error, cancel, run } = useRacedLoader()
 
   async function load() {
     const datasetId = activeDatasetId.value
     if (!datasetId) {
+      cancel()
       items.value = []
       total.value = 0
       return

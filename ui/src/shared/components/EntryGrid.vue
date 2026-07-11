@@ -1,10 +1,14 @@
-<script setup lang="ts">
+<script setup lang="ts" generic="T extends EntryBase">
 import EntryCard from './EntryCard.vue'
 import type { EntryBase, EntryKind } from '@shared/types'
 
 defineProps<{
   kind: EntryKind
-  items: EntryBase[]
+  items: T[]
+}>()
+
+defineSlots<{
+  trailing?: (props: { entry: T }) => unknown
 }>()
 </script>
 
@@ -15,7 +19,17 @@ defineProps<{
       :key="entry.id"
       :kind="kind"
       :entry="entry"
-    />
+    >
+      <template
+        v-if="$slots.trailing"
+        #trailing
+      >
+        <slot
+          name="trailing"
+          :entry="entry"
+        />
+      </template>
+    </EntryCard>
   </div>
 </template>
 
