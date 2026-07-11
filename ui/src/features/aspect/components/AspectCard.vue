@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, type CSSProperties } from 'vue'
 import { useI18n } from 'vue-i18n'
+import McCard from '@shared/ui/McCard.vue'
 import AspectSigil from './AspectSigil.vue'
 import type { AspectListEntry } from '../types'
 
@@ -15,7 +16,8 @@ const cardStyle = computed<CSSProperties>(() => ({
 </script>
 
 <template>
-  <router-link
+  <McCard
+    tag="router-link"
     class="aspect-card"
     :style="cardStyle"
     :to="{ name: 'aspect-detail', params: { aspectId: entry.id } }"
@@ -62,5 +64,5 @@ const cardStyle = computed<CSSProperties>(() => ({
         </span>
       </span>
     </span>
-  </router-link>
+  </McCard>
 </template>

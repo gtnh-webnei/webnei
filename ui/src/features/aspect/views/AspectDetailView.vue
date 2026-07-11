@@ -1,27 +1,25 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { useMediaQuery } from '@vueuse/core'
+import { computed, ref, watch, type CSSProperties } from 'vue'
+import { ArrowLeft } from '@element-plus/icons-vue'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { useDatasetStore } from '@features/dataset/store'
+import CatalogPanel from '@shared/components/CatalogPanel.vue'
 import EntryGrid from '@shared/components/EntryGrid.vue'
 import SearchHelp, { type SearchHelpItem } from '@shared/components/SearchHelp.vue'
 import { HttpError } from '@shared/api/client'
 import { useRacedLoader } from '@shared/composables/useRacedLoader'
 import { useSearchList } from '@shared/composables/useSearchList'
+import McCard from '@shared/ui/McCard.vue'
 import McInput from '@shared/ui/McInput.vue'
+import McPagination from '@shared/ui/McPagination.vue'
 import AspectComposition from '../components/AspectComposition.vue'
-import AspectPanel from '../components/AspectPanel.vue'
 import AspectSigil from '../components/AspectSigil.vue'
 import AspectUsedInList from '../components/AspectUsedInList.vue'
 import { getAspectDetail, listAspectItems } from '../api'
 import type { AspectDetail } from '../types'
 import '../styles/aspect-theme.css'
-
-const COMPACT_PAGER_QUERY = '(max-width: 520px)'
-const COMPACT_PAGER_COUNT = 5
-const DEFAULT_PAGER_COUNT = 7
 
 const route = useRoute()
 const { t } = useI18n()
@@ -30,8 +28,6 @@ const aspectId = computed(() => route.params.aspectId as string)
 const detail = ref<AspectDetail | null>(null)
 const notFound = ref(false)
 const { loading, error, cancel, run } = useRacedLoader()
-const isCompactPager = useMediaQuery(COMPACT_PAGER_QUERY)
-const pagerCount = computed(() => (isCompactPager.value ? COMPACT_PAGER_COUNT : DEFAULT_PAGER_COUNT))
 
 watch(
   [activeDatasetId, aspectId],
@@ -81,150 +77,194 @@ const itemHelpItems: SearchHelpItem[] = [
 const showItemPagination = computed(() => itemState.total.value > itemState.size)
 const detailError = computed(() => (error.value ? t('aspect.detailLoadError') : null))
 const itemError = computed(() => (itemState.error.value ? t('aspect.itemsLoadError') : null))
+const typeLabel = computed(() => {
+  if (!detail.value) return ''
+  return detail.value.primal ? t('aspect.primal') : t('aspect.compound')
+})
+const accentStyle = computed<CSSProperties | undefined>(() => {
+  if (!detail.value) return undefined
+  return {
+    '--aspect-color': `#${(detail.value.color & 0xffffff).toString(16).padStart(6, '0')}`,
+  }
+})
+const pageLoading = computed(
+  () => loading.value || (itemState.loading.value && itemState.items.value.length > 0),
+)
 </script>
 
 <template>
-  <section class="aspect-research-shell">
+  <CatalogPanel
+    class="aspect-detail-page"
+    :loading="pageLoading"
+    :style="accentStyle"
+  >
+    <template
+      v-if="detail"
+      #header
+    >
+      <div class="aspect-detail-header">
+        <router-link
+          class="aspect-detail-back"
+          to="/aspects"
+        >
+          <el-icon class="aspect-detail-back-icon">
+            <ArrowLeft />
+          </el-icon>
+          <span>{{ t('common.back') }}</span>
+        </router-link>
+
+        <div class="aspect-detail-identity">
+          <AspectSigil
+            :icon="detail.icon"
+            :name="detail.displayName"
+            :color="detail.color"
+            :size="48"
+          />
+          <div class="aspect-detail-copy">
+            <p class="aspect-detail-title">
+              {{ detail.displayName }}
+            </p>
+            <p class="aspect-detail-meta">
+              {{ typeLabel }}
+            </p>
+            <p class="aspect-detail-desc">
+              {{ detail.description }}
+            </p>
+          </div>
+        </div>
+      </div>
+    </template>
+
     <div
       v-if="!activeDatasetId"
-      class="aspect-page-state"
+      class="aspect-detail-state"
     >
       {{ t('dataset.empty') }}
     </div>
     <div
       v-else-if="loading"
-      class="aspect-page-state"
+      class="aspect-detail-state"
     >
       {{ t('catalog.loading') }}
     </div>
     <div
       v-else-if="notFound"
-      class="aspect-page-state is-error"
+      class="aspect-detail-state is-error"
     >
       <strong>{{ t('aspect.notFound') }}</strong>
-      <router-link to="/aspects">
+      <router-link
+        class="aspect-detail-state-link"
+        to="/aspects"
+      >
         {{ t('aspect.returnToCatalog') }}
       </router-link>
     </div>
     <div
       v-else-if="detailError"
-      class="aspect-page-state is-error"
+      class="aspect-detail-state is-error"
     >
       <strong>{{ detailError }}</strong>
-      <router-link to="/aspects">
+      <router-link
+        class="aspect-detail-state-link"
+        to="/aspects"
+      >
         {{ t('aspect.returnToCatalog') }}
       </router-link>
     </div>
 
-    <article
+    <div
       v-else-if="detail"
-      class="aspect-detail-page mc-scroll-area"
+      class="aspect-detail-body"
     >
-      <router-link
-        class="aspect-detail-back"
-        to="/aspects"
+      <!-- 关系区：一个 NEI 凹陷井，内部固定双栏 -->
+      <McCard
+        class="aspect-relation-well"
+        tone="inset"
+        :clickable="false"
       >
-        <span aria-hidden="true">←</span>
-        <span>{{ t('aspect.returnToCatalog') }}</span>
-      </router-link>
-
-      <AspectPanel>
-        <div class="aspect-detail-hero">
-          <AspectSigil
-            :icon="detail.icon"
-            :name="detail.displayName"
-            :color="detail.color"
-            :size="88"
-          />
-          <div class="aspect-detail-intro">
-            <h2>{{ detail.displayName }}</h2>
-            <p class="aspect-detail-summary">
-              {{ detail.primal ? t('aspect.primal') : t('aspect.compound') }}
-            </p>
-            <p>{{ detail.description }}</p>
-          </div>
-        </div>
-      </AspectPanel>
-
-      <div class="aspect-detail-middle">
-        <AspectPanel :title="t('aspect.composition')">
+        <section class="aspect-relation-pane">
+          <header class="aspect-block-head">
+            <h2>{{ t('aspect.composition') }}</h2>
+          </header>
           <AspectComposition :aspect="detail" />
-        </AspectPanel>
+        </section>
 
-        <AspectPanel :title="t('aspect.usedBy')">
+        <section class="aspect-relation-pane">
+          <header class="aspect-block-head">
+            <h2>{{ t('aspect.usedBy') }}</h2>
+            <span class="aspect-block-count">
+              {{ t('catalog.resultCount', { count: detail.usedBy.length }) }}
+            </span>
+          </header>
           <AspectUsedInList :items="detail.usedBy" />
-        </AspectPanel>
-      </div>
+        </section>
+      </McCard>
 
-      <AspectPanel
-        class="aspect-items-panel"
-        :title="t('aspect.associatedItems')"
-      >
-        <div class="aspect-item-toolbar">
+      <!-- 物品区：与物品列表同一套 raised 卡片语言 -->
+      <section class="aspect-items-block">
+        <header class="aspect-items-toolbar">
+          <div class="aspect-block-head">
+            <h2>{{ t('aspect.associatedItems') }}</h2>
+            <span class="aspect-block-count">
+              {{ t('catalog.resultCount', { count: itemState.total.value }) }}
+            </span>
+          </div>
           <div class="aspect-item-search">
             <McInput
               v-model="itemState.query.value"
+              class="aspect-item-input"
               clearable
               :placeholder="t('catalog.searchPlaceholder')"
             />
             <SearchHelp :items="itemHelpItems" />
           </div>
-          <p class="aspect-item-total">
-            {{ t('catalog.resultCount', { count: itemState.total.value }) }}
-          </p>
-        </div>
+        </header>
 
-        <div
-          class="aspect-item-results mc-scroll-area"
-          :class="{ 'is-loading': itemState.loading.value && itemState.items.value.length }"
+        <p
+          v-if="itemError"
+          class="aspect-empty is-error"
         >
-          <p
-            v-if="itemError"
-            class="aspect-section-empty is-error"
-          >
-            {{ itemError }}
-          </p>
-          <p
-            v-else-if="itemState.loading.value && !itemState.items.value.length"
-            class="aspect-section-empty"
-          >
-            {{ t('catalog.loading') }}
-          </p>
-          <p
-            v-else-if="!itemState.items.value.length"
-            class="aspect-section-empty"
-          >
-            {{ t('aspect.itemsEmpty') }}
-          </p>
-          <EntryGrid
-            v-else
-            kind="item"
-            :items="itemState.items.value"
-          >
-            <template #trailing="{ entry }">
-              <span class="aspect-item-amount">
-                <strong>{{ entry.amount }}</strong>
-                <span>{{ t('aspect.amount') }}</span>
-              </span>
-            </template>
-          </EntryGrid>
-        </div>
+          {{ itemError }}
+        </p>
+        <p
+          v-else-if="itemState.loading.value && !itemState.items.value.length"
+          class="aspect-empty"
+        >
+          {{ t('catalog.loading') }}
+        </p>
+        <p
+          v-else-if="!itemState.items.value.length"
+          class="aspect-empty"
+        >
+          {{ t('aspect.itemsEmpty') }}
+        </p>
+        <EntryGrid
+          v-else
+          kind="item"
+          layout="list"
+          tone="raised"
+          :items="itemState.items.value"
+        >
+          <template #trailing="{ entry }">
+            <span class="aspect-item-amount">
+              <strong>{{ entry.amount }}</strong>
+              <span>{{ t('aspect.amount') }}</span>
+            </span>
+          </template>
+        </EntryGrid>
+      </section>
+    </div>
 
-        <footer
-          v-if="showItemPagination"
-          class="aspect-item-pagination"
-        >
-          <el-pagination
-            background
-            layout="prev, pager, next"
-            :current-page="itemState.page.value + 1"
-            :page-size="itemState.size"
-            :total="itemState.total.value"
-            :pager-count="pagerCount"
-            @current-change="itemState.onPageChange"
-          />
-        </footer>
-      </AspectPanel>
-    </article>
-  </section>
+    <template
+      v-if="detail && showItemPagination"
+      #footer
+    >
+      <McPagination
+        :page="itemState.page.value"
+        :size="itemState.size"
+        :total="itemState.total.value"
+        @change="itemState.onPageChange"
+      />
+    </template>
+  </CatalogPanel>
 </template>

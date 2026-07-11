@@ -2,10 +2,18 @@
 import EntryCard from './EntryCard.vue'
 import type { EntryBase, EntryKind } from '@shared/types'
 
-defineProps<{
-  kind: EntryKind
-  items: T[]
-}>()
+withDefaults(
+  defineProps<{
+    kind: EntryKind
+    items: T[]
+    tone?: 'raised' | 'inset'
+    layout?: 'grid' | 'list'
+  }>(),
+  {
+    tone: 'raised',
+    layout: 'grid',
+  },
+)
 
 defineSlots<{
   trailing?: (props: { entry: T }) => unknown
@@ -13,12 +21,16 @@ defineSlots<{
 </script>
 
 <template>
-  <div class="entry-grid">
+  <div
+    class="entry-grid"
+    :class="[`is-${layout}`]"
+  >
     <EntryCard
       v-for="entry in items"
       :key="entry.id"
       :kind="kind"
       :entry="entry"
+      :tone="tone"
     >
       <template
         v-if="$slots.trailing"
@@ -36,14 +48,22 @@ defineSlots<{
 <style scoped>
 .entry-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  grid-auto-rows: 68px;
-  gap: 8px;
   min-width: 0;
 }
 
+.entry-grid.is-grid {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-auto-rows: 68px;
+  gap: 8px;
+}
+
+.entry-grid.is-list {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+}
+
 @media (max-width: 520px) {
-  .entry-grid {
+  .entry-grid.is-grid {
     grid-template-columns: 1fr;
   }
 }

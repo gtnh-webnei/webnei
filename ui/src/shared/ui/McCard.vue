@@ -1,14 +1,15 @@
 <script setup lang="ts">
-// NEI 可点卡片：凸起立体边 + 面板底 + hover 高亮。列表条目一类的可点方块用它，
-// 内部布局由使用方通过默认插槽决定。
+// NEI 卡片表面：raised 用于主列表；inset 用于面板内嵌内容，避免与 McPanel 双重凸起。
 withDefaults(
   defineProps<{
     tag?: string
     clickable?: boolean
+    tone?: 'raised' | 'inset'
   }>(),
   {
     tag: 'article',
     clickable: true,
+    tone: 'raised',
   },
 )
 </script>
@@ -17,7 +18,7 @@ withDefaults(
   <component
     :is="tag"
     class="mc-card"
-    :class="{ 'is-clickable': clickable }"
+    :class="[`is-${tone}`, { 'is-clickable': clickable }]"
   >
     <slot />
   </component>
@@ -27,11 +28,21 @@ withDefaults(
 @use '@/styles/mixins' as nei;
 
 .mc-card {
+  border-width: 2px;
+  border-radius: var(--mc-panel-radius);
+  color: var(--mc-panel-text);
+}
+
+.mc-card.is-raised {
   @include nei.bevel(var(--mc-panel-hi), var(--mc-panel-low));
 
-  border-width: 2px;
   background: var(--mc-panel);
-  color: var(--mc-panel-text);
+}
+
+.mc-card.is-inset {
+  @include nei.bevel(var(--mc-panel-hi), var(--mc-panel-low), sunken);
+
+  background: color-mix(in srgb, var(--mc-slot) 42%, var(--mc-panel));
 }
 
 .mc-card.is-clickable {
@@ -41,8 +52,13 @@ withDefaults(
     filter 100ms ease;
 }
 
-.mc-card.is-clickable:hover {
+.mc-card.is-raised.is-clickable:hover {
   background: var(--mc-card-hover);
   filter: brightness(1.02);
+}
+
+.mc-card.is-inset.is-clickable:hover {
+  background: color-mix(in srgb, var(--mc-panel-hi) 28%, var(--mc-panel));
+  filter: brightness(1.01);
 }
 </style>

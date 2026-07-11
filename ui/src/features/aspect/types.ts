@@ -8,7 +8,6 @@ export interface AspectBrief {
 }
 
 export interface AspectListEntry extends AspectBrief {
-  id: string
   description: string
   primal: boolean
   components: AspectBrief[]
@@ -16,7 +15,6 @@ export interface AspectListEntry extends AspectBrief {
 }
 
 export interface AspectDetail extends AspectBrief {
-  id: string
   description: string
   primal: boolean
   components: AspectBrief[]

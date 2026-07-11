@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import AspectSigil from './AspectSigil.vue'
+import AspectChip from './AspectChip.vue'
 import type { AspectBrief } from '../types'
 
 defineProps<{
@@ -15,20 +15,12 @@ const { t } = useI18n()
     v-if="items.length"
     class="aspect-used-list"
   >
-    <router-link
+    <AspectChip
       v-for="entry in items"
       :key="entry.id"
-      class="aspect-used-link"
+      :entry="entry"
       :to="{ name: 'aspect-detail', params: { aspectId: entry.id } }"
-    >
-      <AspectSigil
-        :icon="entry.icon"
-        :name="entry.displayName"
-        :color="entry.color"
-        :size="36"
-      />
-      <strong>{{ entry.displayName }}</strong>
-    </router-link>
+    />
   </div>
   <p
     v-else

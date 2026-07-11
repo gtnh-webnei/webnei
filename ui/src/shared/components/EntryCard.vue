@@ -6,10 +6,16 @@ import McCard from '@shared/ui/McCard.vue'
 import { stripMcFormat } from '@shared/utils/mcFormat'
 import type { EntryBase, EntryKind } from '@shared/types'
 
-const props = defineProps<{
-  kind: EntryKind
-  entry: EntryBase
-}>()
+const props = withDefaults(
+  defineProps<{
+    kind: EntryKind
+    entry: EntryBase
+    tone?: 'raised' | 'inset'
+  }>(),
+  {
+    tone: 'raised',
+  },
+)
 
 defineSlots<{
   trailing?: () => unknown
@@ -26,6 +32,7 @@ const detailLabel = computed(() => `${props.entry.modId}:${props.entry.registryN
   <McCard
     class="catalog-card"
     :class="{ 'has-trailing': $slots.trailing }"
+    :tone="tone"
   >
     <McSlot
       class="catalog-card-slot"

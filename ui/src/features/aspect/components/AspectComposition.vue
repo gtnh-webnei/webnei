@@ -8,6 +8,8 @@ defineProps<{
 }>()
 
 const { t } = useI18n()
+
+const SIGIL_SIZE = 36
 </script>
 
 <template>
@@ -24,14 +26,16 @@ const { t } = useI18n()
         :icon="aspect.icon"
         :name="aspect.displayName"
         :color="aspect.color"
-        :size="58"
+        :size="SIGIL_SIZE"
       />
       <span>{{ aspect.displayName }}</span>
     </div>
+
     <span
       class="aspect-equation-symbol"
       aria-hidden="true"
     >=</span>
+
     <router-link
       class="aspect-equation-term"
       :to="{ name: 'aspect-detail', params: { aspectId: aspect.components[0].id } }"
@@ -40,14 +44,16 @@ const { t } = useI18n()
         :icon="aspect.components[0].icon"
         :name="aspect.components[0].displayName"
         :color="aspect.components[0].color"
-        :size="46"
+        :size="SIGIL_SIZE"
       />
       <span>{{ aspect.components[0].displayName }}</span>
     </router-link>
+
     <span
       class="aspect-equation-symbol"
       aria-hidden="true"
     >+</span>
+
     <router-link
       class="aspect-equation-term"
       :to="{ name: 'aspect-detail', params: { aspectId: aspect.components[1].id } }"
@@ -56,14 +62,14 @@ const { t } = useI18n()
         :icon="aspect.components[1].icon"
         :name="aspect.components[1].displayName"
         :color="aspect.components[1].color"
-        :size="46"
+        :size="SIGIL_SIZE"
       />
       <span>{{ aspect.components[1].displayName }}</span>
     </router-link>
   </div>
   <p
     v-else
-    class="aspect-primal-empty"
+    class="aspect-section-empty"
   >
     {{ t('aspect.primalCompositionEmpty') }}
   </p>
