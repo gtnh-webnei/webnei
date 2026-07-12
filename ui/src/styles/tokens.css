@@ -64,6 +64,12 @@
   --mc-tooltip-border-end: rgb(40 0 127 / 0.5);
   --mc-tooltip-text: #ffffff;
 
+  /* 字体 */
+  --app-font-family:
+    'WebNEI GTNH Glyphs', 'WebNEI Minecraft', system-ui, -apple-system, BlinkMacSystemFont,
+    'Segoe UI', 'Microsoft YaHei', 'PingFang SC', sans-serif;
+  --el-font-family: var(--app-font-family);
+
   /* 尺寸与效果 */
   --mc-grid-size: 32px;
   --mc-panel-radius: 2px;

@@ -29,6 +29,9 @@
   ),
   $border-radius: (
     'base': 2px,
+  ),
+  $font-family: (
+    '': var(--app-font-family),
   )
 );
 @use 'element-plus/theme-chalk/src/index.scss';

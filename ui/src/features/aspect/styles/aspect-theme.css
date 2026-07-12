@@ -22,7 +22,6 @@
 }
 
 .aspect-research-shell.search-page .search-kicker {
-  font-family: Georgia, 'Times New Roman', serif;
   letter-spacing: 0.035em;
 }
 
@@ -70,7 +69,6 @@
 
 .aspect-grid-heading h2 {
   color: var(--mc-panel-text);
-  font-family: Georgia, 'Times New Roman', serif;
   font-size: 17px;
   letter-spacing: 0.035em;
 }
@@ -136,7 +134,6 @@
 
 .aspect-card-title-row strong {
   color: var(--aspect-ink);
-  font-family: Georgia, 'Times New Roman', serif;
   font-size: 15px;
 }
 

@@ -20,9 +20,9 @@ interface Options {
 }
 
 /**
- * 分页搜索列表逻辑：在 useRacedLoader（防抖+竞态+loading/error 内核）之上叠加分页。
+ * 分页搜索列表逻辑：在 useRacedLoader（竞态+loading/error 内核）之上叠加查询防抖和分页。
  * 每页条数在初始化时按窗口宽度分档取一次，之后固定。
- * query 变更重置到首页；翻页/数据集切换触发重取；仅采纳最新一次请求的结果。
+ * query 变更防抖后重置到首页；翻页/数据集切换立即重取；仅采纳最新一次请求的结果。
  */
 export function useSearchList<T>(
   activeDatasetId: Ref<string | null>,
@@ -71,7 +71,8 @@ export function useSearchList<T>(
     page.value = Math.max(currentPage - 1, 0)
   }
 
-  watchDebounced([activeDatasetId, query], resetAndLoad, { debounce, immediate: true })
+  watch(activeDatasetId, resetAndLoad, { immediate: true })
+  watchDebounced(query, resetAndLoad, { debounce })
   watch(page, () => void load())
 
   return { query, page, total, items, loading, error, size, onPageChange }

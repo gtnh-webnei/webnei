@@ -7,21 +7,22 @@
   unicode-range: U+2070, U+207A-207B, U+2080-2089, U+E000-E020;
 }
 
+@font-face {
+  font-family: 'WebNEI Minecraft';
+  src: url('../assets/fonts/minecraft.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF;
+}
+
 html,
 body,
 #app {
   min-width: 320px;
   height: 100%;
   margin: 0;
-  font-family:
-    'WebNEI GTNH Glyphs',
-    Inter,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    'Helvetica Neue',
-    Arial,
-    sans-serif;
+  font-family: var(--app-font-family);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background: var(--el-bg-color-page);
@@ -44,6 +45,13 @@ body {
 
 * {
   box-sizing: border-box;
+}
+
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
 }
 
 ::selection {

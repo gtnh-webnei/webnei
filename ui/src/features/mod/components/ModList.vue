@@ -223,7 +223,6 @@ const showList = computed(() => !isMobile.value || !detailOpen.value)
 .forge-mod-field { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 12px; align-items: baseline; min-width: 0; }
 .forge-mod-field dt { color: var(--forge-list-muted); font-size: calc(var(--forge-detail-line-size) - 1px); font-weight: 800; line-height: 1.4; }
 .forge-mod-field dd { min-width: 0; margin: 0; color: var(--forge-detail-line); font-size: var(--forge-detail-line-size); font-weight: 700; line-height: 1.4; }
-.forge-mod-field .is-code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 .forge-mod-field .is-break { overflow-wrap: anywhere; word-break: break-word; }
 
 .forge-mod-back { display: inline-flex; align-items: center; gap: 4px; justify-self: start; padding: 4px 6px; border: 0; background: transparent; color: var(--forge-list-muted); font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }
