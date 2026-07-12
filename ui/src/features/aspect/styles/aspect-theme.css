@@ -227,37 +227,64 @@
     0 0 9px color-mix(in srgb, var(--aspect-color) 52%, transparent);
 }
 
-/* ---- detail: CatalogPanel 内固定结构 ---- */
+/* ---- detail: Thaumcraft 研究铭版 ---- */
 
 .aspect-detail-page {
   --aspect-color: var(--mc-gold);
+  --aspect-detail-surface: var(--mc-panel);
+  --aspect-detail-well: color-mix(in srgb, var(--mc-slot) 24%, var(--mc-panel));
+  --aspect-detail-edge-hi: var(--mc-panel-hi);
+  --aspect-detail-edge-low: var(--mc-panel-low);
+  --aspect-detail-ink: var(--mc-panel-text);
+  --aspect-detail-muted: var(--app-surface-muted);
 }
 
 .aspect-detail-header {
   display: grid;
-  gap: 12px;
+  gap: 10px;
   min-width: 0;
+}
+
+.aspect-detail-back,
+.aspect-detail-state-link {
+  border: 2px solid;
+  border-color: var(--aspect-detail-edge-hi) var(--aspect-detail-edge-low)
+    var(--aspect-detail-edge-low) var(--aspect-detail-edge-hi);
+  background: var(--aspect-detail-surface);
+  color: var(--aspect-detail-ink);
+  font-weight: 800;
+  text-decoration: none;
+  transition:
+    background-color 100ms ease,
+    color 100ms ease;
 }
 
 .aspect-detail-back {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   justify-self: start;
-  margin-left: -4px;
-  padding: 4px 6px;
-  border: 0;
-  background: transparent;
-  color: var(--app-surface-muted);
-  font-size: 13px;
-  font-weight: 800;
-  text-decoration: none;
+  min-height: 36px;
+  padding: 0 10px 0 8px;
+  font-size: 12px;
 }
 
 .aspect-detail-back:hover,
-.aspect-detail-back:focus-visible {
-  color: var(--mc-panel-text);
-  outline: none;
+.aspect-detail-state-link:hover {
+  background: var(--mc-card-hover);
+  color: var(--mc-ink);
+}
+
+.aspect-detail-back:focus-visible,
+.aspect-detail-state-link:focus-visible {
+  outline: 2px solid var(--mc-gold);
+  outline-offset: 2px;
+}
+
+.aspect-detail-back:active,
+.aspect-detail-state-link:active {
+  border-color: var(--aspect-detail-edge-low) var(--aspect-detail-edge-hi)
+    var(--aspect-detail-edge-hi) var(--aspect-detail-edge-low);
 }
 
 .aspect-detail-back-icon {
@@ -265,23 +292,62 @@
 }
 
 .aspect-detail-identity {
+  position: relative;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: 76px minmax(0, 1fr);
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   min-width: 0;
-  padding: 2px 0 4px;
-  border-bottom: 2px solid color-mix(in srgb, var(--aspect-color) 42%, var(--mc-panel-low));
-  background: linear-gradient(
-    100deg,
-    color-mix(in srgb, var(--aspect-color) 12%, transparent),
-    transparent 46%
-  );
+  padding: 14px 16px;
+  overflow: hidden;
+  border: 2px solid;
+  border-color: var(--aspect-detail-edge-low) var(--aspect-detail-edge-hi)
+    var(--aspect-detail-edge-hi) var(--aspect-detail-edge-low);
+  background: var(--aspect-detail-well);
+  box-shadow:
+    inset 2px 2px 0 color-mix(in srgb, var(--aspect-detail-edge-low) 54%, transparent),
+    inset -2px -2px 0 color-mix(in srgb, var(--aspect-detail-edge-hi) 64%, transparent);
+}
+
+.aspect-detail-identity::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: color-mix(in srgb, var(--aspect-color) 58%, var(--aspect-detail-edge-low));
+  content: '';
+  pointer-events: none;
+}
+
+.aspect-detail-seal {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  border: 2px solid;
+  border-color: var(--aspect-detail-edge-hi) var(--aspect-detail-edge-low)
+    var(--aspect-detail-edge-low) var(--aspect-detail-edge-hi);
+  background: var(--aspect-detail-surface);
+  box-shadow: 3px 3px 0 color-mix(in srgb, var(--aspect-detail-edge-low) 38%, transparent);
+}
+
+.aspect-detail-seal::after {
+  position: absolute;
+  inset: 4px;
+  border: 1px solid color-mix(in srgb, var(--aspect-color) 54%, var(--aspect-detail-edge-low));
+  content: '';
+  pointer-events: none;
+}
+
+.aspect-detail-seal .aspect-sigil {
+  z-index: 1;
 }
 
 .aspect-detail-copy {
   display: grid;
-  gap: 4px;
+  gap: 5px;
   min-width: 0;
 }
 
@@ -294,58 +360,72 @@
   margin: 0;
 }
 
-/* 与 SearchListLayout .search-kicker 对齐 */
 .aspect-detail-title {
-  color: var(--mc-panel-text);
-  font-size: 18px;
+  color: var(--aspect-detail-ink);
+  font-size: 20px;
   font-weight: 900;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.025em;
+  line-height: 1.15;
   overflow-wrap: anywhere;
 }
 
 .aspect-detail-meta {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: 6px;
   min-width: 0;
-  color: var(--app-surface-muted);
-  font-size: 12px;
-  font-weight: 700;
+  color: var(--aspect-detail-muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.035em;
+}
+
+.aspect-detail-meta-divider {
+  color: color-mix(in srgb, var(--aspect-color) 62%, var(--aspect-detail-muted));
+}
+
+.aspect-detail-id {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .aspect-detail-desc {
-  max-width: 72ch;
-  color: var(--mc-panel-text);
+  max-width: 68ch;
+  color: var(--aspect-detail-ink);
   font-size: 13px;
   font-weight: 700;
-  line-height: 1.5;
+  line-height: 1.55;
 }
 
 .aspect-detail-body {
   display: grid;
   align-content: start;
-  gap: 16px;
+  gap: 18px;
   min-width: 0;
 }
 
-/* 关系井：一个凹陷面板，内部固定双栏 + 中线分隔 */
 .aspect-relation-well {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(280px, 0.9fr) minmax(0, 1.35fr);
   align-items: stretch;
   min-width: 0;
-  min-height: 160px;
+  min-height: 176px;
   overflow: hidden;
 }
 
 .aspect-relation-pane {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  gap: 10px;
+  gap: 12px;
   min-width: 0;
   min-height: 0;
-  padding: 12px;
+  padding: 14px;
 }
 
 .aspect-relation-pane + .aspect-relation-pane {
-  border-left: 2px solid var(--mc-panel-low);
+  border-left: 2px solid var(--aspect-detail-edge-low);
+  box-shadow: inset 2px 0 var(--aspect-detail-edge-hi);
 }
 
 .aspect-block-head {
@@ -354,29 +434,51 @@
   align-items: baseline;
   gap: 8px;
   min-width: 0;
+  padding-bottom: 7px;
+  border-bottom: 2px solid color-mix(in srgb, var(--aspect-detail-edge-low) 72%, transparent);
 }
 
 .aspect-block-head h2 {
-  color: var(--mc-panel-text);
+  color: var(--aspect-detail-ink);
   font-size: 14px;
   font-weight: 900;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.035em;
 }
 
 .aspect-block-count {
-  color: var(--app-surface-muted);
-  font-size: 12px;
-  font-weight: 700;
+  color: var(--aspect-detail-muted);
+  font-size: 11px;
+  font-weight: 800;
 }
 
-/* 组成：公式，无卡片壳 */
 .aspect-equation {
   display: grid;
+  grid-template-areas: 'current equals left plus right';
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  gap: 8px;
+  gap: 7px;
   min-width: 0;
-  min-height: 96px;
+  min-height: 104px;
+}
+
+.aspect-equation-current {
+  grid-area: current;
+}
+
+.aspect-equation-equals {
+  grid-area: equals;
+}
+
+.aspect-equation-left {
+  grid-area: left;
+}
+
+.aspect-equation-plus {
+  grid-area: plus;
+}
+
+.aspect-equation-right {
+  grid-area: right;
 }
 
 .aspect-equation-term {
@@ -384,13 +486,14 @@
   justify-items: center;
   gap: 6px;
   min-width: 0;
-  padding: 4px;
-  color: var(--mc-panel-text);
+  padding: 6px 4px;
+  color: var(--aspect-detail-ink);
   font-size: 12px;
   font-weight: 800;
   line-height: 1.2;
   text-align: center;
   text-decoration: none;
+  transition: color 100ms ease;
 }
 
 .aspect-equation-term > span:last-child {
@@ -400,8 +503,8 @@
   white-space: nowrap;
 }
 
-.aspect-equation-term:hover,
-.aspect-equation-term:focus-visible {
+.aspect-equation-term:not(.is-current):hover,
+.aspect-equation-term:not(.is-current):focus-visible {
   color: var(--mc-ink);
 }
 
@@ -410,19 +513,20 @@
 }
 
 .aspect-equation-symbol {
-  color: color-mix(in srgb, var(--aspect-color) 50%, var(--app-surface-muted));
+  color: color-mix(in srgb, var(--aspect-color) 56%, var(--aspect-detail-muted));
   font-size: 20px;
   font-weight: 900;
   line-height: 1;
+  text-shadow: 1px 1px var(--aspect-detail-edge-hi);
 }
 
 .aspect-empty,
 .aspect-section-empty {
   display: grid;
   align-content: center;
-  min-height: 96px;
+  min-height: 104px;
   margin: 0;
-  color: var(--app-surface-muted);
+  color: var(--aspect-detail-muted);
   font-size: 12px;
   font-weight: 700;
   line-height: 1.5;
@@ -433,21 +537,27 @@
   color: var(--mc-redstone);
 }
 
-/* 用于合成：raised 芯片网格 */
 .aspect-used-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
   align-content: start;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-/* 物品区：与 /items 同一套列表语言 */
+.aspect-used-item {
+  min-width: 0;
+}
+
 .aspect-items-block {
   display: grid;
   gap: 12px;
   min-width: 0;
   padding-top: 4px;
-  border-top: 2px solid var(--mc-panel-low);
+  border-top: 2px solid var(--aspect-detail-edge-low);
 }
 
 .aspect-items-toolbar {
@@ -459,14 +569,14 @@
 }
 
 .aspect-item-search {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 8px;
   min-width: 0;
 }
 
 .aspect-item-input {
-  flex: 1 1 auto;
   min-width: 0;
 }
 
@@ -478,8 +588,8 @@
   min-width: 44px;
   height: 100%;
   padding-left: 8px;
-  border-left: 2px solid var(--mc-panel-low);
-  color: var(--mc-panel-text);
+  border-left: 2px solid var(--aspect-detail-edge-low);
+  color: var(--aspect-detail-ink);
 }
 
 .aspect-item-amount strong {
@@ -489,7 +599,7 @@
 }
 
 .aspect-item-amount span {
-  color: var(--app-surface-muted);
+  color: var(--aspect-detail-muted);
   font-size: 10px;
   font-weight: 800;
   line-height: 1;
@@ -501,7 +611,7 @@
   gap: 12px;
   align-content: center;
   min-height: 180px;
-  color: var(--mc-panel-text);
+  color: var(--aspect-detail-ink);
   font-size: 13px;
   font-weight: 700;
   text-align: center;
@@ -514,19 +624,14 @@
 .aspect-detail-state-link {
   display: inline-grid;
   place-items: center;
-  min-height: 34px;
+  min-height: 36px;
   padding: 0 12px;
-  border: 2px solid;
-  border-color: var(--mc-panel-hi) var(--mc-panel-low) var(--mc-panel-low) var(--mc-panel-hi);
-  background: var(--mc-panel);
-  color: var(--mc-panel-text);
-  font-weight: 800;
-  text-decoration: none;
 }
 
-.aspect-detail-state-link:hover,
-.aspect-detail-state-link:focus-visible {
-  background: var(--mc-card-hover);
+@media (max-width: 1280px) {
+  .aspect-used-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 1040px) {
@@ -535,19 +640,28 @@
   }
 }
 
-@media (max-width: 720px) {
-  .aspect-relation-well,
-  .aspect-items-toolbar {
+@media (max-width: 1039px) {
+  .aspect-relation-well {
     grid-template-columns: minmax(0, 1fr);
   }
 
   .aspect-relation-pane + .aspect-relation-pane {
-    border-top: 2px solid var(--mc-panel-low);
+    border-top: 2px solid var(--aspect-detail-edge-low);
     border-left: 0;
+    box-shadow: inset 0 2px var(--aspect-detail-edge-hi);
+  }
+}
+
+@media (max-width: 720px) {
+  .aspect-detail-identity {
+    grid-template-columns: 76px minmax(0, 1fr);
+    gap: 12px;
+    padding: 12px;
   }
 
-  .aspect-used-list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .aspect-items-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
   }
 }
 
@@ -555,31 +669,72 @@
   .aspect-grid {
     grid-template-columns: minmax(0, 1fr);
   }
+}
 
+@media (max-width: 560px) {
   .aspect-detail-identity {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: 72px minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .aspect-detail-seal {
+    width: 72px;
+    height: 72px;
+  }
+
+  .aspect-detail-title {
+    font-size: 18px;
+  }
+
+  .aspect-detail-meta {
+    grid-template-columns: auto auto minmax(0, 1fr);
+    gap: 4px;
   }
 
   .aspect-used-list {
     grid-template-columns: minmax(0, 1fr);
   }
-}
 
-@media (max-width: 520px) {
   .aspect-equation {
-    grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr);
-    gap: 6px;
+    grid-template-areas:
+      'current current current'
+      'equals equals equals'
+      'left plus right';
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    gap: 6px 8px;
   }
 
-  .aspect-equation-term.is-current {
-    grid-column: 1 / -1;
+  .aspect-equation-equals {
+    justify-self: center;
+  }
+}
+
+@media (max-width: 400px) {
+  .aspect-detail-identity {
+    grid-template-columns: 64px minmax(0, 1fr);
+    padding: 10px;
+  }
+
+  .aspect-detail-seal {
+    width: 64px;
+    height: 64px;
+  }
+
+  .aspect-relation-pane {
+    padding: 12px 10px;
+  }
+
+  .aspect-equation-term {
+    font-size: 11px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .aspect-card,
   .aspect-chip,
-  .aspect-equation-term {
+  .aspect-equation-term,
+  .aspect-detail-back,
+  .aspect-detail-state-link {
     transition: none;
   }
 }

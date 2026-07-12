@@ -11,17 +11,21 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <div
+  <ul
     v-if="items.length"
     class="aspect-used-list"
   >
-    <AspectChip
+    <li
       v-for="entry in items"
       :key="entry.id"
-      :entry="entry"
-      :to="{ name: 'aspect-detail', params: { aspectId: entry.id } }"
-    />
-  </div>
+      class="aspect-used-item"
+    >
+      <AspectChip
+        :entry="entry"
+        :to="{ name: 'aspect-detail', params: { aspectId: entry.id } }"
+      />
+    </li>
+  </ul>
   <p
     v-else
     class="aspect-section-empty"

@@ -33,6 +33,7 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       assetsDir: 'static',
+      copyPublicDir: env.WEBNEI_BUILD_COPY_PUBLIC_DIR !== 'false',
     },
     server: {
       host: '127.0.0.1',

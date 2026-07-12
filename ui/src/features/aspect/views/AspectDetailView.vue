@@ -110,22 +110,29 @@ const pageLoading = computed(
           <el-icon class="aspect-detail-back-icon">
             <ArrowLeft />
           </el-icon>
-          <span>{{ t('common.back') }}</span>
+          <span>{{ t('aspect.returnToCatalog') }}</span>
         </router-link>
 
         <div class="aspect-detail-identity">
-          <AspectSigil
-            :icon="detail.icon"
-            :name="detail.displayName"
-            :color="detail.color"
-            :size="48"
-          />
+          <div class="aspect-detail-seal">
+            <AspectSigil
+              :icon="detail.icon"
+              :name="detail.displayName"
+              :color="detail.color"
+              :size="48"
+            />
+          </div>
           <div class="aspect-detail-copy">
-            <p class="aspect-detail-title">
+            <h1 class="aspect-detail-title">
               {{ detail.displayName }}
-            </p>
+            </h1>
             <p class="aspect-detail-meta">
-              {{ typeLabel }}
+              <span>{{ typeLabel }}</span>
+              <span
+                class="aspect-detail-meta-divider"
+                aria-hidden="true"
+              >·</span>
+              <span class="aspect-detail-id">{{ detail.id }}</span>
             </p>
             <p class="aspect-detail-desc">
               {{ detail.description }}

@@ -36,23 +36,25 @@ const isLink = computed(() => props.to != null)
 <style scoped>
 .aspect-chip {
   display: grid;
-  grid-template-columns: 36px minmax(0, 1fr);
+  grid-template-columns: 40px minmax(0, 1fr);
   align-items: center;
-  gap: 8px;
-  height: 52px;
+  gap: 9px;
   min-width: 0;
-  padding: 0 10px 0 8px;
+  min-height: 56px;
+  padding: 6px 10px 6px 8px;
   color: var(--mc-panel-text);
   text-decoration: none;
 }
 
 .aspect-chip-name {
+  display: -webkit-box;
   min-width: 0;
   overflow: hidden;
   font-size: 12px;
   font-weight: 800;
-  line-height: 1.2;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 </style>

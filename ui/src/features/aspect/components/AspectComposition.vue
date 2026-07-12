@@ -21,7 +21,7 @@ const SIGIL_SIZE = 36
       right: aspect.components[1].displayName,
     })"
   >
-    <div class="aspect-equation-term is-current">
+    <div class="aspect-equation-term is-current aspect-equation-current">
       <AspectSigil
         :icon="aspect.icon"
         :name="aspect.displayName"
@@ -32,12 +32,12 @@ const SIGIL_SIZE = 36
     </div>
 
     <span
-      class="aspect-equation-symbol"
+      class="aspect-equation-symbol aspect-equation-equals"
       aria-hidden="true"
     >=</span>
 
     <router-link
-      class="aspect-equation-term"
+      class="aspect-equation-term aspect-equation-left"
       :to="{ name: 'aspect-detail', params: { aspectId: aspect.components[0].id } }"
     >
       <AspectSigil
@@ -50,12 +50,12 @@ const SIGIL_SIZE = 36
     </router-link>
 
     <span
-      class="aspect-equation-symbol"
+      class="aspect-equation-symbol aspect-equation-plus"
       aria-hidden="true"
     >+</span>
 
     <router-link
-      class="aspect-equation-term"
+      class="aspect-equation-term aspect-equation-right"
       :to="{ name: 'aspect-detail', params: { aspectId: aspect.components[1].id } }"
     >
       <AspectSigil
