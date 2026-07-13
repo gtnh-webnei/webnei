@@ -67,8 +67,8 @@ export function useSearchList<T>(
     }
   }
 
-  function onPageChange(currentPage: number) {
-    page.value = Math.max(currentPage - 1, 0)
+  function onPageChange(nextPage: number) {
+    page.value = nextPage
   }
 
   watch(activeDatasetId, resetAndLoad, { immediate: true })
