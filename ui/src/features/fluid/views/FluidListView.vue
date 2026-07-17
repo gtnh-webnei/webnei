@@ -6,6 +6,7 @@ import { useDatasetStore } from '@features/dataset/store'
 import { useSearchList } from '@shared/composables/useSearchList'
 import SearchListLayout from '@shared/components/SearchListLayout.vue'
 import EntryGrid from '@shared/components/EntryGrid.vue'
+import EntryCard from '@shared/components/EntryCard.vue'
 import type { SearchHelpItem } from '@shared/components/SearchHelp.vue'
 import { listFluids } from '../api'
 
@@ -44,6 +45,13 @@ const helpItems: SearchHelpItem[] = [
     <EntryGrid
       kind="fluid"
       :items="state.items.value"
-    />
+    >
+      <template #item="{ entry }">
+        <EntryCard
+          kind="fluid"
+          :entry="entry"
+        />
+      </template>
+    </EntryGrid>
   </SearchListLayout>
 </template>

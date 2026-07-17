@@ -21,9 +21,6 @@ public class FluidBrowserRow {
     private String modId;
     private String modName;
     private String registryName;
-    private String chemicalExpression;
-    private int temperature;
-    private boolean gaseous;
     private String iconPath;
     private Integer iconWidth;
     private Integer iconHeight;

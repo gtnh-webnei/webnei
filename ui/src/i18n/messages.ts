@@ -65,6 +65,12 @@ export const messages = {
       loading: '加载中',
       empty: '没有匹配结果',
     },
+    tooltip: {
+      temperature: '温度: {kelvin} K',
+      phase: '状态: {phase}',
+      gas: '气体',
+      liquid: '液体',
+    },
     dataset: {
       title: '数据集',
       current: '当前数据集',
@@ -145,6 +151,12 @@ export const messages = {
       resultCount: '{count} entries',
       loading: 'Loading',
       empty: 'No matching entries',
+    },
+    tooltip: {
+      temperature: 'Temperature: {kelvin} K',
+      phase: 'State: {phase}',
+      gas: 'Gas',
+      liquid: 'Liquid',
     },
     dataset: {
       title: 'Dataset',

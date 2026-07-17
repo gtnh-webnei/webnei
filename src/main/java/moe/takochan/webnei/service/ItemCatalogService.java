@@ -28,10 +28,13 @@ public class ItemCatalogService {
 
     private static final int DEFAULT_PAGE_SIZE = 60;
     private static final int MAX_PAGE_SIZE = 120;
+    private static final String DATASET_ID_COLUMN = "dataset_id";
+    private static final String ITEM_VARIANT_ID_COLUMN = "item_variant_id";
+    private static final String LIST_INDEX_COLUMN = "list_index";
 
     private static final CatalogSearchSupport SEARCH = new CatalogSearchSupport(
             "mv_item_search",
-            "item_variant_id",
+            ITEM_VARIANT_ID_COLUMN,
             Map.of(
                     SearchTermType.TEXT, "s_std",
                     SearchTermType.MOD, "s_mod",
@@ -70,9 +73,9 @@ public class ItemCatalogService {
 
     private QueryWrapper<ItemBrowserRow> query(String datasetId, String searchText) {
         QueryWrapper<ItemBrowserRow> query = new QueryWrapper<ItemBrowserRow>()
-                .eq("dataset_id", datasetId)
-                .orderByAsc("list_index", "item_variant_id");
-        SEARCH.apply(query, "item_variant_id", searchQueryParser.parse(searchText));
+                .eq(DATASET_ID_COLUMN, datasetId)
+                .orderByAsc(LIST_INDEX_COLUMN, ITEM_VARIANT_ID_COLUMN);
+        SEARCH.apply(query, ITEM_VARIANT_ID_COLUMN, searchQueryParser.parse(searchText));
         return query;
     }
 
@@ -95,21 +98,17 @@ public class ItemCatalogService {
     private ItemListEntry toEntry(DatasetEntity dataset, ItemBrowserRow row) {
         return new ItemListEntry(
                 row.getItemVariantId(),
-                row.getItemVariantId(),
-                row.getItemId(),
                 row.getDisplayName(),
                 row.getModId(),
                 row.getModName(),
                 row.getRegistryName(),
-                row.getDamage(),
-                row.getListIndex(),
-                icon(dataset, row),
-                row.getTooltipText(),
-                row.getChemicalExpression());
+                icon(dataset, row));
     }
 
     private IconAsset icon(DatasetEntity dataset, ItemBrowserRow row) {
         String url = assetUrlService.assetUrl(dataset, row.getIconPath());
-        return url == null ? null : new IconAsset(url, row.getIconWidth(), row.getIconHeight(), row.getIconMetadataJson());
+        return url == null
+                ? null
+                : new IconAsset(url, row.getIconWidth(), row.getIconHeight(), row.getIconMetadataJson());
     }
 }

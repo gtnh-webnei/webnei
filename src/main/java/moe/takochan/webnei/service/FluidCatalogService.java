@@ -93,19 +93,17 @@ public class FluidCatalogService {
     private FluidListEntry toEntry(DatasetEntity dataset, FluidBrowserRow row) {
         return new FluidListEntry(
                 row.getFluidId(),
-                row.getFluidId(),
                 row.getDisplayName(),
                 row.getModId(),
                 row.getModName(),
                 row.getRegistryName(),
-                row.getChemicalExpression(),
-                row.getTemperature(),
-                row.isGaseous(),
                 icon(dataset, row));
     }
 
     private IconAsset icon(DatasetEntity dataset, FluidBrowserRow row) {
         String url = assetUrlService.assetUrl(dataset, row.getIconPath());
-        return url == null ? null : new IconAsset(url, row.getIconWidth(), row.getIconHeight(), row.getIconMetadataJson());
+        return url == null
+                ? null
+                : new IconAsset(url, row.getIconWidth(), row.getIconHeight(), row.getIconMetadataJson());
     }
 }

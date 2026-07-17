@@ -16,6 +16,7 @@ withDefaults(
 )
 
 defineSlots<{
+  item?: (props: { entry: T }) => unknown
   trailing?: (props: { entry: T }) => unknown
 }>()
 </script>
@@ -25,23 +26,31 @@ defineSlots<{
     class="entry-grid"
     :class="[`is-${layout}`]"
   >
-    <EntryCard
+    <template
       v-for="entry in items"
       :key="entry.id"
-      :kind="kind"
-      :entry="entry"
-      :tone="tone"
     >
-      <template
-        v-if="$slots.trailing"
-        #trailing
+      <slot
+        name="item"
+        :entry="entry"
       >
-        <slot
-          name="trailing"
+        <EntryCard
+          :kind="kind"
           :entry="entry"
-        />
-      </template>
-    </EntryCard>
+          :tone="tone"
+        >
+          <template
+            v-if="$slots.trailing"
+            #trailing
+          >
+            <slot
+              name="trailing"
+              :entry="entry"
+            />
+          </template>
+        </EntryCard>
+      </slot>
+    </template>
   </div>
 </template>
 

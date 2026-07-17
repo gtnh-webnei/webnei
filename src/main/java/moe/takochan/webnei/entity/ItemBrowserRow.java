@@ -17,17 +17,13 @@ public class ItemBrowserRow {
     @TableId(value = "item_variant_id", type = IdType.INPUT)
     private String itemVariantId;
 
-    private String itemId;
     private String displayName;
     private String modId;
     private String modName;
     private String registryName;
-    private int damage;
     private int listIndex;
     private String iconPath;
     private Integer iconWidth;
     private Integer iconHeight;
     private String iconMetadataJson;
-    private String tooltipText;
-    private String chemicalExpression;
 }

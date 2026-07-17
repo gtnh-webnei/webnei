@@ -63,6 +63,24 @@
   --mc-tooltip-border-start: rgb(80 0 255 / 0.5);
   --mc-tooltip-border-end: rgb(40 0 127 / 0.5);
   --mc-tooltip-text: #ffffff;
+  --mc-tooltip-font-size: clamp(0.75rem, 0.7rem + 0.15vw, 0.875rem);
+  --mc-tooltip-line-height: 1.25em;
+  --mc-tooltip-title-gap: 0.25em;
+  --mc-tooltip-padding: 0.65em 0.75em;
+  --mc-tooltip-border-width: 0.125rem;
+  --mc-tooltip-border-radius: 2px;
+  --mc-tooltip-viewport-gap: 12px;
+  --mc-tooltip-scrollbar-size: 8px;
+  --mc-tooltip-scrollbar-thumb-min-size: 24px;
+  --mc-tooltip-scrollbar-track: rgb(16 0 16 / 0.96);
+  --mc-tooltip-scrollbar-thumb: rgb(80 0 255 / 0.6);
+  --mc-tooltip-scrollbar-thumb-hover: rgb(112 48 255 / 0.82);
+  --mc-tooltip-max-width: calc(
+    100dvw - var(--mc-tooltip-viewport-gap) - var(--mc-tooltip-viewport-gap)
+  );
+  --mc-tooltip-max-height: calc(
+    100dvh - var(--mc-tooltip-viewport-gap) - var(--mc-tooltip-viewport-gap)
+  );
 
   /* 字体 */
   --app-font-family:

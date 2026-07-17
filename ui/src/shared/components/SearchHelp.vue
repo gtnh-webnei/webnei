@@ -17,7 +17,10 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <McTooltip placement="bottom-end">
+  <McTooltip
+    :data="{ kind: 'custom' }"
+    placement="bottom-end"
+  >
     <template #content>
       <div class="search-help">
         <p class="search-help-title">

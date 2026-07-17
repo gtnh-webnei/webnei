@@ -17,15 +17,71 @@
   background: var(--mc-deepslate);
 }
 
-// 通用 MC tooltip：深紫黑半透明底 + 紫色渐变细边
+// 通用 MC tooltip：内容组件绘制完整 frame。
 .el-popper.mc-tooltip.is-dark {
-  max-width: 360px;
-  padding: 10px;
-  border: 2px solid transparent;
-  border-radius: 5px;
-  background:
-    linear-gradient(var(--mc-tooltip-bg), var(--mc-tooltip-bg)) padding-box,
-    linear-gradient(to bottom, var(--mc-tooltip-border-start), var(--mc-tooltip-border-end)) border-box;
+  max-width: var(--mc-tooltip-max-width);
+  max-height: var(--mc-tooltip-max-height);
   box-shadow: none;
   color: var(--mc-tooltip-text);
+}
+
+.el-popper.mc-tooltip--panel.is-dark {
+  overflow: visible;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.el-popper.mc-tooltip--panel .mc-tooltip-content {
+  overscroll-behavior: contain;
+  scrollbar-color: var(--mc-tooltip-scrollbar-thumb) var(--mc-tooltip-scrollbar-track);
+  scrollbar-width: thin;
+}
+
+.el-popper.mc-tooltip--panel .mc-tooltip-content::-webkit-scrollbar {
+  width: var(--mc-tooltip-scrollbar-size);
+  height: var(--mc-tooltip-scrollbar-size);
+}
+
+.el-popper.mc-tooltip--panel .mc-tooltip-content::-webkit-scrollbar-track {
+  background: var(--mc-tooltip-scrollbar-track);
+  box-shadow: inset 0 0 0 1px var(--mc-tooltip-border-end);
+}
+
+.el-popper.mc-tooltip--panel .mc-tooltip-content::-webkit-scrollbar-thumb {
+  min-height: var(--mc-tooltip-scrollbar-thumb-min-size);
+  border: 1px solid var(--mc-tooltip-border-start);
+  background: var(--mc-tooltip-scrollbar-thumb);
+}
+
+.el-popper.mc-tooltip--panel .mc-tooltip-content::-webkit-scrollbar-thumb:hover {
+  background: var(--mc-tooltip-scrollbar-thumb-hover);
+}
+
+.el-popper.mc-tooltip--panel .mc-tooltip-content::-webkit-scrollbar-corner {
+  background: var(--mc-tooltip-scrollbar-track);
+}
+
+.el-popper.mc-tooltip--panel .mc-tooltip-content::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+@media (max-width: 720px) {
+  .el-popper.mc-tooltip--panel .mc-tooltip-content {
+    scrollbar-width: none;
+  }
+
+  .el-popper.mc-tooltip--panel .mc-tooltip-content::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .el-popper.mc-tooltip {
+    transition: none !important;
+  }
 }
